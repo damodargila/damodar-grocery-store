@@ -137,7 +137,6 @@ body{
                 {{ cat[0] }}
             </option>
             {% endfor %}
-
         </select>
 
         <button type="submit">
@@ -153,7 +152,19 @@ body{
 
 <div class="card">
 
-{% if product[4] %}
+{% if product[1] == "aata" %}
+<img src="{{ url_for('static', filename='images/aata.jpg') }}">
+
+{% elif product[1] == "rice" %}
+<img src="{{ url_for('static', filename='images/rice.jpg') }}">
+
+{% elif product[1] == "potato" %}
+<img src="{{ url_for('static', filename='images/potato.jpg') }}">
+
+{% elif product[1] == "sugar" %}
+<img src="{{ url_for('static', filename='images/sugar.jpg') }}">
+
+{% elif product[4] %}
 <img src="{{ product[4] }}">
 {% endif %}
 
