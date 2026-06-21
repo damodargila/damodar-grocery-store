@@ -1,102 +1,86 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <title>Damodar Grocery Store</title>
 
 <style>
-*{
-    box-sizing:border-box;
-}
-
-body{
-    font-family:Arial;
-    background:#f5f5f5;
-    margin:0;
-}
+*{box-sizing:border-box;}
+body{font-family:Arial;background:#f5f5f5;margin:0;}
 
 .header{
-    background:linear-gradient(135deg,green,#014d20);
-    color:white;
-    text-align:center;
-    padding:25px;
+background:linear-gradient(135deg,green,#014d20);
+color:white;
+text-align:center;
+padding:25px;
 }
 
 .nav a{
-    color:white;
-    text-decoration:none;
-    margin:8px;
-    display:inline-block;
+color:white;
+text-decoration:none;
+margin:8px;
+display:inline-block;
 }
 
 .search-box{
-    text-align:center;
-    background:white;
-    padding:20px;
+text-align:center;
+background:white;
+padding:20px;
 }
 
 .search-box input,
 .search-box select{
-    padding:10px;
-    width:250px;
+padding:10px;
+width:250px;
 }
 
 .search-box button{
-    padding:10px 20px;
-    background:green;
-    color:white;
-    border:none;
+padding:10px 20px;
+background:green;
+color:white;
+border:none;
 }
 
 .products{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-    padding:20px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
 }
 
 .card{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 0 8px gray;
+background:white;
+padding:15px;
+border-radius:12px;
+box-shadow:0 0 8px gray;
 }
 
 .card img{
-    width:100%;
-    height:170px;
-    object-fit:cover;
-    border-radius:10px;
+width:100%;
+height:170px;
+object-fit:cover;
+border-radius:10px;
 }
 
 .btn{
-    background:green;
-    color:white;
-    padding:8px 12px;
-    text-decoration:none;
-    border-radius:5px;
-    display:inline-block;
-    margin:3px;
+background:green;
+color:white;
+padding:8px 12px;
+text-decoration:none;
+border-radius:5px;
+display:inline-block;
+margin:3px;
 }
 
-.review{
-    background:#2196f3;
-}
+.review{background:#2196f3;}
+.viewreview{background:#9c27b0;}
+.edit{background:#ff9800;}
+.delete-btn{background:red;}
+.out{color:red;font-weight:bold;}
 
-.viewreview{
-    background:#9c27b0;
-}
-
-.edit{
-    background:#ff9800;
-}
-
-.delete-btn{
-    background:red;
-}
-
-.out{
-    color:red;
-    font-weight:bold;
+.rating{
+color:#ff9800;
+font-weight:bold;
 }
 </style>
 
@@ -104,46 +88,48 @@ body{
 <body>
 
 <div class="header">
-    <h1>🛒 Damodar Grocery Store</h1>
-    <p>Fresh grocery at your doorstep</p>
+<h1>🛒 Damodar Grocery Store</h1>
+<p>Fresh grocery at your doorstep</p>
 
-    <div class="nav">
-        <a href="/">🏠 Home</a>
-        <a href="/cart">🛒 Cart</a>
-        <a href="/wishlist">❤️ Wishlist</a>
-        <a href="/add_product">➕ Add Product</a>
-        <a href="/orders">📊 Dashboard</a>
-        <a href="/register">👤 Register</a>
-        <a href="/customer_login">🔑 Login</a>
-        <a href="/profile">🙋 Profile</a>
-        <a href="/my_orders">📦 My Orders</a>
-        <a href="/logout">🚪 Logout</a>
-    </div>
+<div class="nav">
+<a href="/">🏠 Home</a>
+<a href="/cart">🛒 Cart</a>
+<a href="/wishlist">❤️ Wishlist</a>
+<a href="/add_product">➕ Add Product</a>
+<a href="/orders">📊 Dashboard</a>
+<a href="/register">👤 Register</a>
+<a href="/customer_login">🔑 Login</a>
+<a href="/profile">🙋 Profile</a>
+<a href="/my_orders">📦 My Orders</a>
+<a href="/logout">🚪 Logout</a>
+</div>
 </div>
 
 <div class="search-box">
-    <form action="/" method="GET">
+<form action="/" method="GET">
 
-        <input type="text"
-               name="search"
-               placeholder="Search product..."
-               value="{{ search }}">
+<input type="text"
+name="search"
+placeholder="Search product..."
+value="{{ search }}">
 
-        <select name="category">
-            <option value="">All Categories</option>
+<select name="category">
+<option value="">All Categories</option>
 
-            {% for cat in categories %}
-            <option value="{{ cat[0] }}">
-                {{ cat[0] }}
-            </option>
-            {% endfor %}
-        </select>
+{% for cat in categories %}
 
-        <button type="submit">
-            Search
-        </button>
+<option value="{{ cat[0] }}">
+{{ cat[0] }}
+</option>
+{% endfor %}
 
-    </form>
+</select>
+
+<button type="submit">
+Search
+</button>
+
+</form>
 </div>
 
 <div class="products">
@@ -152,20 +138,17 @@ body{
 
 <div class="card">
 
-{% if product[1] == "aata" %}
-<img src="{{ url_for('static', filename='images/aata.jpg') }}">
+{% set pname = product[1]|lower %}
 
-{% elif product[1] == "rice" %}
-<img src="{{ url_for('static', filename='images/rice.jpg') }}">
+{% if "aata" in pname %} <img src="{{ url_for('static', filename='images/aata.jpg') }}">
 
-{% elif product[1] == "potato" %}
-<img src="{{ url_for('static', filename='images/potato.jpg') }}">
+{% elif "rice" in pname %} <img src="{{ url_for('static', filename='images/rice.jpg') }}">
 
-{% elif product[1] == "sugar" %}
-<img src="{{ url_for('static', filename='images/sugar.jpg') }}">
+{% elif "potato" in pname %} <img src="{{ url_for('static', filename='images/potato.jpg') }}">
 
-{% elif product[4] %}
-<img src="{{ product[4] }}">
+{% elif "sugar" in pname %} <img src="{{ url_for('static', filename='images/sugar.jpg') }}">
+
+{% elif product[4] %} <img src="{{ product[4] }}">
 {% endif %}
 
 <h2>{{ product[1] }}</h2>
@@ -174,13 +157,23 @@ body{
 
 <h3>₹{{ product[3] }}</h3>
 
+{% if ratings.get(product[0]) %}
+
+<p class="rating">
+⭐ {{ ratings[product[0]]['avg'] }}/5
+</p>
+
+<p>
+📝 {{ ratings[product[0]]['count'] }} Reviews
+</p>
+{% endif %}
+
 <p>Stock: {{ product[5] }}</p>
 
-{% if product[5] > 0 %}
-<a class="btn" href="/add_to_cart/{{ product[0] }}">
-Add To Cart
-</a>
+{% if product[5] > 0 %} <a class="btn" href="/add_to_cart/{{ product[0] }}">
+Add To Cart </a>
 {% else %}
+
 <p class="out">Out Of Stock</p>
 {% endif %}
 
@@ -192,24 +185,20 @@ Add To Cart
 
 <a class="btn edit"
 href="/edit_product/{{ product[0] }}">
-✏️ Edit
-</a>
+✏️ Edit </a>
 
 <a class="btn review"
 href="/review/{{ product[0] }}">
-⭐ Review
-</a>
+⭐ Review </a>
 
 <a class="btn viewreview"
 href="/reviews/{{ product[0] }}">
-👀 Reviews
-</a>
+👀 Reviews </a>
 
 <a class="btn delete-btn"
 href="/delete_product/{{ product[0] }}"
 onclick="return confirm('Delete Product?')">
-Delete
-</a>
+Delete </a>
 
 </div>
 

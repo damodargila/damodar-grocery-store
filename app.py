@@ -66,12 +66,36 @@ def home():
     cursor.execute(query, params)
     products = cursor.fetchall()
 
+    ratings = {}
+
+    for product in products:
+        cursor.execute(
+            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
+            (product[0],)
+        )
+        data = cursor.fetchone()
+
+        avg_rating = round(data[0], 1) if data[0] else 0
+        total_reviews = data[1]
+
+        ratings[product[0]] = {
+            "avg": avg_rating,
+            "count": total_reviews
+        }
+
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()
 
     conn.close()
 
-    return render_template("index.html", products=products, search=search, category=category, categories=categories)
+    return render_template(
+        "index.html",
+        products=products,
+        ratings=ratings,
+        search=search,
+        category=category,
+        categories=categories
+    )
 
 
 @app.route("/send_otp", methods=["GET", "POST"])
@@ -215,7 +239,10 @@ def register():
         cursor = conn.cursor()
 
         try:
-            cursor.execute("INSERT INTO users(name, email, password) VALUES(?,?,?)", (name, email, password))
+            cursor.execute(
+                "INSERT INTO users(name, email, password) VALUES(?,?,?)",
+                (name, email, password)
+            )
             conn.commit()
         except:
             conn.close()
@@ -235,7 +262,10 @@ def customer_login():
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email=? AND password=?", (email, password))
+        cursor.execute(
+            "SELECT * FROM users WHERE email=? AND password=?",
+            (email, password)
+        )
         user = cursor.fetchone()
         conn.close()
 
