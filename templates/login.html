@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Login</title>
+
+<style>
+body{
+    font-family:Arial;
+    background:#f5f5f5;
+    padding:40px;
+}
+
+.box{
+    background:white;
+    width:350px;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 8px gray;
+    margin:auto;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+}
+
+button{
+    background:green;
+    color:white;
+    padding:10px 20px;
+    border:none;
+    border-radius:5px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="box">
+<h1>🔐 Admin Login</h1>
+
+<form action="/login" method="POST">
+    <label>Username:</label>
+    <input type="text" name="username" required>
+
+    <label>Password:</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Login</button>
+</form>
+
+<br>
+<a href="/">Back To Store</a>
+</div>
+
+</body>
+</html>

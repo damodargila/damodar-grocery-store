@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Reviews</title></head>
+<body>
+
+<h1>👀 Product Reviews</h1>
+
+{% for r in reviews %}
+<div style="border:1px solid gray;padding:10px;margin:10px;">
+<h3>{{ r[2] }}</h3>
+<p>Rating: ⭐ {{ r[3] }}/5</p>
+<p>{{ r[4] }}</p>
+</div>
+{% endfor %}
+
+<a href="/">Back</a>
+
+</body>
+</html>
