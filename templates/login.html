@@ -13,16 +13,16 @@ body{
 .box{
     background:white;
     width:350px;
+    margin:auto;
     padding:25px;
     border-radius:10px;
     box-shadow:0 0 8px gray;
-    margin:auto;
 }
 
 input{
     width:100%;
     padding:10px;
-    margin:10px 0;
+    margin:8px 0;
 }
 
 button{
@@ -33,24 +33,27 @@ button{
     border-radius:5px;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="box">
 <h1>🔐 Admin Login</h1>
 
-<form action="/login" method="POST">
-    <label>Username:</label>
-    <input type="text" name="username" required>
+<form action="/admin_login" method="POST">
 
-    <label>Password:</label>
-    <input type="password" name="password" required>
+<label>Username:</label>
+<input type="text" name="username" required>
 
-    <button type="submit">Login</button>
+<label>Password:</label>
+<input type="password" name="password" required>
+
+<button type="submit">Login</button>
+
 </form>
 
 <br>
+
 <a href="/">Back To Store</a>
 </div>
 
