@@ -581,35 +581,75 @@ def export_orders():
 
 @app.route("/add_product", methods=["GET", "POST"])
 def add_product():
-    if "admin" not in session:
-        return redirect("/admin_login")
+if "admin" not in session:
+return redirect("/admin_login")
 
-    if request.method == "POST":
-        name = request.form["name"]
-        category = request.form["category"]
-        price = request.form["price"]
-        stock = request.form["stock"]
+```
+if request.method == "POST":
 
-        image_file = request.files["image"]
-        image_path = ""
+    name = request.form["name"]
+    category = request.form["category"]
+    price = request.form["price"]
+    stock = request.form["stock"]
+    description = request.form.get("description", "")
 
-        if image_file:
-            filename = secure_filename(image_file.filename)
-            image_file.save(os.path.join(UPLOAD_FOLDER, filename))
-            image_path = "/" + UPLOAD_FOLDER + "/" + filename
+    image_files = request.files.getlist("images")
 
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO products(name, category, price, image, stock) VALUES(?,?,?,?,?)",
-            (name, category, price, image_path, stock)
-        )
-        conn.commit()
-        conn.close()
+    image1 = ""
+    image2 = ""
+    image3 = ""
+    image4 = ""
+    image5 = ""
 
-        return redirect("/")
+    images = []
 
-    return render_template("add_product.html")
+    for file in image_files:
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            images.append("/" + UPLOAD_FOLDER + "/" + filename)
+
+    if len(images) > 0:
+        image1 = images[0]
+    if len(images) > 1:
+        image2 = images[1]
+    if len(images) > 2:
+        image3 = images[2]
+    if len(images) > 3:
+        image4 = images[3]
+    if len(images) > 4:
+        image5 = images[4]
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    INSERT INTO products
+    (name, category, price, image, stock,
+     description, image2, image3, image4, image5)
+    VALUES (?,?,?,?,?,?,?,?,?,?)
+    """,
+    (
+        name,
+        category,
+        price,
+        image1,
+        stock,
+        description,
+        image2,
+        image3,
+        image4,
+        image5
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+return render_template("add_product.html")
+```
+
 
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])

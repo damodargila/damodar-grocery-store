@@ -3,38 +3,141 @@
 <head>
 <title>Add Product</title>
 <style>
-body{font-family:Arial;background:#f5f5f5;padding:30px;}
-.box{background:white;width:400px;padding:25px;border-radius:10px;box-shadow:0 0 8px gray;}
-input{width:100%;padding:10px;margin:8px 0;}
-button{background:green;color:white;padding:10px 20px;border:none;border-radius:5px;}
+*{box-sizing:border-box;}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f7fb;
+}
+
+.container{
+    max-width:900px;
+    margin:40px auto;
+    background:white;
+    padding:35px;
+    border-radius:18px;
+    box-shadow:0 0 20px rgba(0,0,0,0.15);
+}
+
+h1{
+    color:green;
+    margin-bottom:5px;
+}
+
+p{
+    color:#666;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+label{
+    font-weight:bold;
+    display:block;
+    margin-bottom:6px;
+}
+
+input, textarea{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+textarea{
+    height:120px;
+    resize:none;
+}
+
+.full{
+    grid-column:1/3;
+}
+
+button{
+    background:green;
+    color:white;
+    padding:12px 25px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0b6623;
+}
+
+.back{
+    display:inline-block;
+    margin-top:20px;
+    color:green;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+.note{
+    color:#777;
+    font-size:14px;
+}
 </style>
 </head>
+
 <body>
 
-<div class="box">
-<h1>➕ Add Product</h1>
+<div class="container">
+
+<h1>➕ Add New Product</h1>
+<p>Add product details and upload up to 5 images.</p>
 
 <form action="/add_product" method="POST" enctype="multipart/form-data">
-<label>Product Name:</label>
-<input type="text" name="name" required>
 
-<label>Category:</label>
-<input type="text" name="category" required>
+<div class="grid">
 
-<label>Price:</label>
-<input type="number" name="price" required>
+<div>
+<label>Product Name *</label>
+<input type="text" name="name" placeholder="Enter product name" required>
+</div>
 
-<label>Stock:</label>
+<div>
+<label>Category *</label>
+<input type="text" name="category" placeholder="Enter category" required>
+</div>
+
+<div>
+<label>Price ₹ *</label>
+<input type="number" name="price" placeholder="Enter price" required>
+</div>
+
+<div>
+<label>Stock *</label>
 <input type="number" name="stock" value="10" required>
+</div>
 
-<label>Upload Image:</label>
-<input type="file" name="image" required>
+<div class="full">
+<label>Product Description</label>
+<textarea name="description" placeholder="Enter product description"></textarea>
+</div>
 
-<button type="submit">Add Product</button>
-</form>
+<div class="full">
+<label>Product Images *</label>
+<input type="file" name="images" accept="image/*" multiple required>
+<p class="note">You can select 1 to 5 images.</p>
+</div>
+
+</div>
 
 <br>
-<a href="/">Back To Store</a>
+
+<button type="submit">Add Product</button>
+
+</form>
+
+<a class="back" href="/">← Back To Store</a>
+
 </div>
 
 </body>
