@@ -692,8 +692,20 @@ def edit_product(product_id):
         stock = request.form["stock"]
 
         cursor.execute(
-            "UPDATE products SET name=?, category=?, price=?, stock=? WHERE id=?",
-            (name, category, price, stock, product_id)
+            "UPDATE products SET name=?, category=?, price=?, image=?, stock=?, description=?, image2=?, image3=?, image4=?, image5=? WHERE ",
+            (
+    name,
+    category,
+    price,
+    product[4],
+    stock,
+    description,
+    product[8] if len(product) > 8 else "",
+    product[9] if len(product) > 9 else "",
+    product[10] if len(product) > 10 else "",
+    product[11] if len(product) > 11 else "",
+    product_id
+)
         )
 
         conn.commit()
