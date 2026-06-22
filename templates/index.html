@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <title>Damodar Grocery Store</title>
@@ -77,11 +76,7 @@ margin:3px;
 .edit{background:#ff9800;}
 .delete-btn{background:red;}
 .out{color:red;font-weight:bold;}
-
-.rating{
-color:#ff9800;
-font-weight:bold;
-}
+.rating{color:#ff9800;font-weight:bold;}
 </style>
 
 </head>
@@ -95,8 +90,12 @@ font-weight:bold;
 <a href="/">🏠 Home</a>
 <a href="/cart">🛒 Cart</a>
 <a href="/wishlist">❤️ Wishlist</a>
+
+{% if session.get('admin') %}
 <a href="/add_product">➕ Add Product</a>
 <a href="/orders">📊 Dashboard</a>
+{% endif %}
+
 <a href="/register">👤 Register</a>
 <a href="/customer_login">🔑 Login</a>
 <a href="/profile">🙋 Profile</a>
@@ -108,26 +107,18 @@ font-weight:bold;
 <div class="search-box">
 <form action="/" method="GET">
 
-<input type="text"
-name="search"
-placeholder="Search product..."
-value="{{ search }}">
+<input type="text" name="search" placeholder="Search product..." value="{{ search }}">
 
 <select name="category">
 <option value="">All Categories</option>
 
 {% for cat in categories %}
-
-<option value="{{ cat[0] }}">
-{{ cat[0] }}
-</option>
+<option value="{{ cat[0] }}">{{ cat[0] }}</option>
 {% endfor %}
 
 </select>
 
-<button type="submit">
-Search
-</button>
+<button type="submit">Search</button>
 
 </form>
 </div>
@@ -140,15 +131,16 @@ Search
 
 {% set pname = product[1]|lower %}
 
-{% if "aata" in pname %} <img src="{{ url_for('static', filename='images/aata.jpg') }}">
-
-{% elif "rice" in pname %} <img src="{{ url_for('static', filename='images/rice.jpg') }}">
-
-{% elif "potato" in pname %} <img src="{{ url_for('static', filename='images/potato.jpg') }}">
-
-{% elif "sugar" in pname %} <img src="{{ url_for('static', filename='images/sugar.jpg') }}">
-
-{% elif product[4] %} <img src="{{ product[4] }}">
+{% if "aata" in pname %}
+<img src="{{ url_for('static', filename='images/aata.jpg') }}">
+{% elif "rice" in pname %}
+<img src="{{ url_for('static', filename='images/rice.jpg') }}">
+{% elif "potato" in pname %}
+<img src="{{ url_for('static', filename='images/potato.jpg') }}">
+{% elif "sugar" in pname %}
+<img src="{{ url_for('static', filename='images/sugar.jpg') }}">
+{% elif product[4] %}
+<img src="{{ product[4] }}">
 {% endif %}
 
 <h2>{{ product[1] }}</h2>
@@ -158,47 +150,35 @@ Search
 <h3>₹{{ product[3] }}</h3>
 
 {% if ratings.get(product[0]) %}
-
-<p class="rating">
-⭐ {{ ratings[product[0]]['avg'] }}/5
-</p>
-
-<p>
-📝 {{ ratings[product[0]]['count'] }} Reviews
-</p>
+<p class="rating">⭐ {{ ratings[product[0]]['avg'] }}/5</p>
+<p>📝 {{ ratings[product[0]]['count'] }} Reviews</p>
 {% endif %}
 
 <p>Stock: {{ product[5] }}</p>
 
-{% if product[5] > 0 %} <a class="btn" href="/add_to_cart/{{ product[0] }}">
-Add To Cart </a>
+{% if product[5] > 0 %}
+<a class="btn" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
 {% else %}
-
 <p class="out">Out Of Stock</p>
 {% endif %}
 
 <br>
 
-<a class="btn" href="/wishlist/{{ product[0] }}">
-❤️ Wishlist
-</a>
+<a class="btn" href="/wishlist/{{ product[0] }}">❤️ Wishlist</a>
 
-<a class="btn edit"
-href="/edit_product/{{ product[0] }}">
-✏️ Edit </a>
-
-<a class="btn review"
-href="/review/{{ product[0] }}">
-⭐ Review </a>
-
-<a class="btn viewreview"
-href="/reviews/{{ product[0] }}">
-👀 Reviews </a>
+{% if session.get('admin') %}
+<a class="btn edit" href="/edit_product/{{ product[0] }}">✏️ Edit</a>
 
 <a class="btn delete-btn"
 href="/delete_product/{{ product[0] }}"
 onclick="return confirm('Delete Product?')">
-Delete </a>
+Delete
+</a>
+{% endif %}
+
+<a class="btn review" href="/review/{{ product[0] }}">⭐ Review</a>
+
+<a class="btn viewreview" href="/reviews/{{ product[0] }}">👀 Reviews</a>
 
 </div>
 
