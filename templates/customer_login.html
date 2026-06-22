@@ -2,22 +2,102 @@
 <html>
 <head>
 <title>Customer Login</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#4CAF50,#0b6623);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.login-box{
+    background:white;
+    width:400px;
+    padding:35px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,0.3);
+    text-align:center;
+}
+
+.login-box h1{
+    color:green;
+    margin-bottom:25px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:green;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0b6623;
+}
+
+a{
+    text-decoration:none;
+    color:green;
+    font-weight:bold;
+}
+
+.register{
+    margin-top:20px;
+}
+</style>
+
 </head>
 <body>
+
+<div class="login-box">
 
 <h1>🔑 Customer Login</h1>
 
 <form method="POST">
-    <input type="email" name="email" placeholder="Email" required><br><br>
 
-    <input type="password" name="password" placeholder="Password" required><br><br>
+<input type="email"
+name="email"
+placeholder="Enter Email"
+required>
 
-    <button type="submit">Login</button>
+<input type="password"
+name="password"
+placeholder="Enter Password"
+required>
+
+<button type="submit">
+Login
+</button>
+
 </form>
 
-<br>
+<div class="register">
+<a href="/register">
+Create New Account
+</a>
+</div>
 
-<a href="/register">Register New Account</a>
+</div>
 
 </body>
 </html>
