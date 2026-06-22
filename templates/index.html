@@ -54,11 +54,33 @@ border-radius:12px;
 box-shadow:0 0 8px gray;
 }
 
-.card img{
+.main-img{
 width:100%;
 height:170px;
 object-fit:cover;
 border-radius:10px;
+}
+
+.extra-images{
+display:flex;
+gap:6px;
+margin-top:8px;
+flex-wrap:wrap;
+}
+
+.extra-images img{
+width:55px;
+height:55px;
+object-fit:cover;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+.desc{
+background:#f1f1f1;
+padding:8px;
+border-radius:6px;
+font-size:14px;
 }
 
 .btn{
@@ -106,20 +128,16 @@ margin:3px;
 
 <div class="search-box">
 <form action="/" method="GET">
-
 <input type="text" name="search" placeholder="Search product..." value="{{ search }}">
 
 <select name="category">
 <option value="">All Categories</option>
-
 {% for cat in categories %}
 <option value="{{ cat[0] }}">{{ cat[0] }}</option>
 {% endfor %}
-
 </select>
 
 <button type="submit">Search</button>
-
 </form>
 </div>
 
@@ -129,23 +147,24 @@ margin:3px;
 
 <div class="card">
 
-{% set pname = product[1]|lower %}
-
-{% if "aata" in pname %}
-<img src="{{ url_for('static', filename='images/aata.jpg') }}">
-{% elif "rice" in pname %}
-<img src="{{ url_for('static', filename='images/rice.jpg') }}">
-{% elif "potato" in pname %}
-<img src="{{ url_for('static', filename='images/potato.jpg') }}">
-{% elif "sugar" in pname %}
-<img src="{{ url_for('static', filename='images/sugar.jpg') }}">
-{% elif product[4] %}
-<img src="{{ product[4] }}">
+{% if product[4] %}
+<img class="main-img" src="{{ product[4] }}">
 {% endif %}
+
+<div class="extra-images">
+{% if product|length > 7 and product[7] %}<img src="{{ product[7] }}">{% endif %}
+{% if product|length > 8 and product[8] %}<img src="{{ product[8] }}">{% endif %}
+{% if product|length > 9 and product[9] %}<img src="{{ product[9] }}">{% endif %}
+{% if product|length > 10 and product[10] %}<img src="{{ product[10] }}">{% endif %}
+</div>
 
 <h2>{{ product[1] }}</h2>
 
 <p>Category: {{ product[2] }}</p>
+
+{% if product|length > 6 and product[6] %}
+<p class="desc">{{ product[6] }}</p>
+{% endif %}
 
 <h3>₹{{ product[3] }}</h3>
 
@@ -168,16 +187,10 @@ margin:3px;
 
 {% if session.get('admin') %}
 <a class="btn edit" href="/edit_product/{{ product[0] }}">✏️ Edit</a>
-
-<a class="btn delete-btn"
-href="/delete_product/{{ product[0] }}"
-onclick="return confirm('Delete Product?')">
-Delete
-</a>
+<a class="btn delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>
 {% endif %}
 
 <a class="btn review" href="/review/{{ product[0] }}">⭐ Review</a>
-
 <a class="btn viewreview" href="/reviews/{{ product[0] }}">👀 Reviews</a>
 
 </div>
