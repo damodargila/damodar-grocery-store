@@ -28,6 +28,29 @@ def get_db():
     return sqlite3.connect("grocery.db")
 
 
+def ensure_product_columns():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    columns = [
+        ("description", "TEXT"),
+        ("image2", "TEXT"),
+        ("image3", "TEXT"),
+        ("image4", "TEXT"),
+        ("image5", "TEXT"),
+        ("discount", "INTEGER DEFAULT 10")
+    ]
+
+    for name, column_type in columns:
+        try:
+            cursor.execute(f"ALTER TABLE products ADD COLUMN {name} {column_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    conn.commit()
+    conn.close()
+
+
 def send_email(to_email, subject, body):
     if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD:
         print("Email settings missing")
@@ -46,6 +69,8 @@ def send_email(to_email, subject, body):
 
 @app.route("/")
 def home():
+    ensure_product_columns()
+
     search = request.args.get("search", "")
     category = request.args.get("category", "")
 
@@ -219,6 +244,7 @@ def admin_login():
             session["admin"] = True
             return redirect("/orders")
         return "Wrong admin username or password"
+
     return render_template("login.html")
 
 
@@ -244,7 +270,7 @@ def register():
                 (name, email, password)
             )
             conn.commit()
-        except:
+        except sqlite3.IntegrityError:
             conn.close()
             return "Email already registered"
 
@@ -272,6 +298,7 @@ def customer_login():
         if user:
             session["user"] = user[1]
             return redirect("/")
+
         return "Wrong email or password"
 
     return render_template("customer_login.html")
@@ -288,6 +315,7 @@ def add_to_cart(product_id):
 
     session["cart"] = cart
     session.modified = True
+
     return redirect("/cart")
 
 
@@ -301,6 +329,8 @@ def increase(product_id):
     cart[product_id] = cart.get(product_id, 0) + 1
 
     session["cart"] = cart
+    session.modified = True
+
     return redirect("/cart")
 
 
@@ -318,6 +348,8 @@ def decrease(product_id):
             cart.pop(product_id)
 
     session["cart"] = cart
+    session.modified = True
+
     return redirect("/cart")
 
 
@@ -339,7 +371,7 @@ def cart():
         product = cursor.fetchone()
 
         if product:
-            subtotal = product[3] * quantity
+            subtotal = int(product[3]) * quantity
             total += subtotal
             products.append((product, quantity, subtotal))
 
@@ -368,6 +400,7 @@ def wishlist(product_id):
     cursor.execute("INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
     conn.commit()
     conn.close()
+
     return redirect("/")
 
 
@@ -412,7 +445,7 @@ def checkout():
             product = cursor.fetchone()
 
             if product:
-                subtotal = product[3] * quantity
+                subtotal = int(product[3]) * quantity
                 total += subtotal
                 order_products.append((product, quantity))
 
@@ -484,6 +517,9 @@ def invoice(order_id):
     items = cursor.fetchall()
 
     conn.close()
+
+    if not order:
+        return "Order not found"
 
     pdf = canvas.Canvas(filename)
     pdf.drawString(100, 800, "Damodar Grocery Store Invoice")
@@ -581,81 +617,70 @@ def export_orders():
 
 @app.route("/add_product", methods=["GET", "POST"])
 def add_product():
-if "admin" not in session:
-return redirect("/admin_login")
+    if "admin" not in session:
+        return redirect("/admin_login")
 
-```
-if request.method == "POST":
+    ensure_product_columns()
 
-    name = request.form["name"]
-    category = request.form["category"]
-    price = request.form["price"]
-    stock = request.form["stock"]
-    description = request.form.get("description", "")
+    if request.method == "POST":
+        name = request.form["name"]
+        category = request.form["category"]
+        price = request.form["price"]
+        stock = request.form["stock"]
+        description = request.form.get("description", "")
 
-    image_files = request.files.getlist("images")
+        image_files = request.files.getlist("images")
+        images = []
 
-    image1 = ""
-    image2 = ""
-    image3 = ""
-    image4 = ""
-    image5 = ""
+        for file in image_files:
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                images.append("/" + UPLOAD_FOLDER + "/" + filename)
 
-    images = []
+        image1 = images[0] if len(images) > 0 else ""
+        image2 = images[1] if len(images) > 1 else ""
+        image3 = images[2] if len(images) > 2 else ""
+        image4 = images[3] if len(images) > 3 else ""
+        image5 = images[4] if len(images) > 4 else ""
 
-    for file in image_files:
-        if file and file.filename:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
-            images.append("/" + UPLOAD_FOLDER + "/" + filename)
+        conn = get_db()
+        cursor = conn.cursor()
 
-    if len(images) > 0:
-        image1 = images[0]
-    if len(images) > 1:
-        image2 = images[1]
-    if len(images) > 2:
-        image3 = images[2]
-    if len(images) > 3:
-        image4 = images[3]
-    if len(images) > 4:
-        image5 = images[4]
+        cursor.execute(
+            """
+            INSERT INTO products
+            (name, category, price, image, stock, description, image2, image3, image4, image5)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                name,
+                category,
+                price,
+                image1,
+                stock,
+                description,
+                image2,
+                image3,
+                image4,
+                image5
+            )
+        )
 
-    conn = get_db()
-    cursor = conn.cursor()
+        conn.commit()
+        conn.close()
 
-    cursor.execute("""
-    INSERT INTO products
-    (name, category, price, image, stock,
-     description, image2, image3, image4, image5)
-    VALUES (?,?,?,?,?,?,?,?,?,?)
-    """,
-    (
-        name,
-        category,
-        price,
-        image1,
-        stock,
-        description,
-        image2,
-        image3,
-        image4,
-        image5
-    ))
+        return redirect("/")
 
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
-
-return render_template("add_product.html")
-```
-
+    return render_template("add_product.html")
 
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
     if "admin" not in session:
         return redirect("/admin_login")
+
+    ensure_product_columns()
 
     conn = get_db()
     cursor = conn.cursor()
