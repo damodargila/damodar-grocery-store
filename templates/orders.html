@@ -1,217 +1,485 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <title>Admin Dashboard</title>
 
 <style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
 body{
-font-family:Arial;
-padding:20px;
-background:#f5f5f5;
+    background:#f5f7fb;
+    color:#111827;
 }
 
-body.dark{
-background:#222;
-color:white;
+.layout{
+    display:flex;
+    min-height:100vh;
 }
 
-h1{
-color:green;
+.sidebar{
+    width:260px;
+    background:linear-gradient(180deg,#064d1a,#022c12);
+    color:white;
+    padding:25px 18px;
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
 }
 
-.dashboard{
-display:flex;
-gap:20px;
-flex-wrap:wrap;
-margin-bottom:20px;
+.logo{
+    font-size:26px;
+    font-weight:bold;
+    margin-bottom:35px;
 }
 
-.box{
-background:white;
-color:black;
-padding:20px;
-border-radius:10px;
-box-shadow:0 0 5px gray;
-width:200px;
+.logo span{
+    color:#71f08a;
+    font-size:18px;
 }
 
-.chart-box{
-background:white;
-color:black;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+.menu a{
+    display:block;
+    color:white;
+    text-decoration:none;
+    padding:14px 15px;
+    margin-bottom:10px;
+    border-radius:10px;
+    font-weight:bold;
 }
 
-.bar{
-background:green;
-color:white;
-padding:10px;
-margin:8px 0;
+.menu a:hover,
+.menu .active{
+    background:#0b8f3a;
+}
+
+.side-card{
+    margin-top:40px;
+    background:rgba(255,255,255,0.12);
+    padding:18px;
+    border-radius:14px;
+    line-height:1.5;
+}
+
+.main{
+    margin-left:260px;
+    width:calc(100% - 260px);
+}
+
+.topbar{
+    height:70px;
+    background:white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.search{
+    width:380px;
+    padding:13px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    font-size:15px;
+}
+
+.admin-user{
+    font-weight:bold;
+    color:#0b8f3a;
+}
+
+.content{
+    padding:30px;
+}
+
+.hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.hero h1{
+    font-size:30px;
+}
+
+.hero p{
+    color:#666;
+    margin-top:6px;
+}
+
+.action-btn{
+    display:inline-block;
+    text-decoration:none;
+    padding:13px 18px;
+    border-radius:10px;
+    margin-left:8px;
+    font-weight:bold;
+    color:white;
+    background:#0b8f3a;
+}
+
+.light-btn{
+    background:white;
+    color:#0b8f3a;
+    border:1px solid #d6eadc;
+}
+
+.logout{
+    background:#ef4444;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.card{
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(0,0,0,0.08);
+    border:1px solid #e8efe9;
+}
+
+.card p{
+    color:#555;
+    margin-bottom:12px;
+}
+
+.card h2{
+    font-size:34px;
+}
+
+.card-icon{
+    float:right;
+    font-size:35px;
+    background:#e8fff0;
+    padding:12px;
+    border-radius:50%;
+}
+
+.chart-grid{
+    display:grid;
+    grid-template-columns:1fr 1.7fr;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.panel{
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(0,0,0,0.08);
+}
+
+.donut{
+    width:170px;
+    height:170px;
+    border-radius:50%;
+    background:conic-gradient(#0b8f3a 0deg 360deg);
+    margin:25px auto;
+    position:relative;
+}
+
+.donut:after{
+    content:"";
+    width:75px;
+    height:75px;
+    background:white;
+    border-radius:50%;
+    position:absolute;
+    top:47px;
+    left:47px;
+}
+
+.bar-row{
+    margin:18px 0;
+}
+
+.bar-bg{
+    background:#edf2f7;
+    height:16px;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.bar-fill{
+    height:100%;
+    background:#0b8f3a;
+    border-radius:20px;
+}
+
+.table-panel{
+    background:white;
+    padding:24px;
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(0,0,0,0.08);
+}
+
+.table-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
-background:white;
-color:black;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:10px;
-text-align:left;
+    width:100%;
+    border-collapse:collapse;
 }
 
 th{
-background:green;
-color:white;
+    background:#eaf7ee;
+    color:#111827;
+    padding:14px;
+    text-align:left;
+}
+
+td{
+    padding:14px;
+    border-bottom:1px solid #eee;
+}
+
+.id-badge{
+    background:#dff5e6;
+    color:#0b8f3a;
+    padding:8px 11px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.status{
+    background:#fff1d6;
+    color:#d97706;
+    padding:7px 10px;
+    border-radius:8px;
+    font-weight:bold;
 }
 
 .btn{
-background:green;
-color:white;
-padding:8px 12px;
-text-decoration:none;
-border-radius:5px;
-display:inline-block;
-margin:2px;
+    padding:8px 11px;
+    color:white;
+    text-decoration:none;
+    border-radius:7px;
+    display:inline-block;
+    margin:2px;
+    font-size:14px;
 }
 
-.red{
-background:red;
-}
+.red{background:#ef4444;}
+.orange{background:#f59e0b;}
+.blue{background:#2563eb;}
+.green{background:#0b8f3a;}
 
-.orange{
-background:orange;
-}
+@media(max-width:900px){
+    .sidebar{
+        position:static;
+        width:100%;
+    }
 
-.blue{
-background:#2196f3;
+    .layout{
+        flex-direction:column;
+    }
+
+    .main{
+        margin-left:0;
+        width:100%;
+    }
+
+    .cards,
+    .chart-grid{
+        grid-template-columns:1fr;
+    }
+
+    .hero,
+    .topbar{
+        flex-direction:column;
+        height:auto;
+        gap:12px;
+        padding:15px;
+        align-items:flex-start;
+    }
+
+    .search{
+        width:100%;
+    }
+
+    table{
+        font-size:13px;
+    }
 }
 </style>
-
-<script>
-function toggleDark(){
-document.body.classList.toggle("dark");
-}
-</script>
-
 </head>
+
 <body>
 
-<h1>📊 Admin Dashboard</h1>
+<div class="layout">
 
-<button onclick="toggleDark()">🌙 Dark Mode</button>
+<div class="sidebar">
 
-<a class="btn" href="/export_orders">
-📥 Export Excel
-</a>
+    <div class="logo">
+        🛒 DAMODAR<br>
+        <span>GROCERY STORE</span>
+    </div>
 
-<a class="btn" href="/">
-🏠 Store
-</a>
+    <div class="menu">
+        <a class="active" href="/orders">📊 Dashboard</a>
+        <a href="/orders">📦 All Orders</a>
+        <a href="/add_product">➕ Add Product</a>
+        <a href="/">🏪 Store Front</a>
+        <a href="/export_orders">📥 Export Excel</a>
+        <a href="/logout">🚪 Logout</a>
+    </div>
 
-<a class="btn red" href="/logout">
-Logout
-</a>
-
-<div class="dashboard">
-
-<div class="box">
-<p>Total Orders</p>
-<h2>{{ total_orders }}</h2>
-</div>
-
-<div class="box">
-<p>Total Sales</p>
-<h2>₹{{ total_sales }}</h2>
-</div>
-
-<div class="box">
-<p>Pending Orders</p>
-<h2>{{ pending_orders }}</h2>
-</div>
-
-<div class="box">
-<p>Delivered Orders</p>
-<h2>{{ delivered_orders }}</h2>
-</div>
+    <div class="side-card">
+        <h3>Grow Your Business</h3>
+        <p>Track sales, manage orders and increase store revenue.</p>
+    </div>
 
 </div>
 
-<div class="chart-box">
+<div class="main">
 
-<h2>📊 Order Status Chart</h2>
+    <div class="topbar">
+        <input class="search" type="text" placeholder="Search here...">
+        <div class="admin-user">👤 Admin</div>
+    </div>
 
-<p>Pending</p>
-<div class="bar"
-style="width:{{ pending_orders * 80 + 50 }}px;">
-{{ pending_orders }}
+    <div class="content">
+
+        <div class="hero">
+            <div>
+                <h1>Welcome back, Admin! 👋</h1>
+                <p>Here’s what’s happening with your store today.</p>
+            </div>
+
+            <div>
+                <a class="action-btn light-btn" href="/export_orders">📥 Export Excel</a>
+                <a class="action-btn light-btn" href="/">🏪 Store Front</a>
+                <a class="action-btn" href="/add_product">➕ Add Product</a>
+                <a class="action-btn logout" href="/logout">Logout</a>
+            </div>
+        </div>
+
+        <div class="cards">
+
+            <div class="card">
+                <div class="card-icon">🛍️</div>
+                <p>Total Orders</p>
+                <h2>{{ total_orders }}</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">💰</div>
+                <p>Total Sales</p>
+                <h2>₹{{ total_sales }}</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">⏳</div>
+                <p>Pending Orders</p>
+                <h2>{{ pending_orders }}</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">✅</div>
+                <p>Delivered Orders</p>
+                <h2>{{ delivered_orders }}</h2>
+            </div>
+
+        </div>
+
+        <div class="chart-grid">
+
+            <div class="panel">
+                <h2>Order Status Overview</h2>
+                <div class="donut"></div>
+                <p>🟢 Pending: {{ pending_orders }}</p>
+                <p>🔵 Delivered: {{ delivered_orders }}</p>
+            </div>
+
+            <div class="panel">
+                <h2>Sales Overview</h2>
+
+                <div class="bar-row">
+                    <p>Total Sales ₹{{ total_sales }}</p>
+                    <div class="bar-bg">
+                        <div class="bar-fill" style="width:85%;"></div>
+                    </div>
+                </div>
+
+                <div class="bar-row">
+                    <p>Pending Orders {{ pending_orders }}</p>
+                    <div class="bar-bg">
+                        <div class="bar-fill" style="width:65%;"></div>
+                    </div>
+                </div>
+
+                <div class="bar-row">
+                    <p>Delivered Orders {{ delivered_orders }}</p>
+                    <div class="bar-bg">
+                        <div class="bar-fill" style="width:35%;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="table-panel">
+
+            <div class="table-title">
+                <h2>All Orders</h2>
+                <input class="search" type="text" placeholder="Search orders...">
+            </div>
+
+            <table>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Tracking</th>
+                </tr>
+
+                {% for order in orders %}
+                <tr>
+                    <td><span class="id-badge">{{ order[0] }}</span></td>
+                    <td>{{ order[1] }}</td>
+                    <td>{{ order[2] }}</td>
+                    <td>{{ order[3] }}</td>
+                    <td><b>₹{{ order[4] }}</b></td>
+                    <td><span class="status">{{ order[8] }}</span></td>
+
+                    <td>
+                        <a class="btn red" href="/update_status/{{ order[0] }}/Pending">Pending</a>
+                        <a class="btn orange" href="/update_status/{{ order[0] }}/Packed">Packed</a>
+                        <a class="btn blue" href="/update_status/{{ order[0] }}/Shipped">Shipped</a>
+                        <a class="btn green" href="/update_status/{{ order[0] }}/Delivered">Delivered</a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </table>
+
+        </div>
+
+    </div>
+
 </div>
 
-<p>Delivered</p>
-<div class="bar"
-style="width:{{ delivered_orders * 80 + 50 }}px;">
-{{ delivered_orders }}
 </div>
-
-</div>
-
-<h1>📦 All Orders</h1>
-
-<table>
-
-<tr>
-<th>ID</th>
-<th>Name</th>
-<th>Phone</th>
-<th>Address</th>
-<th>Total</th>
-<th>Status</th>
-<th>Tracking</th>
-</tr>
-
-{% for order in orders %}
-
-<tr>
-
-<td>{{ order[0] }}</td>
-<td>{{ order[1] }}</td>
-<td>{{ order[2] }}</td>
-<td>{{ order[3] }}</td>
-<td>₹{{ order[4] }}</td>
-
-<td>
-<b>{{ order[8] }}</b>
-</td>
-
-<td>
-
-<a class="btn red"
-href="/update_status/{{ order[0] }}/Pending">
-Pending </a>
-
-<a class="btn orange"
-href="/update_status/{{ order[0] }}/Packed">
-Packed </a>
-
-<a class="btn blue"
-href="/update_status/{{ order[0] }}/Shipped">
-Shipped </a>
-
-<a class="btn"
-href="/update_status/{{ order[0] }}/Delivered">
-Delivered </a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
 
 </body>
 </html>
