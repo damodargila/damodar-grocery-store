@@ -812,13 +812,19 @@ def edit_product(product_id):
         )
 
         conn.commit()
+
+        cursor.execute("SELECT description FROM products WHERE id=?", (product_id,))
+        saved_description = cursor.fetchone()
+
         conn.close()
 
-        return redirect("/product/" + str(product_id))
+        if saved_description and saved_description[0] == description:
+            return redirect("/product/" + str(product_id))
+        else:
+            return "Description save nahi hua. Database column problem hai."
 
     conn.close()
     return render_template("edit_product.html", product=product)
-
 
 @app.route("/delete_product/<int:product_id>")
 def delete_product(product_id):
