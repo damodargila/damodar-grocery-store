@@ -185,11 +185,11 @@ def home():
     params = []
 
     if search:
-        query += " AND name LIKE %s" if is_postgres else " AND name LIKE ?"
+        query += " AND name LIKE  ?" if is_postgres else " AND name LIKE ?"
         params.append("%" + search + "%")
 
     if category:
-        query += " AND category=%s" if is_postgres else " AND category=?"
+        query += " AND category= ?" if is_postgres else " AND category=?"
         params.append(category)
 
     cursor.execute(query, params)
@@ -199,7 +199,7 @@ def home():
 
     for product in products:
         cursor.execute(
-            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=%s" if is_postgres else
+            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id= ?" if is_postgres else
             "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
             (product[0],)
         )
