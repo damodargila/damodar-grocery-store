@@ -180,15 +180,17 @@ def home():
     conn = get_db()
     cursor = conn.cursor()
 
+    is_postgres = bool(os.getenv("DATABASE_URL"))
+
     query = "SELECT * FROM products WHERE 1=1"
     params = []
 
     if search:
-        query += " AND name LIKE ?"
+        query += " AND name LIKE %s" if is_postgres else " AND name LIKE ?"
         params.append("%" + search + "%")
 
     if category:
-        query += " AND category=?"
+        query += " AND category=%s" if is_postgres else " AND category=?"
         params.append(category)
 
     cursor.execute(query, params)
@@ -198,6 +200,7 @@ def home():
 
     for product in products:
         cursor.execute(
+            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=%s" if is_postgres else
             "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
             (product[0],)
         )
