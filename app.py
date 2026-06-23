@@ -27,7 +27,6 @@ cloudinary.config(
 app = Flask(__name__)
 app.secret_key = "damodar123"
 
-init_db()
 
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -153,6 +152,7 @@ def init_db():
 def ensure_product_columns():
     init_db()
 
+init_db()
 
 def send_email(to_email, subject, body):
     if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD:
