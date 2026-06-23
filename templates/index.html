@@ -185,7 +185,6 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
     <p class="stock">Stock: {{ product[5] }}</p>
 
-    <a class="btn details-btn" href="/product/{{ product[0] }}">View Details</a>
 
     {% if product[5] > 0 %}
     <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
