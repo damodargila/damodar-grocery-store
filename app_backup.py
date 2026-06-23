@@ -1,9 +1,15 @@
 from flask import Flask, render_template, redirect, session, request, send_file
 import sqlite3
 import os
+import random
+import smtplib
+from email.message import EmailMessage
 from werkzeug.utils import secure_filename
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "damodar123"
@@ -14,11 +20,57 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "1234"
 
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
+
+
 def get_db():
     return sqlite3.connect("grocery.db")
 
+
+def ensure_product_columns():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    columns = [
+        ("description", "TEXT"),
+        ("image2", "TEXT"),
+        ("image3", "TEXT"),
+        ("image4", "TEXT"),
+        ("image5", "TEXT"),
+        ("discount", "INTEGER DEFAULT 10")
+    ]
+
+    for name, column_type in columns:
+        try:
+            cursor.execute(f"ALTER TABLE products ADD COLUMN {name} {column_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    conn.commit()
+    cursor.execute("SELECT product_id FROM wishlist")
+
+
+def send_email(to_email, subject, body):
+    if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD:
+        print("Email settings missing")
+        return
+
+    msg = EmailMessage()
+    msg["From"] = EMAIL_ADDRESS
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
+        smtp.send_message(msg)
+
+
 @app.route("/")
 def home():
+    ensure_product_columns()
+
     search = request.args.get("search", "")
     category = request.args.get("category", "")
 
@@ -39,18 +91,141 @@ def home():
     cursor.execute(query, params)
     products = cursor.fetchall()
 
+    ratings = {}
+
+    for product in products:
+        cursor.execute(
+            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
+            (product[0],)
+        )
+        data = cursor.fetchone()
+
+        avg_rating = round(data[0], 1) if data[0] else 0
+        total_reviews = data[1]
+
+        ratings[product[0]] = {
+            "avg": avg_rating,
+            "count": total_reviews
+        }
+
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()
 
+    cursor.execute("SELECT product_id FROM wishlist")
+    wishlist_ids = {row[0] for row in cursor.fetchall()}
+
     conn.close()
 
-    return render_template("index.html", products=products, search=search, category=category, categories=categories)
+    return render_template(
+        "index.html",
+        products=products,
+        ratings=ratings,
+        search=search,
+        category=category,
+        categories=categories,
+        wishlist_ids=wishlist_ids
+    )
+
+
+@app.route("/send_otp", methods=["GET", "POST"])
+def send_otp():
+    if request.method == "POST":
+        email = request.form["email"]
+        otp = str(random.randint(100000, 999999))
+
+        session["otp_email"] = email
+        session["otp"] = otp
+
+        send_email(
+            email,
+            "Your Damodar Grocery Store OTP",
+            f"Your OTP is {otp}"
+        )
+
+        return redirect("/verify_otp")
+
+    return render_template("send_otp.html")
+
+
+@app.route("/verify_otp", methods=["GET", "POST"])
+def verify_otp():
+    if request.method == "POST":
+        user_otp = request.form["otp"]
+
+        if user_otp == session.get("otp"):
+            session["user"] = session.get("otp_email")
+            session.pop("otp", None)
+            return redirect("/")
+        else:
+            return "Wrong OTP"
+
+    return render_template("verify_otp.html")
+
+
+@app.route("/apply_coupon", methods=["POST"])
+def apply_coupon():
+    code = request.form["coupon"].upper()
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT discount FROM coupons WHERE code=?", (code,))
+    coupon = cursor.fetchone()
+
+    cursor.execute("SELECT product_id FROM wishlist")
+
+    if coupon:
+        session["coupon_code"] = code
+        session["discount"] = coupon[0]
+    else:
+        session["coupon_code"] = ""
+        session["discount"] = 0
+
+    return redirect("/cart")
+
+
+@app.route("/review/<int:product_id>", methods=["GET", "POST"])
+def review(product_id):
+    if request.method == "POST":
+        customer_name = request.form["customer_name"]
+        rating = request.form["rating"]
+        comment = request.form["comment"]
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO reviews(product_id, customer_name, rating, comment) VALUES(?,?,?,?)",
+            (product_id, customer_name, rating, comment)
+        )
+
+        conn.commit()
+        cursor.execute("SELECT product_id FROM wishlist")
+
+        return redirect("/reviews/" + str(product_id))
+
+    return render_template("review.html", product_id=product_id)
+
+
+@app.route("/reviews/<int:product_id>")
+def reviews(product_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM reviews WHERE product_id=?", (product_id,))
+    reviews_data = cursor.fetchall()
+
+    cursor.execute("SELECT product_id FROM wishlist")
+
+    return render_template("reviews.html", reviews=reviews_data)
+
 
 @app.route("/profile")
 def profile():
     if "user" not in session:
         return redirect("/customer_login")
     return render_template("profile.html", name=session["user"])
+
 
 @app.route("/my_orders")
 def my_orders():
@@ -61,9 +236,10 @@ def my_orders():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM orders ORDER BY id DESC")
     orders = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template("my_orders.html", orders=orders)
+
 
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
@@ -72,12 +248,15 @@ def admin_login():
             session["admin"] = True
             return redirect("/orders")
         return "Wrong admin username or password"
+
     return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -90,16 +269,20 @@ def register():
         cursor = conn.cursor()
 
         try:
-            cursor.execute("INSERT INTO users(name, email, password) VALUES(?,?,?)", (name, email, password))
+            cursor.execute(
+                "INSERT INTO users(name, email, password) VALUES(?,?,?)",
+                (name, email, password)
+            )
             conn.commit()
-        except:
-            conn.close()
+        except sqlite3.IntegrityError:
+            cursor.execute("SELECT product_id FROM wishlist")
             return "Email already registered"
 
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
         return redirect("/customer_login")
 
     return render_template("register.html")
+
 
 @app.route("/customer_login", methods=["GET", "POST"])
 def customer_login():
@@ -109,16 +292,21 @@ def customer_login():
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email=? AND password=?", (email, password))
+        cursor.execute(
+            "SELECT * FROM users WHERE email=? AND password=?",
+            (email, password)
+        )
         user = cursor.fetchone()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         if user:
             session["user"] = user[1]
             return redirect("/")
+
         return "Wrong email or password"
 
     return render_template("customer_login.html")
+
 
 @app.route("/add_to_cart/<int:product_id>")
 def add_to_cart(product_id):
@@ -131,7 +319,9 @@ def add_to_cart(product_id):
 
     session["cart"] = cart
     session.modified = True
+
     return redirect("/cart")
+
 
 @app.route("/increase/<int:product_id>")
 def increase(product_id):
@@ -143,7 +333,10 @@ def increase(product_id):
     cart[product_id] = cart.get(product_id, 0) + 1
 
     session["cart"] = cart
+    session.modified = True
+
     return redirect("/cart")
+
 
 @app.route("/decrease/<int:product_id>")
 def decrease(product_id):
@@ -159,7 +352,10 @@ def decrease(product_id):
             cart.pop(product_id)
 
     session["cart"] = cart
+    session.modified = True
+
     return redirect("/cart")
+
 
 @app.route("/cart")
 def cart():
@@ -179,25 +375,38 @@ def cart():
         product = cursor.fetchone()
 
         if product:
-            subtotal = product[3] * quantity
+            subtotal = int(product[3]) * quantity
             total += subtotal
             products.append((product, quantity, subtotal))
 
     gst = int(total * 0.05)
-    grand_total = total + gst
+    discount_percent = session.get("discount", 0)
+    discount_amount = int(total * discount_percent / 100)
+    grand_total = total + gst - discount_amount
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
-    return render_template("cart.html", products=products, total=total, gst=gst, grand_total=grand_total)
+    return render_template(
+        "cart.html",
+        products=products,
+        total=total,
+        gst=gst,
+        discount_percent=discount_percent,
+        discount_amount=discount_amount,
+        grand_total=grand_total
+    )
 
-@app.route("/wishlist/<int:product_id>")
+
+    @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
+
     return redirect("/")
+
 
 @app.route("/wishlist")
 def wishlist_page():
@@ -211,9 +420,10 @@ def wishlist_page():
     """)
 
     products = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template("wishlist.html", products=products)
+
 
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
@@ -222,6 +432,7 @@ def checkout():
         phone = request.form["phone"]
         address = request.form["address"]
         payment_method = request.form["payment_method"]
+        email = request.form["email"]
 
         cart_items = session.get("cart", {})
         if isinstance(cart_items, list):
@@ -238,7 +449,7 @@ def checkout():
             product = cursor.fetchone()
 
             if product:
-                subtotal = product[3] * quantity
+                subtotal = int(product[3]) * quantity
                 total += subtotal
                 order_products.append((product, quantity))
 
@@ -248,7 +459,9 @@ def checkout():
                 )
 
         gst = int(total * 0.05)
-        grand_total = total + gst
+        discount_percent = session.get("discount", 0)
+        discount_amount = int(total * discount_percent / 100)
+        grand_total = total + gst - discount_amount
 
         cursor.execute(
             """
@@ -276,14 +489,23 @@ def checkout():
             )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
+
+        send_email(
+            email,
+            "Order Placed Successfully",
+            f"Your order #{order_id} has been placed. Total amount: Rs.{grand_total}"
+        )
 
         session["cart"] = {}
+        session["discount"] = 0
+        session["coupon_code"] = ""
         session["last_order_id"] = order_id
 
         return render_template("success.html", order_id=order_id)
 
     return render_template("checkout.html")
+
 
 @app.route("/invoice/<int:order_id>")
 def invoice(order_id):
@@ -298,7 +520,10 @@ def invoice(order_id):
     cursor.execute("SELECT * FROM order_items WHERE order_id=?", (order_id,))
     items = cursor.fetchall()
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
+
+    if not order:
+        return "Order not found"
 
     pdf = canvas.Canvas(filename)
     pdf.drawString(100, 800, "Damodar Grocery Store Invoice")
@@ -317,6 +542,7 @@ def invoice(order_id):
     pdf.save()
 
     return send_file(filename, as_attachment=True)
+
 
 @app.route("/orders")
 def orders():
@@ -341,7 +567,7 @@ def orders():
         else:
             pending_orders += 1
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template(
         "orders.html",
@@ -352,6 +578,7 @@ def orders():
         delivered_orders=delivered_orders
     )
 
+
 @app.route("/update_status/<int:order_id>/<status>")
 def update_status(order_id, status):
     if "admin" not in session:
@@ -361,9 +588,10 @@ def update_status(order_id, status):
     cursor = conn.cursor()
     cursor.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return redirect("/orders")
+
 
 @app.route("/export_orders")
 def export_orders():
@@ -374,7 +602,7 @@ def export_orders():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM orders")
     orders = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     wb = Workbook()
     ws = wb.active
@@ -390,67 +618,139 @@ def export_orders():
 
     return send_file(filename, as_attachment=True)
 
+
 @app.route("/add_product", methods=["GET", "POST"])
 def add_product():
     if "admin" not in session:
         return redirect("/admin_login")
+
+    ensure_product_columns()
 
     if request.method == "POST":
         name = request.form["name"]
         category = request.form["category"]
         price = request.form["price"]
         stock = request.form["stock"]
+        description = request.form.get("description", "")
 
-        image_file = request.files["image"]
-        image_path = ""
+        image_files = request.files.getlist("images")
+        images = []
 
-        if image_file:
-            filename = secure_filename(image_file.filename)
-            image_file.save(os.path.join(UPLOAD_FOLDER, filename))
-            image_path = "/" + UPLOAD_FOLDER + "/" + filename
+        for file in image_files:
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                images.append("/" + UPLOAD_FOLDER + "/" + filename)
+
+        image1 = images[0] if len(images) > 0 else ""
+        image2 = images[1] if len(images) > 1 else ""
+        image3 = images[2] if len(images) > 2 else ""
+        image4 = images[3] if len(images) > 3 else ""
+        image5 = images[4] if len(images) > 4 else ""
 
         conn = get_db()
         cursor = conn.cursor()
+
         cursor.execute(
-            "INSERT INTO products(name, category, price, image, stock) VALUES(?,?,?,?,?)",
-            (name, category, price, image_path, stock)
+            """
+            INSERT INTO products
+            (name, category, price, image, stock, description, image2, image3, image4, image5)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                name,
+                category,
+                price,
+                image1,
+                stock,
+                description,
+                image2,
+                image3,
+                image4,
+                image5
+            )
         )
+
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         return redirect("/")
 
     return render_template("add_product.html")
+
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
     if "admin" not in session:
         return redirect("/admin_login")
 
+    ensure_product_columns()
+
     conn = get_db()
     cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+    product = cursor.fetchone()
+
+    if not product:
+        cursor.execute("SELECT product_id FROM wishlist")
+        return "Product not found"
 
     if request.method == "POST":
         name = request.form["name"]
         category = request.form["category"]
         price = request.form["price"]
         stock = request.form["stock"]
+        description = request.form.get("description", "")
+
+        image1 = product[4]
+        image2 = product[8] if len(product) > 8 else ""
+        image3 = product[9] if len(product) > 9 else ""
+        image4 = product[10] if len(product) > 10 else ""
+        image5 = product[11] if len(product) > 11 else ""
+
+        files = [
+            ("image1", image1),
+            ("image2", image2),
+            ("image3", image3),
+            ("image4", image4),
+            ("image5", image5)
+        ]
+
+        new_images = []
+
+        for field_name, old_image in files:
+            file = request.files.get(field_name)
+
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                new_images.append("/" + UPLOAD_FOLDER + "/" + filename)
+            else:
+                new_images.append(old_image)
 
         cursor.execute(
-            "UPDATE products SET name=?, category=?, price=?, stock=? WHERE id=?",
-            (name, category, price, stock, product_id)
+            """
+            UPDATE products
+            SET name=?, category=?, price=?, image=?, stock=?, description=?,
+                image2=?, image3=?, image4=?, image5=?
+            WHERE id=?
+            """,
+            (
+                name, category, price, new_images[0], stock, description,
+                new_images[1], new_images[2], new_images[3], new_images[4],
+                product_id
+            )
         )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         return redirect("/")
 
-    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
-    product = cursor.fetchone()
-    conn.close()
-
+    cursor.execute("SELECT product_id FROM wishlist")
     return render_template("edit_product.html", product=product)
+
 
 @app.route("/delete_product/<int:product_id>")
 def delete_product(product_id):
@@ -461,9 +761,10 @@ def delete_product(product_id):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM products WHERE id=?", (product_id,))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return redirect("/")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
