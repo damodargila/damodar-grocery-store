@@ -138,7 +138,7 @@ textarea{
     <input type="number" name="stock" value="{{ product[5] }}" required>
 
     <label>Description</label>
-    <textarea name="description">{{ product[6] if product|length > 6 and product[6] else '' }}</textarea>
+    <textarea name="description">{{ product['description'] if product['description'] else '' }}</textarea>
 
     <button class="btn" type="submit">💾 Update Product</button>
     <a class="cancel" href="/">Cancel</a>

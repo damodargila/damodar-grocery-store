@@ -25,7 +25,9 @@ EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
 
 def get_db():
-    return sqlite3.connect("grocery.db")
+    conn = sqlite3.connect("grocery.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def ensure_product_columns():

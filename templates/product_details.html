@@ -118,7 +118,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
             {% endif %}
 
             {% if product|length > 6 and product[6] %}
-            <p class="desc">{{ product[6] }}</p>
+            <p class="desc"> {{ product['description'] }}</p>
             {% else %}
             <p class="desc">Fresh and trusted grocery product from Damodar Grocery Store.</p>
             {% endif %}
@@ -135,7 +135,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     <div class="section">
         <h2>Product Description</h2>
         {% if product|length > 6 and product[6] %}
-        <p class="desc">{{ product[6] }}</p>
+        <p class="desc"> {{ product['description'] }}</p>
         {% else %}
         <p class="desc">No description added yet.</p>
         {% endif %}
