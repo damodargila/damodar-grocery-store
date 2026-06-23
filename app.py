@@ -172,7 +172,6 @@ def send_email(to_email, subject, body):
 
 @app.route("/")
 def home():
-    ensure_product_columns()
 
     search = request.args.get("search", "")
     category = request.args.get("category", "")
