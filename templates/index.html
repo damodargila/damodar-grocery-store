@@ -2,277 +2,81 @@
 <html>
 <head>
 <title>Damodar Grocery Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,sans-serif;background:#f1f3f6;color:#111;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#eef2f5;color:#111}
 
-.topbar{
-background:#0b6623;
-color:white;
-padding:12px 25px;
-display:flex;
-align-items:center;
-gap:20px;
-}
+.topbar{background:#131921;color:white;padding:12px 22px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:100}
+.logo{font-size:24px;font-weight:bold;white-space:nowrap;color:#fff}
+.logo span{color:#ff9900}
 
-.logo{
-font-size:24px;
-font-weight:bold;
-white-space:nowrap;
-}
+.search-form{display:flex;flex:1;max-width:800px;border-radius:6px;overflow:hidden}
+.search-form input{flex:1;padding:13px;border:none;font-size:15px}
+.search-form select{width:160px;border:none;border-left:1px solid #ddd;padding:13px;background:#f3f3f3}
+.search-form button{background:#ff9900;color:#111;border:none;padding:13px 22px;font-weight:bold;cursor:pointer}
 
-.search-form{
-display:flex;
-flex:1;
-max-width:750px;
-}
+.top-links a{color:white;text-decoration:none;margin-left:12px;font-weight:bold;font-size:14px}
 
-.search-form input{
-flex:1;
-padding:13px;
-border:none;
-font-size:15px;
-}
+.navbar{background:#232f3e;padding:10px 22px;display:flex;gap:20px;flex-wrap:wrap}
+.navbar a{color:white;text-decoration:none;font-size:14px;font-weight:bold}
 
-.search-form select{
-width:160px;
-border:none;
-border-left:1px solid #ddd;
-padding:13px;
-}
+.hero{margin:18px 22px;background:linear-gradient(135deg,#0b6623,#42b883);color:white;border-radius:18px;padding:30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.hero h1{font-size:34px}
+.hero p{margin-top:8px;font-size:16px}
+.hero-badge{background:#ff9900;color:#111;padding:14px 18px;border-radius:12px;font-weight:bold}
 
-.search-form button{
-background:#ff9f00;
-color:white;
-border:none;
-padding:13px 22px;
-font-weight:bold;
-cursor:pointer;
-}
+.section-title{padding:5px 22px 15px;font-size:24px;color:#111}
 
-.top-links a{
-color:white;
-text-decoration:none;
-margin-left:14px;
-font-weight:bold;
-}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;padding:0 22px 35px}
 
-.navbar{
-background:white;
-padding:12px 25px;
-display:flex;
-gap:22px;
-box-shadow:0 2px 8px rgba(0,0,0,0.12);
-flex-wrap:wrap;
-}
+.card{background:white;border-radius:14px;padding:12px;box-shadow:0 3px 12px rgba(0,0,0,.12);transition:.25s;position:relative}
+.card:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,0,0,.2)}
 
-.navbar a{
-text-decoration:none;
-color:#222;
-font-weight:bold;
-}
+.img-wrap{position:relative;background:#f7f7f7;border-radius:12px;overflow:hidden}
+.main-img{width:100%;height:170px;object-fit:cover;display:block}
+.no-img{height:170px;display:flex;align-items:center;justify-content:center;color:#777;background:#eee}
 
-.banner{
-margin:18px 25px;
-background:linear-gradient(135deg,#dfffe8,#ffffff);
-border-radius:14px;
-padding:25px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-box-shadow:0 3px 12px rgba(0,0,0,0.10);
-}
+.stock-badge{position:absolute;top:8px;left:8px;background:#0b8f3a;color:white;font-size:12px;padding:5px 9px;border-radius:20px;font-weight:bold}
+.out-badge{background:#d32f2f}
 
-.banner h1{
-color:#0b6623;
-font-size:32px;
-}
+.extra-images{display:flex;gap:6px;margin-top:8px}
+.extra-images img{width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #ddd}
 
-.banner p{
-margin-top:8px;
-color:#555;
-}
+.card h2{font-size:17px;margin:10px 0 5px;height:40px;overflow:hidden}
+.category{font-size:13px;color:#555;margin-bottom:6px}
+.desc{font-size:13px;color:#666;height:36px;overflow:hidden;margin-bottom:8px}
 
-.banner-badge{
-background:#0b6623;
-color:white;
-padding:14px 18px;
-border-radius:10px;
-font-weight:bold;
-}
+.price-row{display:flex;align-items:center;gap:8px;margin:8px 0}
+.price{font-size:22px;font-weight:bold;color:#0b6623}
+.mrp{font-size:13px;color:#777;text-decoration:line-through}
+.offer{font-size:12px;color:#0b6623;font-weight:bold}
 
-.products{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(205px,1fr));
-gap:16px;
-padding:0 25px 30px;
-}
+.rating-box{display:inline-block;background:#0b8f3a;color:white;font-size:13px;padding:4px 7px;border-radius:5px;font-weight:bold}
+.review-count{font-size:13px;color:#555;margin-left:5px}
+.stock{font-size:13px;margin:8px 0;color:#444}
 
-.card{
-background:white;
-border-radius:12px;
-padding:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.12);
-transition:0.25s;
-position:relative;
-}
+.btn{display:inline-block;text-decoration:none;color:white;border-radius:8px;font-size:13px;font-weight:bold;padding:8px 9px;margin:3px 2px}
+.cart-btn{display:block;background:#ffd814;color:#111;text-align:center;font-size:15px;padding:10px;margin:8px 0}
+.buy-btn{display:block;background:#ffa41c;color:#111;text-align:center;font-size:15px;padding:10px;margin-bottom:6px}
+.wish{background:#e91e63}
+.review{background:#1976d2}
+.viewreview{background:#6a1b9a}
+.edit{background:#fb8c00}
+.delete-btn{background:#e53935}
+.out{color:red;font-weight:bold;margin:10px 0}
 
-.card:hover{
-transform:translateY(-4px);
-box-shadow:0 8px 20px rgba(0,0,0,0.18);
-}
-
-.img-wrap{
-position:relative;
-}
-
-.main-img{
-width:100%;
-height:150px;
-object-fit:cover;
-border-radius:10px;
-background:#eee;
-}
-
-.stock-badge{
-position:absolute;
-top:8px;
-left:8px;
-background:#0b6623;
-color:white;
-font-size:12px;
-padding:5px 8px;
-border-radius:6px;
-font-weight:bold;
-}
-
-.extra-images{
-display:flex;
-gap:5px;
-margin-top:7px;
-overflow:hidden;
-}
-
-.extra-images img{
-width:36px;
-height:36px;
-object-fit:cover;
-border-radius:5px;
-border:1px solid #ddd;
-}
-
-.card h2{
-font-size:17px;
-margin:10px 0 5px;
-height:40px;
-overflow:hidden;
-}
-
-.category{
-font-size:13px;
-color:#555;
-margin-bottom:6px;
-}
-
-.desc{
-font-size:13px;
-color:#666;
-height:34px;
-overflow:hidden;
-margin-bottom:6px;
-}
-
-.price-row{
-display:flex;
-align-items:center;
-gap:8px;
-margin:7px 0;
-}
-
-.price{
-font-size:21px;
-font-weight:bold;
-color:#0b6623;
-}
-
-.mrp{
-font-size:13px;
-color:#777;
-text-decoration:line-through;
-}
-
-.offer{
-font-size:12px;
-color:#0b6623;
-font-weight:bold;
-}
-
-.rating-box{
-display:inline-block;
-background:#0b8f3a;
-color:white;
-font-size:13px;
-padding:4px 7px;
-border-radius:5px;
-font-weight:bold;
-}
-
-.review-count{
-font-size:13px;
-color:#555;
-margin-left:5px;
-}
-
-.stock{
-font-size:13px;
-margin:8px 0;
-color:#444;
-}
-
-.btn{
-display:inline-block;
-text-decoration:none;
-color:white;
-border-radius:7px;
-font-size:13px;
-font-weight:bold;
-padding:7px 9px;
-margin:3px 2px;
-}
-
-.cart-btn{
-display:block;
-background:#ff9f00;
-text-align:center;
-font-size:15px;
-padding:10px;
-margin:8px 0;
-}
-
-.buy-btn{
-display:block;
-background:#0b6623;
-text-align:center;
-font-size:15px;
-padding:10px;
-margin-bottom:6px;
-}
-
-.wish{background:#e91e63;}
-.review{background:#1976d2;}
-.viewreview{background:#6a1b9a;}
-.edit{background:#fb8c00;}
-.delete-btn{background:#e53935;}
-.out{color:red;font-weight:bold;margin:10px 0;}
+.footer{background:#131921;color:white;text-align:center;padding:22px;margin-top:10px}
 
 @media(max-width:800px){
-.topbar{flex-direction:column;align-items:flex-start;}
-.search-form{width:100%;flex-direction:column;}
-.search-form input,.search-form select,.search-form button{width:100%;margin-bottom:6px;}
-.banner{flex-direction:column;align-items:flex-start;gap:12px;}
-.products{grid-template-columns:repeat(auto-fit,minmax(165px,1fr));padding:0 12px 20px;}
-.main-img{height:125px;}
+.topbar{flex-direction:column;align-items:flex-start}
+.search-form{width:100%;flex-direction:column}
+.search-form input,.search-form select,.search-form button{width:100%;margin-bottom:6px}
+.hero{flex-direction:column;align-items:flex-start;gap:12px;margin:12px}
+.hero h1{font-size:26px}
+.products{grid-template-columns:repeat(auto-fit,minmax(165px,1fr));padding:0 12px 25px}
+.main-img,.no-img{height:135px}
 }
 </style>
 </head>
@@ -280,14 +84,14 @@ margin-bottom:6px;
 <body>
 
 <div class="topbar">
-    <div class="logo">🛒 Damodar Grocery</div>
+    <div class="logo">Damodar <span>Grocery</span></div>
 
     <form class="search-form" action="/" method="GET">
-        <input type="text" name="search" placeholder="Search for grocery products..." value="{{ search }}">
+        <input type="text" name="search" placeholder="Search grocery products..." value="{{ search }}">
         <select name="category">
             <option value="">All Categories</option>
             {% for cat in categories %}
-            <option value="{{ cat[0] }}">{{ cat[0] }}</option>
+            <option value="{{ cat[0] }}" {% if category == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
             {% endfor %}
         </select>
         <button type="submit">Search</button>
@@ -301,44 +105,46 @@ margin-bottom:6px;
 </div>
 
 <div class="navbar">
-    <a href="/">🏠 Home</a>
-    <a href="/cart">🛒 Cart</a>
-    <a href="/wishlist">❤️ Wishlist</a>
-    <a href="/register">👤 Register</a>
-    <a href="/customer_login">🔑 Login</a>
-    <a href="/my_orders">📦 My Orders</a>
+    <a href="/">Home</a>
+    <a href="/cart">Cart</a>
+    <a href="/wishlist">Wishlist</a>
+    <a href="/register">Register</a>
+    <a href="/customer_login">Login</a>
+    <a href="/my_orders">My Orders</a>
 
     {% if session.get('admin') %}
-    <a href="/add_product">➕ Add Product</a>
-    <a href="/orders">📊 Dashboard</a>
+    <a href="/add_product">Add Product</a>
+    <a href="/orders">Admin Dashboard</a>
     {% endif %}
 
-    <a href="/logout">🚪 Logout</a>
+    <a href="/logout">Logout</a>
 </div>
 
-<div class="banner">
+<div class="hero">
     <div>
-        <h1>Fresh Grocery at Your Doorstep</h1>
-        <p>Best quality products, fast delivery and trusted service.</p>
+        <h1>Fresh Grocery Delivered Fast</h1>
+        <p>Best quality products, trusted service and daily fresh deals.</p>
     </div>
-    <div class="banner-badge">🔥 Daily Fresh Deals</div>
+    <div class="hero-badge">Today Special Deals</div>
 </div>
+
+<h2 class="section-title">Featured Products</h2>
 
 <div class="products">
-
 {% for product in products %}
 
 <div class="card">
-
     <div class="img-wrap">
         {% if product[4] %}
-        <img class="main-img" src="{{ product[4] }}">
+        <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
+        {% else %}
+        <div class="no-img">No Image</div>
         {% endif %}
 
         {% if product[5] > 0 %}
         <div class="stock-badge">In Stock</div>
         {% else %}
-        <div class="stock-badge" style="background:red;">Out</div>
+        <div class="stock-badge out-badge">Out</div>
         {% endif %}
     </div>
 
@@ -350,7 +156,6 @@ margin-bottom:6px;
     </div>
 
     <h2>{{ product[1] }}</h2>
-
     <p class="category">Category: {{ product[2] }}</p>
 
     {% if product|length > 6 and product[6] %}
@@ -360,7 +165,7 @@ margin-bottom:6px;
     <div class="price-row">
         <span class="price">₹{{ product[3] }}</span>
         <span class="mrp">₹{{ product[3] + 20 }}</span>
-        <span class="offer">Deal</span>
+        <span class="offer">Best Deal</span>
     </div>
 
     {% if ratings.get(product[0]) %}
@@ -373,25 +178,27 @@ margin-bottom:6px;
     <p class="stock">Stock: {{ product[5] }}</p>
 
     {% if product[5] > 0 %}
-    <a class="cart-btn btn" href="/add_to_cart/{{ product[0] }}">🛒 Add To Cart</a>
+    <a class="cart-btn btn" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
     <a class="buy-btn btn" href="/add_to_cart/{{ product[0] }}">Buy Now</a>
     {% else %}
     <p class="out">Out Of Stock</p>
     {% endif %}
 
-    <a class="btn wish" href="/wishlist/{{ product[0] }}">❤️ Wishlist</a>
-    <a class="btn review" href="/review/{{ product[0] }}">⭐ Review</a>
-    <a class="btn viewreview" href="/reviews/{{ product[0] }}">👀 Reviews</a>
+    <a class="btn wish" href="/wishlist/{{ product[0] }}">Wishlist</a>
+    <a class="btn review" href="/review/{{ product[0] }}">Review</a>
+    <a class="btn viewreview" href="/reviews/{{ product[0] }}">Reviews</a>
 
     {% if session.get('admin') %}
-    <a class="btn edit" href="/edit_product/{{ product[0] }}">✏️ Edit</a>
+    <a class="btn edit" href="/edit_product/{{ product[0] }}">Edit</a>
     <a class="btn delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>
     {% endif %}
-
 </div>
 
 {% endfor %}
+</div>
 
+<div class="footer">
+    © 2026 Damodar Grocery Store | Fresh Grocery, Fast Delivery
 </div>
 
 </body>
