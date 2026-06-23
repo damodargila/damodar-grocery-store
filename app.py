@@ -27,6 +27,8 @@ cloudinary.config(
 app = Flask(__name__)
 app.secret_key = "damodar123"
 
+init_db()
+
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -38,32 +40,118 @@ EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
 
 def get_db():
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        return psycopg2.connect(database_url, cursor_factory=DictCursor)
+
     conn = sqlite3.connect("grocery.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 
-def ensure_product_columns():
+def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    columns = [
-        ("description", "TEXT"),
-        ("image2", "TEXT"),
-        ("image3", "TEXT"),
-        ("image4", "TEXT"),
-        ("image5", "TEXT"),
-        ("discount", "INTEGER DEFAULT 10")
-    ]
+    if os.getenv("DATABASE_URL"):
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                category TEXT,
+                price INTEGER,
+                image TEXT,
+                stock INTEGER,
+                description TEXT,
+                image2 TEXT,
+                image3 TEXT,
+                image4 TEXT,
+                image5 TEXT,
+                discount INTEGER DEFAULT 10
+            )
+        """)
 
-    for name, column_type in columns:
-        try:
-            cursor.execute(f"ALTER TABLE products ADD COLUMN {name} {column_type}")
-        except sqlite3.OperationalError:
-            pass
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER,
+                customer_name TEXT,
+                rating INTEGER,
+                comment TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wishlist (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name TEXT,
+                email TEXT UNIQUE,
+                password TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                customer_name TEXT,
+                phone TEXT,
+                address TEXT,
+                total INTEGER,
+                payment_method TEXT,
+                payment_status TEXT,
+                gst_amount INTEGER,
+                status TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER,
+                product_name TEXT,
+                price INTEGER,
+                quantity INTEGER
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS coupons (
+                id SERIAL PRIMARY KEY,
+                code TEXT UNIQUE,
+                discount INTEGER
+            )
+        """)
+
+    else:
+        columns = [
+            ("description", "TEXT"),
+            ("image2", "TEXT"),
+            ("image3", "TEXT"),
+            ("image4", "TEXT"),
+            ("image5", "TEXT"),
+            ("discount", "INTEGER DEFAULT 10")
+        ]
+
+        for name, column_type in columns:
+            try:
+                cursor.execute(f"ALTER TABLE products ADD COLUMN {name} {column_type}")
+            except sqlite3.OperationalError:
+                pass
 
     conn.commit()
     conn.close()
+
+
+def ensure_product_columns():
+    init_db()
 
 
 def send_email(to_email, subject, body):
