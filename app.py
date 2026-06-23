@@ -784,8 +784,16 @@ def edit_product(product_id):
         cursor.execute(
             """
             UPDATE products
-            SET name=?, category=?, price=?, image=?, stock=?, description=?,
-                image2=?, image3=?, image4=?, image5=?
+            SET name=?,
+                category=?,
+                price=?,
+                image=?,
+                stock=?,
+                description=?,
+                image2=?,
+                image3=?,
+                image4=?,
+                image5=?
             WHERE id=?
             """,
             (
