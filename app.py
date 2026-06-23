@@ -749,17 +749,17 @@ def edit_product(product_id):
         return "Product not found"
 
     if request.method == "POST":
-        name = request.form["name"]
-        category = request.form["category"]
-        price = request.form["price"]
-        stock = request.form["stock"]
+        name = request.form.get("name", "")
+        category = request.form.get("category", "")
+        price = request.form.get("price", "")
+        stock = request.form.get("stock", "")
         description = request.form.get("description", "")
 
-        image1 = product[4]
-        image2 = product[8] if len(product) > 8 else ""
-        image3 = product[9] if len(product) > 9 else ""
-        image4 = product[10] if len(product) > 10 else ""
-        image5 = product[11] if len(product) > 11 else ""
+        image1 = product[4] if len(product) > 4 else ""
+        image2 = product[7] if len(product) > 7 else ""
+        image3 = product[8] if len(product) > 8 else ""
+        image4 = product[9] if len(product) > 9 else ""
+        image5 = product[10] if len(product) > 10 else ""
 
         files = [
             ("image1", image1),
@@ -789,8 +789,16 @@ def edit_product(product_id):
             WHERE id=?
             """,
             (
-                name, category, price, new_images[0], stock, description,
-                new_images[1], new_images[2], new_images[3], new_images[4],
+                name,
+                category,
+                price,
+                new_images[0],
+                stock,
+                description,
+                new_images[1],
+                new_images[2],
+                new_images[3],
+                new_images[4],
                 product_id
             )
         )
@@ -798,7 +806,7 @@ def edit_product(product_id):
         conn.commit()
         conn.close()
 
-        return redirect("/")
+        return redirect("/product/" + str(product_id))
 
     conn.close()
     return render_template("edit_product.html", product=product)
