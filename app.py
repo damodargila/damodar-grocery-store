@@ -812,7 +812,7 @@ def add_product():
             """
             INSERT INTO products
             (name, category, price, image, stock, description, image2, image3, image4, image5)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+             VALUES (?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 name,
