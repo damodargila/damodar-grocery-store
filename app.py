@@ -396,6 +396,50 @@ def cart():
         grand_total=grand_total
     )
 
+@app.route("/product/<int:product_id>")
+def product_details(product_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+    product = cursor.fetchone()
+
+    if not product:
+        conn.close()
+        return "Product not found"
+
+    cursor.execute(
+        "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
+        (product_id,)
+    )
+    data = cursor.fetchone()
+
+    avg_rating = round(data[0], 1) if data[0] else 0
+    total_reviews = data[1]
+
+    cursor.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (product_id,))
+    reviews_data = cursor.fetchall()
+
+    cursor.execute("SELECT product_id FROM wishlist")
+    wishlist_ids = {row[0] for row in cursor.fetchall()}
+
+    cursor.execute(
+        "SELECT * FROM products WHERE category=? AND id!=? LIMIT 5",
+        (product[2], product_id)
+    )
+    related_products = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "product_details.html",
+        product=product,
+        avg_rating=avg_rating,
+        total_reviews=total_reviews,
+        reviews=reviews_data,
+        wishlist_ids=wishlist_ids,
+        related_products=related_products
+    )
 
 @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):

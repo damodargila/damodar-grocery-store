@@ -214,6 +214,7 @@ font-size:13px;font-weight:bold;padding:8px 9px;margin:3px 2px
 
     {% if product[5] > 0 %}
     <a class="cart-btn btn" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
+    <a class="cart-btn btn" href="/product/{{ product[0] }}">View Details</a>
     <a class="buy-btn btn" href="/add_to_cart/{{ product[0] }}">Buy Now</a>
     {% else %}
     <p class="out">Out Of Stock</p>
