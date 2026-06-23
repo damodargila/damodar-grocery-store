@@ -38,11 +38,6 @@ EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
 
 def get_db():
-    database_url = os.getenv("DATABASE_URL")
-
-    if database_url:
-        return psycopg2.connect(database_url, cursor_factory=DictCursor)
-
     conn = sqlite3.connect("grocery.db")
     conn.row_factory = sqlite3.Row
     return conn
