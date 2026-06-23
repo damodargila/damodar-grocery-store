@@ -11,53 +11,35 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .logo{font-size:24px;font-weight:bold}
 .logo span{color:#ff9900}
 .header a{color:white;text-decoration:none;margin-left:16px;font-weight:bold}
-
 .container{max-width:1200px;margin:22px auto;padding:0 18px}
-.breadcrumb{font-size:14px;color:#666;margin-bottom:18px}
-
 .product-box{background:white;border-radius:18px;padding:22px;display:grid;grid-template-columns:1fr 1.2fr;gap:30px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
-
 .image-box{position:relative;background:#f7f7f7;border-radius:16px;overflow:hidden}
-.main-img{width:100%;height:430px;object-fit:cover;display:block}
-.no-img{height:430px;display:flex;align-items:center;justify-content:center;color:#777;background:#eee;font-size:22px}
+.main-img{width:100%;height:420px;object-fit:cover;display:block}
+.no-img{height:420px;display:flex;align-items:center;justify-content:center;color:#777;background:#eee;font-size:22px}
+.thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.thumbs img{width:85px;height:75px;object-fit:cover;border-radius:10px;border:2px solid #ddd}
 .heart{position:absolute;top:16px;right:16px;width:48px;height:48px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;color:#666;text-decoration:none;box-shadow:0 2px 12px rgba(0,0,0,.25)}
 .heart.active{color:red}
-
 .badge{display:inline-block;background:#0b8f3a;color:white;padding:7px 12px;border-radius:8px;font-weight:bold;margin-bottom:14px}
 .title{font-size:34px;margin-bottom:12px}
-.rating{font-size:16px;margin-bottom:18px;color:#444}
 .stars{color:#ffa000;font-size:22px}
-
 .price-row{display:flex;align-items:center;gap:14px;margin:18px 0}
 .price{font-size:40px;font-weight:bold;color:#0b6623}
 .mrp{text-decoration:line-through;color:#777;font-size:20px}
 .discount{background:#dff5e4;color:#0b6623;padding:8px 14px;border-radius:20px;font-weight:bold}
-
 .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}
 .info{border:1px solid #eee;border-radius:12px;padding:14px;text-align:center;font-size:13px;background:#fafafa}
-
 .stock{font-size:17px;margin:15px 0;font-weight:bold;color:#0b6623}
-.desc{font-size:16px;line-height:1.6;color:#444;margin:16px 0}
-
+.desc{font-size:16px;line-height:1.7;color:#444;white-space:pre-line}
 .actions{display:flex;gap:14px;margin-top:22px}
 .btn{flex:1;text-align:center;text-decoration:none;padding:15px;border-radius:10px;font-size:17px;font-weight:bold}
 .cart{background:#ffd814;color:#111}
 .buy{background:#ff9900;color:#111}
-
 .section{background:white;border-radius:16px;padding:22px;margin-top:22px;box-shadow:0 3px 14px rgba(0,0,0,.10)}
-.section h2{margin-bottom:14px}
-
-.review-card{border-bottom:1px solid #eee;padding:12px 0}
-.review-card:last-child{border-bottom:none}
-.review-name{font-weight:bold}
-.review-text{color:#555;margin-top:5px}
-
 .related{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
 .rel-card{border:1px solid #eee;border-radius:12px;padding:10px;text-decoration:none;color:#111;background:#fafafa}
 .rel-card img{width:100%;height:130px;object-fit:cover;border-radius:10px}
-.rel-card h3{font-size:15px;margin:8px 0}
 .rel-price{color:#0b6623;font-weight:bold;font-size:18px}
-
 .footer{background:#131921;color:white;text-align:center;padding:24px;margin-top:30px}
 
 @media(max-width:800px){
@@ -83,24 +65,33 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 </div>
 
 <div class="container">
-    <div class="breadcrumb">Home › {{ product[2] }} › {{ product[1] }}</div>
 
     <div class="product-box">
-        <div class="image-box">
-            {% if product[4] %}
-            <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
-            {% else %}
-            <div class="no-img">No Image</div>
-            {% endif %}
+        <div>
+            <div class="image-box">
+                {% if product[4] %}
+                <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
+                {% else %}
+                <div class="no-img">No Image</div>
+                {% endif %}
 
-            <a class="heart {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
+                <a class="heart {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
+            </div>
+
+            <div class="thumbs">
+                {% if product[4] %}<img src="{{ product[4] }}">{% endif %}
+                {% if product|length > 7 and product[7] %}<img src="{{ product[7] }}">{% endif %}
+                {% if product|length > 8 and product[8] %}<img src="{{ product[8] }}">{% endif %}
+                {% if product|length > 9 and product[9] %}<img src="{{ product[9] }}">{% endif %}
+                {% if product|length > 10 and product[10] %}<img src="{{ product[10] }}">{% endif %}
+            </div>
         </div>
 
         <div>
             <div class="badge">Best Seller</div>
             <h1 class="title">{{ product[1] }}</h1>
 
-            <div class="rating">
+            <div>
                 <span class="stars">★★★★★</span>
                 {{ avg_rating }} ({{ total_reviews }} Reviews)
             </div>
@@ -111,7 +102,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                 <span class="discount">Best Deal</span>
             </div>
 
-            <p>Inclusive of all taxes</p>
+            <p>Category: <b>{{ product[2] }}</b></p>
 
             <div class="info-grid">
                 <div class="info">✅ Best Quality</div>
@@ -143,26 +134,24 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
     <div class="section">
         <h2>Product Description</h2>
-        <p class="desc">
-            {{ product[1] }} is available at Damodar Grocery Store with trusted quality and fast delivery.
-            Order now and get fresh grocery delivered easily.
-        </p>
+        {% if product|length > 6 and product[6] %}
+        <p class="desc">{{ product[6] }}</p>
+        {% else %}
+        <p class="desc">No description added yet.</p>
+        {% endif %}
     </div>
 
     <div class="section">
         <h2>Customer Reviews</h2>
-
         {% if reviews %}
             {% for review in reviews %}
-            <div class="review-card">
-                <div class="review-name">{{ review[2] }} - ⭐ {{ review[3] }}</div>
-                <div class="review-text">{{ review[4] }}</div>
-            </div>
+            <p><b>{{ review[2] }}</b> - ⭐ {{ review[3] }}</p>
+            <p>{{ review[4] }}</p>
+            <hr><br>
             {% endfor %}
         {% else %}
             <p>No reviews yet.</p>
         {% endif %}
-
         <br>
         <a href="/review/{{ product[0] }}">Write a Review</a>
     </div>
@@ -183,6 +172,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
             {% endfor %}
         </div>
     </div>
+
 </div>
 
 <div class="footer">
