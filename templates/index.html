@@ -139,7 +139,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 <div class="products">
 {% for product in products %}
 
-<div class="card">
+<div class="card" onclick="window.location='/product/{{ product[0] }}'" style="cursor:pointer;">
     <div class="img-wrap">
         {% if product[4] %}
         <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
@@ -153,7 +153,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <div class="stock-badge out-badge">Out</div>
         {% endif %}
 
-        <a class="heart-btn {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
+        <a onclick="event.stopPropagation();" class="heart-btn {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
     </div>
 
     <div class="extra-images">
@@ -188,15 +188,15 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     <a class="btn details-btn" href="/product/{{ product[0] }}">View Details</a>
 
     {% if product[5] > 0 %}
-    <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
-    <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}">Buy Now</a>
+    <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
+    <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
     {% else %}
     <p class="out">Out Of Stock</p>
     {% endif %}
 
     <div class="small-btns">
-        <a class="mini review" href="/review/{{ product[0] }}">Review</a>
-        <a class="mini viewreview" href="/reviews/{{ product[0] }}">Reviews</a>
+        <a class="mini review" href="/review/{{ product[0] }}" onclick="event.stopPropagation();">Review</a>
+        <a class="mini viewreview" href="/reviews/{{ product[0] }}" onclick="event.stopPropagation();">Reviews</a>
 
         {% if session.get('admin') %}
         <a class="mini edit" href="/edit_product/{{ product[0] }}">Edit</a>
