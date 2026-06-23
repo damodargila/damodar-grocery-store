@@ -8,6 +8,10 @@ from werkzeug.utils import secure_filename
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from dotenv import load_dotenv
+
+import psycopg2
+from psycopg2.extras import DictCursor
+
 import cloudinary
 import cloudinary.uploader
 
@@ -34,6 +38,11 @@ EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
 
 def get_db():
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        return psycopg2.connect(database_url, cursor_factory=DictCursor)
+
     conn = sqlite3.connect("grocery.db")
     conn.row_factory = sqlite3.Row
     return conn
