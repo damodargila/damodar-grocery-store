@@ -8,8 +8,17 @@ from werkzeug.utils import secure_filename
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
 
 load_dotenv()
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 app = Flask(__name__)
 app.secret_key = "damodar123"
@@ -693,8 +702,8 @@ def add_product():
         for file in image_files:
             if file and file.filename:
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
-                images.append("/" + UPLOAD_FOLDER + "/" + filename)
+                upload_result = cloudinary.uploader.upload(file)
+                images.append(upload_result["secure_url"])
 
         image1 = images[0] if len(images) > 0 else ""
         image2 = images[1] if len(images) > 1 else ""
@@ -778,8 +787,8 @@ def edit_product(product_id):
 
             if file and file.filename:
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
-                new_images.append("/" + UPLOAD_FOLDER + "/" + filename)
+                upload_result = cloudinary.uploader.upload(file)
+                new_images.append(upload_result["secure_url"])
             else:
                 new_images.append(old_image)
 
