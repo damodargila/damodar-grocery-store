@@ -48,7 +48,7 @@ def ensure_product_columns():
             pass
 
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
 
 def send_email(to_email, subject, body):
@@ -111,7 +111,7 @@ def home():
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template(
         "index.html",
@@ -168,7 +168,7 @@ def apply_coupon():
     cursor.execute("SELECT discount FROM coupons WHERE code=?", (code,))
     coupon = cursor.fetchone()
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     if coupon:
         session["coupon_code"] = code
@@ -196,7 +196,7 @@ def review(product_id):
         )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         return redirect("/reviews/" + str(product_id))
 
@@ -211,7 +211,7 @@ def reviews(product_id):
     cursor.execute("SELECT * FROM reviews WHERE product_id=?", (product_id,))
     reviews_data = cursor.fetchall()
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template("reviews.html", reviews=reviews_data)
 
@@ -232,7 +232,7 @@ def my_orders():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM orders ORDER BY id DESC")
     orders = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template("my_orders.html", orders=orders)
 
@@ -271,10 +271,10 @@ def register():
             )
             conn.commit()
         except sqlite3.IntegrityError:
-            conn.close()
+            cursor.execute("SELECT product_id FROM wishlist")
             return "Email already registered"
 
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
         return redirect("/customer_login")
 
     return render_template("register.html")
@@ -293,7 +293,7 @@ def customer_login():
             (email, password)
         )
         user = cursor.fetchone()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         if user:
             session["user"] = user[1]
@@ -380,7 +380,7 @@ def cart():
     discount_amount = int(total * discount_percent / 100)
     grand_total = total + gst - discount_amount
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template(
         "cart.html",
@@ -399,7 +399,7 @@ def wishlist(product_id):
     cursor = conn.cursor()
     cursor.execute("INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return redirect("/")
 
@@ -416,7 +416,7 @@ def wishlist_page():
     """)
 
     products = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template("wishlist.html", products=products)
 
@@ -485,7 +485,7 @@ def checkout():
             )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         send_email(
             email,
@@ -516,7 +516,7 @@ def invoice(order_id):
     cursor.execute("SELECT * FROM order_items WHERE order_id=?", (order_id,))
     items = cursor.fetchall()
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     if not order:
         return "Order not found"
@@ -563,7 +563,7 @@ def orders():
         else:
             pending_orders += 1
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return render_template(
         "orders.html",
@@ -584,7 +584,7 @@ def update_status(order_id, status):
     cursor = conn.cursor()
     cursor.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return redirect("/orders")
 
@@ -598,7 +598,7 @@ def export_orders():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM orders")
     orders = cursor.fetchall()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     wb = Workbook()
     ws = wb.active
@@ -668,7 +668,7 @@ def add_product():
         )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         return redirect("/")
 
@@ -689,7 +689,7 @@ def edit_product(product_id):
     product = cursor.fetchone()
 
     if not product:
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
         return "Product not found"
 
     if request.method == "POST":
@@ -740,11 +740,11 @@ def edit_product(product_id):
         )
 
         conn.commit()
-        conn.close()
+        cursor.execute("SELECT product_id FROM wishlist")
 
         return redirect("/")
 
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
     return render_template("edit_product.html", product=product)
 
 
@@ -757,7 +757,7 @@ def delete_product(product_id):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM products WHERE id=?", (product_id,))
     conn.commit()
-    conn.close()
+    cursor.execute("SELECT product_id FROM wishlist")
 
     return redirect("/")
 
