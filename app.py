@@ -1602,16 +1602,39 @@ def add_product():
     ensure_product_columns()
 
     if request.method == "POST":
-        name = request.form["name"]
-        category = request.form["category"]
-        price = request.form["price"]
-        stock = request.form["stock"]
-        description = request.form.get("description", "")
+        name = request.form.get("name", "").strip()
+        category = request.form.get("category", "").strip()
+        price = request.form.get("price", "").strip()
+        stock = request.form.get("stock", "").strip()
+        description = request.form.get("description", "").strip()
 
         image_files = request.files.getlist("images")
+        selected_images = [file for file in image_files if file and file.filename]
+
+        try:
+            price_value = int(price)
+            stock_value = int(stock)
+        except ValueError:
+            return render_template("add_product.html", error="Price aur stock valid number hone chahiye.", form_data=request.form)
+
+        if not name or not category:
+            return render_template("add_product.html", error="Product name aur category required hai.", form_data=request.form)
+
+        if price_value < 1:
+            return render_template("add_product.html", error="Price 1 se kam nahi ho sakta.", form_data=request.form)
+
+        if stock_value < 0:
+            return render_template("add_product.html", error="Stock 0 se kam nahi ho sakta.", form_data=request.form)
+
+        if not selected_images:
+            return render_template("add_product.html", error="Kam se kam 1 product image select kare.", form_data=request.form)
+
+        if len(selected_images) > 5:
+            return render_template("add_product.html", error="Maximum 5 images hi upload kar sakte hain.", form_data=request.form)
+
         images = []
 
-        for file in image_files[:5]:
+        for file in selected_images:
             if file and file.filename:
                 secure_filename(file.filename)
                 upload_result = cloudinary.uploader.upload(file)
@@ -1636,9 +1659,9 @@ def add_product():
             (
                 name,
                 category,
-                price,
+                price_value,
                 image1,
-                stock,
+                stock_value,
                 description,
                 image2,
                 image3,
@@ -1652,7 +1675,7 @@ def add_product():
 
         return redirect("/")
 
-    return render_template("add_product.html")
+    return render_template("add_product.html", form_data={})
 
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])

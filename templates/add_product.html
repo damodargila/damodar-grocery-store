@@ -1,144 +1,226 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Add Product</title>
+<title>Add Product - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-*{box-sizing:border-box;}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f7fb;
-}
-
-.container{
-    max-width:900px;
-    margin:40px auto;
-    background:white;
-    padding:35px;
-    border-radius:18px;
-    box-shadow:0 0 20px rgba(0,0,0,0.15);
-}
-
-h1{
-    color:green;
-    margin-bottom:5px;
-}
-
-p{
-    color:#666;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
-
-label{
-    font-weight:bold;
-    display:block;
-    margin-bottom:6px;
-}
-
-input, textarea{
-    width:100%;
-    padding:12px;
-    border:1px solid #ccc;
-    border-radius:8px;
-}
-
-textarea{
-    height:120px;
-    resize:none;
-}
-
-.full{
-    grid-column:1/3;
-}
-
-button{
-    background:green;
-    color:white;
-    padding:12px 25px;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#0b6623;
-}
-
-.back{
-    display:inline-block;
-    margin-top:20px;
-    color:green;
-    font-weight:bold;
-    text-decoration:none;
-}
-
-.note{
-    color:#777;
-    font-size:14px;
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111827}
+a{text-decoration:none}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:10}
+.brand{font-size:24px;font-weight:bold;color:white}
+.brand span{color:#ff9900}
+.nav{display:flex;gap:12px;flex-wrap:wrap}
+.nav a{color:white;font-weight:bold;font-size:14px}
+.page{max-width:1180px;margin:0 auto;padding:28px 18px 44px}
+.hero{background:linear-gradient(135deg,#0b6623,#0b8f3a);color:white;border-radius:18px;padding:26px;display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px;box-shadow:0 12px 30px rgba(11,102,35,.22)}
+.hero h1{font-size:34px;margin-bottom:8px}
+.hero p{color:#e7fff0;line-height:1.5}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero-actions a{background:white;color:#0b6623;border-radius:10px;padding:11px 14px;font-weight:bold}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
+.panel,.preview-card{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.07)}
+.panel{padding:22px}
+.section-title{font-size:22px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.field.full{grid-column:1/-1}
+label{display:block;font-size:13px;font-weight:bold;color:#374151;margin-bottom:7px}
+input,textarea,select{width:100%;border:1px solid #dce3e7;border-radius:10px;padding:13px;font-size:15px;background:white}
+textarea{min-height:120px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold}
+.upload-box{border:2px dashed #cbd5df;border-radius:14px;padding:18px;background:#f8faf9}
+.note{color:#6b7280;font-size:13px;margin-top:8px}
+.thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+.thumb{height:78px;background:#edf2f7;border-radius:10px;overflow:hidden;border:1px solid #dce3e7}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.counter{display:inline-block;margin-top:12px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;padding:8px 10px;border-radius:999px;font-size:13px;font-weight:bold}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.submit{background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px 20px;font-size:16px;font-weight:bold;cursor:pointer}
+.submit:disabled{opacity:.75;cursor:not-allowed}
+.secondary{display:inline-flex;align-items:center;background:#eef3f0;color:#0b6623;border-radius:10px;padding:14px 16px;font-weight:bold}
+.preview-card{padding:16px;position:sticky;top:92px}
+.preview-card h2{font-size:21px;margin-bottom:14px}
+.product-card{border:1px solid #e7ecef;border-radius:14px;overflow:hidden;background:white}
+.product-img{height:190px;background:#edf2f7;display:flex;align-items:center;justify-content:center;color:#6b7280;font-weight:bold}
+.product-img img{width:100%;height:100%;object-fit:cover}
+.product-body{padding:14px}
+.badge{display:inline-block;background:#009245;color:white;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;margin-bottom:10px}
+.product-name{font-size:20px;font-weight:bold;margin-bottom:7px}
+.product-category,.product-desc{color:#5f6b76;font-size:14px;margin-bottom:9px;line-height:1.4}
+.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.price{font-size:24px;font-weight:bold;color:#0b6623}
+.stock{font-weight:bold;color:#374151}
+@media(max-width:900px){
+.topbar,.hero{align-items:flex-start;flex-direction:column}
+.layout{grid-template-columns:1fr}
+.preview-card{position:static}
+.grid{grid-template-columns:1fr}
+.thumbs{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
 
 <body>
-
-<div class="container">
-
-<h1>➕ Add New Product</h1>
-<p>Add product details and upload up to 5 images.</p>
-
-<form action="/add_product" method="POST" enctype="multipart/form-data">
-
-<div class="grid">
-
-<div>
-<label>Product Name *</label>
-<input type="text" name="name" placeholder="Enter product name" required>
+<div class="topbar">
+    <a class="brand" href="/orders">Damodar <span>Admin</span></a>
+    <nav class="nav">
+        <a href="/orders">Dashboard</a>
+        <a href="/">Store Front</a>
+        <a href="/logout">Logout</a>
+    </nav>
 </div>
 
-<div>
-<label>Category *</label>
-<input type="text" name="category" placeholder="Enter category" required>
-</div>
+<main class="page">
+    <section class="hero">
+        <div>
+            <h1>Add New Product</h1>
+            <p>Create a clean product listing with price, stock, description and up to 5 images.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="/orders">Back to Dashboard</a>
+            <a href="/">View Store</a>
+        </div>
+    </section>
 
-<div>
-<label>Price ₹ *</label>
-<input type="number" name="price" placeholder="Enter price" required>
-</div>
+    <div class="layout">
+        <section class="panel">
+            <h2 class="section-title">Product Details</h2>
 
-<div>
-<label>Stock *</label>
-<input type="number" name="stock" value="10" required>
-</div>
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
 
-<div class="full">
-<label>Product Description</label>
-<textarea name="description" placeholder="Enter product description"></textarea>
-</div>
+            <form id="productForm" action="/add_product" method="POST" enctype="multipart/form-data">
+                <div class="grid">
+                    <div class="field">
+                        <label>Product Name *</label>
+                        <input id="nameInput" type="text" name="name" placeholder="Enter product name" value="{{ form_data.get('name', '') if form_data else '' }}" required>
+                    </div>
 
-<div class="full">
-<label>Product Images *</label>
-<input type="file" name="images" accept="image/*" multiple required>
-<p class="note">You can select 1 to 5 images.</p>
-</div>
+                    <div class="field">
+                        <label>Category *</label>
+                        <select id="categoryInput" name="category" required>
+                            {% set selected_category = form_data.get('category', '') if form_data else '' %}
+                            <option value="">Select category</option>
+                            {% for cat in ['Grocery','Vegetable','Fruits','Dairy','Kitchen','Snacks','Beverages'] %}
+                            <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-</div>
+                    <div class="field">
+                        <label>Price *</label>
+                        <input id="priceInput" type="number" name="price" placeholder="Enter price" min="1" value="{{ form_data.get('price', '') if form_data else '' }}" required>
+                    </div>
 
-<br>
+                    <div class="field">
+                        <label>Stock *</label>
+                        <input id="stockInput" type="number" name="stock" min="0" value="{{ form_data.get('stock', '10') if form_data else '10' }}" required>
+                    </div>
 
-<button type="submit">Add Product</button>
+                    <div class="field full">
+                        <label>Product Description</label>
+                        <textarea id="descInput" name="description" placeholder="Enter product description">{{ form_data.get('description', '') if form_data else '' }}</textarea>
+                    </div>
 
-</form>
+                    <div class="field full">
+                        <label>Product Images *</label>
+                        <div class="upload-box">
+                            <input id="imageInput" type="file" name="images" accept="image/*" multiple required>
+                            <p class="note">Select 1 to 5 images. First image will be used as main product image.</p>
+                            <span class="counter" id="imageCounter">0 / 5 selected</span>
+                            <div class="thumbs" id="thumbs"></div>
+                        </div>
+                    </div>
+                </div>
 
-<a class="back" href="/">← Back To Store</a>
+                <div class="actions">
+                    <button class="submit" id="submitBtn" type="submit">Add Product</button>
+                    <a class="secondary" href="/orders">Cancel</a>
+                </div>
+            </form>
+        </section>
 
-</div>
+        <aside class="preview-card">
+            <h2>Live Preview</h2>
+            <div class="product-card">
+                <div class="product-img" id="previewImage">Image Preview</div>
+                <div class="product-body">
+                    <span class="badge">In Stock</span>
+                    <div class="product-name" id="previewName">Product name</div>
+                    <div class="product-category" id="previewCategory">Category: -</div>
+                    <div class="product-desc" id="previewDesc">Product description will appear here.</div>
+                    <div class="price-row">
+                        <span class="price" id="previewPrice">&#8377;0</span>
+                        <span class="stock" id="previewStock">Stock: 10</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
 
+<script>
+const form = document.getElementById('productForm');
+const submitBtn = document.getElementById('submitBtn');
+const imageInput = document.getElementById('imageInput');
+const thumbs = document.getElementById('thumbs');
+const imageCounter = document.getElementById('imageCounter');
+
+function value(id, fallback){
+    return document.getElementById(id).value.trim() || fallback;
+}
+
+function updatePreview(){
+    document.getElementById('previewName').textContent = value('nameInput', 'Product name');
+    document.getElementById('previewCategory').textContent = 'Category: ' + value('categoryInput', '-');
+    document.getElementById('previewDesc').textContent = value('descInput', 'Product description will appear here.');
+    document.getElementById('previewPrice').textContent = '₹' + value('priceInput', '0');
+    document.getElementById('previewStock').textContent = 'Stock: ' + value('stockInput', '10');
+}
+
+['nameInput','categoryInput','priceInput','stockInput','descInput'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', updatePreview);
+    document.getElementById(id).addEventListener('change', updatePreview);
+});
+
+imageInput.addEventListener('change', function(){
+    thumbs.innerHTML = '';
+    const files = Array.from(imageInput.files || []);
+    imageCounter.textContent = files.length + ' / 5 selected';
+
+    if(files.length > 5){
+        alert('Maximum 5 images select kare.');
+        imageInput.value = '';
+        imageCounter.textContent = '0 / 5 selected';
+        document.getElementById('previewImage').innerHTML = 'Image Preview';
+        return;
+    }
+
+    files.forEach(function(file, index){
+        const reader = new FileReader();
+        reader.onload = function(event){
+            const box = document.createElement('div');
+            box.className = 'thumb';
+            box.innerHTML = '<img src="' + event.target.result + '" alt="Preview">';
+            thumbs.appendChild(box);
+
+            if(index === 0){
+                document.getElementById('previewImage').innerHTML = '<img src="' + event.target.result + '" alt="Preview">';
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+form.addEventListener('submit', function(){
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading...';
+});
+
+updatePreview();
+</script>
 </body>
 </html>
