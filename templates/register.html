@@ -50,7 +50,7 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
 <main class="auth-page">
     <section class="hero">
         <h1>Create your grocery account</h1>
-        <p>Fast checkout, order tracking, wishlist and delivered-order reviews ek jagah manage kare.</p>
+        <p>Phone ya email me se koi ek use karke account banaye aur order tracking manage kare.</p>
         <div class="badges">
             <span class="badge">Fast Delivery</span>
             <span class="badge">Secure Login</span>
@@ -74,13 +74,8 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
                 </div>
 
                 <div class="field">
-                    <label>Email</label>
-                    <input type="email" name="email" placeholder="example@email.com" value="{{ form_data.get('email', '') if form_data else '' }}" required>
-                </div>
-
-                <div class="field">
-                    <label>Phone Number</label>
-                    <input type="tel" name="phone" placeholder="10 digit phone number" value="{{ form_data.get('phone', '') if form_data else '' }}" pattern="[0-9]{10}" maxlength="10" required>
+                    <label>Phone / Email</label>
+                    <input type="text" name="login_id" placeholder="9876543210 or example@email.com" value="{{ form_data.get('login_id', '') if form_data else '' }}" required>
                 </div>
 
                 <div class="field">

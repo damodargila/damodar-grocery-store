@@ -36,7 +36,7 @@ button{width:100%;background:#ff9900;color:#111;border:none;border-radius:10px;p
     <section class="card">
         <h1>Verify OTP</h1>
         {% if otp_flow == 'register' %}
-        <p>Email aur phone dono OTP verify karne ke baad account create hoga.</p>
+        <p>Jo phone/email aapne diya hai, uska OTP verify karne ke baad account create hoga.</p>
         {% else %}
         <p>OTP enter karke apne account me login kare.</p>
         {% endif %}
@@ -46,25 +46,18 @@ button{width:100%;background:#ff9900;color:#111;border:none;border-radius:10px;p
         {% endif %}
 
         {% if email_demo_otp %}
-        <div class="demo">Email OTP demo: {{ email_demo_otp }}</div>
+        <div class="demo">OTP demo: {{ email_demo_otp }}</div>
         {% endif %}
 
         {% if phone_demo_otp %}
-        <div class="demo">Phone OTP demo: {{ phone_demo_otp }}</div>
+        <div class="demo">OTP demo: {{ phone_demo_otp }}</div>
         {% endif %}
 
         <form method="POST">
             <div class="field">
-                <label>{% if otp_flow == 'register' %}Email OTP{% else %}OTP{% endif %}</label>
+                <label>OTP</label>
                 <input type="text" name="otp" placeholder="Enter OTP" maxlength="6" required>
             </div>
-
-            {% if otp_flow == 'register' %}
-            <div class="field">
-                <label>Phone OTP</label>
-                <input type="text" name="phone_otp" placeholder="Enter phone OTP" maxlength="6" required>
-            </div>
-            {% endif %}
 
             <button type="submit">Verify OTP</button>
         </form>

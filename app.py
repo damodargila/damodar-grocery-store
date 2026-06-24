@@ -556,6 +556,19 @@ def send_phone_otp(phone, otp):
     print(f"Phone OTP for {phone}: {otp}")
 
 
+def normalize_login_id(value):
+    login_id = (value or "").strip().lower()
+    if "@" in login_id:
+        if "." not in login_id:
+            return "", "", "Valid email enter kare."
+        return login_id, "email", ""
+
+    if not login_id.isdigit() or len(login_id) != 10:
+        return "", "", "Phone number 10 digit ka hona chahiye ya valid email enter kare."
+
+    return login_id, "phone", ""
+
+
 def register_pending_user():
     pending = session.get("pending_register")
     if not pending:
@@ -571,7 +584,7 @@ def register_pending_user():
         execute(
             cursor,
             "INSERT INTO users(name, email, phone, password) VALUES(?,?,?,?)",
-            (pending["name"], pending["email"], pending["phone"], hashed_password)
+            (pending["name"], pending.get("email"), pending.get("phone"), hashed_password)
         )
         conn.commit()
     except Exception:
@@ -679,8 +692,11 @@ def send_otp():
     ensure_user_phone_column()
 
     if request.method == "POST":
-        login_id = request.form.get("login_id", "").strip().lower()
+        login_id, login_type, login_error = normalize_login_id(request.form.get("login_id", ""))
         otp = make_otp()
+
+        if login_error:
+            return render_template("send_otp.html", error=login_error, form_data=request.form)
 
         conn = get_db()
         cursor = conn.cursor()
@@ -692,14 +708,14 @@ def send_otp():
             return render_template("send_otp.html", error="Is email ya phone se account nahi mila.", form_data=request.form)
 
         user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
-        user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else user[3]
+        user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else ""
 
-        session["otp_user"] = user_email
+        session["otp_user"] = user_email or user_phone
         session["otp_login_id"] = login_id
         session["otp"] = otp
         session["otp_flow"] = "login"
 
-        if "@" in login_id:
+        if login_type == "email":
             send_email_async(
                 user_email,
                 "Your Damodar Grocery Store OTP",
@@ -721,10 +737,9 @@ def send_otp():
 def verify_otp():
     if request.method == "POST":
         user_otp = request.form.get("otp", "").strip()
-        user_phone_otp = request.form.get("phone_otp", "").strip()
 
         if session.get("otp_flow") == "register":
-            if user_otp == session.get("otp") and user_phone_otp == session.get("phone_otp"):
+            if user_otp == session.get("otp"):
                 pending = register_pending_user()
                 if not pending:
                     session.pop("otp", None)
@@ -733,11 +748,10 @@ def verify_otp():
                         error="Account create nahi ho paya. Email ya phone already registered ho sakta hai."
                     )
 
-                session["user"] = pending["email"]
+                session["user"] = pending.get("email") or pending.get("phone")
                 session.pop("pending_register", None)
 
                 session.pop("otp", None)
-                session.pop("phone_otp", None)
                 session.pop("otp_flow", None)
                 session.pop("phone_demo_otp", None)
                 session.pop("email_demo_otp", None)
@@ -746,7 +760,7 @@ def verify_otp():
 
             return render_template(
                 "verify_otp.html",
-                error="Email OTP ya Phone OTP galat hai.",
+                error="OTP galat hai.",
                 email_demo_otp=session.get("email_demo_otp", ""),
                 phone_demo_otp=session.get("phone_demo_otp", ""),
                 otp_flow="register"
@@ -755,7 +769,6 @@ def verify_otp():
         if user_otp == session.get("otp"):
             session["user"] = session.get("otp_user")
             session.pop("otp", None)
-            session.pop("phone_otp", None)
             session.pop("otp_flow", None)
             session.pop("otp_user", None)
             session.pop("otp_login_id", None)
@@ -948,52 +961,50 @@ def register():
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        phone = request.form.get("phone", "").strip()
+        login_id, login_type, login_error = normalize_login_id(request.form.get("login_id", ""))
         password = request.form.get("password", "")
 
         if not name:
             return render_template("register.html", error="Name required hai.", form_data=request.form)
 
-        if "@" not in email or "." not in email:
-            return render_template("register.html", error="Valid email enter kare.", form_data=request.form)
-
-        if not phone.isdigit() or len(phone) != 10:
-            return render_template("register.html", error="Phone number 10 digit ka hona chahiye.", form_data=request.form)
+        if login_error:
+            return render_template("register.html", error=login_error, form_data=request.form)
 
         if len(password) < 6:
             return render_template("register.html", error="Password kam se kam 6 characters ka hona chahiye.", form_data=request.form)
 
         conn = get_db()
         cursor = conn.cursor()
-        execute(cursor, "SELECT 1 FROM users WHERE email=? OR phone=?", (email, phone))
+        execute(cursor, "SELECT 1 FROM users WHERE email=? OR phone=?", (login_id, login_id))
         existing_user = cursor.fetchone()
         conn.close()
 
         if existing_user:
             return render_template("register.html", error="Ye email ya phone already registered hai.", form_data=request.form)
 
-        email_otp = make_otp()
-        phone_otp = make_otp()
+        otp = make_otp()
 
         session["pending_register"] = {
             "name": name,
-            "email": email,
-            "phone": phone,
+            "email": login_id if login_type == "email" else None,
+            "phone": login_id if login_type == "phone" else None,
             "password": password,
         }
-        session["otp"] = email_otp
-        session["phone_otp"] = phone_otp
+        session["otp"] = otp
         session["otp_flow"] = "register"
-        session["phone_demo_otp"] = phone_otp
-        session["email_demo_otp"] = email_otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
 
-        send_email_async(
-            email,
-            "Verify your Damodar Grocery account",
-            f"Your account verification OTP is {email_otp}"
-        )
-        send_phone_otp(phone, phone_otp)
+        if login_type == "email":
+            session["email_demo_otp"] = otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
+            session["phone_demo_otp"] = ""
+            send_email_async(
+                login_id,
+                "Verify your Damodar Grocery account",
+                f"Your account verification OTP is {otp}"
+            )
+        else:
+            session["email_demo_otp"] = ""
+            session["phone_demo_otp"] = otp
+            send_phone_otp(login_id, otp)
 
         return redirect("/verify_otp")
 
@@ -1005,8 +1016,11 @@ def customer_login():
     ensure_user_phone_column()
 
     if request.method == "POST":
-        login_id = request.form.get("login_id", "").strip().lower()
+        login_id, _, login_error = normalize_login_id(request.form.get("login_id", ""))
         password = request.form.get("password", "")
+
+        if login_error:
+            return render_template("customer_login.html", error=login_error, form_data=request.form)
 
         conn = get_db()
         cursor = conn.cursor()
@@ -1015,21 +1029,22 @@ def customer_login():
         conn.close()
 
         if user:
-            stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[4]
+            stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[3]
             user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
+            user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else ""
 
             # Supports old plain-text passwords and upgrades them after login.
             if check_password_hash(stored_password, password) or stored_password == password:
                 session.pop("admin", None)
-                session["user"] = user_email
+                session["user"] = user_email or user_phone
 
                 if stored_password == password:
                     conn = get_db()
                     cursor = conn.cursor()
                     execute(
                         cursor,
-                        "UPDATE users SET password=? WHERE email=?",
-                        (generate_password_hash(password), user_email)
+                        "UPDATE users SET password=? WHERE email=? OR phone=?",
+                        (generate_password_hash(password), user_email, user_phone)
                     )
                     conn.commit()
                     conn.close()
