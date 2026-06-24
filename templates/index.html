@@ -194,9 +194,6 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     {% endif %}
 
     <div class="small-btns">
-        <a class="mini review" href="/review/{{ product[0] }}" onclick="event.stopPropagation();">Review</a>
-        <a class="mini viewreview" href="/reviews/{{ product[0] }}" onclick="event.stopPropagation();">Reviews</a>
-
         {% if session.get('admin') %}
         <a class="mini edit" href="/edit_product/{{ product[0] }}">Edit</a>
         <a class="mini delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>

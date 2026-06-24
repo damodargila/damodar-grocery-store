@@ -184,6 +184,40 @@ def order_totals(total):
     return gst, discount_percent, discount_amount, grand_total
 
 
+def can_review_product(product_id):
+    user = session.get("user")
+    if not user:
+        return False
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        execute(cursor, "SELECT name FROM products WHERE id=?", (product_id,))
+        product = cursor.fetchone()
+        if not product:
+            return False
+
+        product_name = product_col(product, "name", 0)
+
+        execute(
+            cursor,
+            """
+            SELECT 1
+            FROM orders
+            JOIN order_items ON orders.id = order_items.order_id
+            WHERE orders.status = ?
+              AND (orders.customer_email = ? OR orders.customer_name = ?)
+              AND (order_items.product_id = ? OR order_items.product_name = ?)
+            LIMIT 1
+            """,
+            ("Delivered", user, user, product_id, product_name)
+        )
+        return cursor.fetchone() is not None
+    finally:
+        conn.close()
+
+
 def empty_checkout_context():
     return {
         "products": [],
@@ -275,6 +309,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS order_items (
                 id SERIAL PRIMARY KEY,
                 order_id INTEGER,
+                product_id INTEGER,
                 product_name TEXT,
                 price INTEGER,
                 quantity INTEGER
@@ -302,6 +337,9 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+            ],
+            "order_items": [
+                ("product_id", "INTEGER"),
             ],
         }
 
@@ -376,6 +414,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS order_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 order_id INTEGER,
+                product_id INTEGER,
                 product_name TEXT,
                 price INTEGER,
                 quantity INTEGER
@@ -402,6 +441,9 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+            ],
+            "order_items": [
+                ("product_id", "INTEGER"),
             ],
         }
 
@@ -586,6 +628,11 @@ def apply_coupon():
 
 @app.route("/review/<int:product_id>", methods=["GET", "POST"])
 def review(product_id):
+    if not can_review_product(product_id):
+        if "user" not in session:
+            return redirect("/customer_login")
+        return "Review only delivered order ke baad diya ja sakta hai."
+
     if request.method == "POST":
         customer_name = request.form["customer_name"]
         rating = request.form["rating"]
@@ -880,7 +927,8 @@ def product_details(product_id):
         total_reviews=total_reviews,
         reviews=reviews_data,
         wishlist_ids=wishlist_ids,
-        related_products=related_products
+        related_products=related_products,
+        can_review=can_review_product(product_id)
     )
 
 
@@ -1003,9 +1051,10 @@ def checkout():
 
             execute(
                 cursor,
-                "INSERT INTO order_items(order_id, product_name, price, quantity) VALUES(?,?,?,?)",
+                "INSERT INTO order_items(order_id, product_id, product_name, price, quantity) VALUES(?,?,?,?,?)",
                 (
                     order_id,
+                    product_id,
                     product_col(product, "name", 1),
                     product_col(product, "price", 3),
                     quantity

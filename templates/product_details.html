@@ -249,7 +249,11 @@ color:#111;background:#fafafa;transition:.2s;
             <p>No reviews yet.</p>
         {% endif %}
         <br>
+        {% if can_review %}
         <a href="/review/{{ product[0] }}">Write a Review</a>
+        {% else %}
+        <p class="desc">Review sirf delivered order ke baad diya ja sakta hai.</p>
+        {% endif %}
     </div>
 
     <div class="section">
