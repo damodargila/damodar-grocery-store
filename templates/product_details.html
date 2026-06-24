@@ -165,7 +165,7 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
         <div>
             <div class="image-box">
                 {% if product[4] %}
-                <img id="mainProductImage" class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
+                <img id="mainProductImage" class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}" decoding="async">
                 {% else %}
                 <div class="no-img">No Image</div>
                 {% endif %}
@@ -175,23 +175,23 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
 
             <div class="thumbs">
                 {% if product[4] %}
-                <img class="thumb" src="{{ product[4] }}" onclick="changeImage(this.src)">
+                <img class="thumb" src="{{ product[4] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
                 {% endif %}
 
                 {% if product['image2'] %}
-                <img class="thumb" src="{{ product['image2'] }}" onclick="changeImage(this.src)">
+                <img class="thumb" src="{{ product['image2'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
                 {% endif %}
 
                 {% if product['image3'] %}
-                <img class="thumb" src="{{ product['image3'] }}" onclick="changeImage(this.src)">
+                <img class="thumb" src="{{ product['image3'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
                 {% endif %}
 
                 {% if product['image4'] %}
-                <img class="thumb" src="{{ product['image4'] }}" onclick="changeImage(this.src)">
+                <img class="thumb" src="{{ product['image4'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
                 {% endif %}
 
                 {% if product['image5'] %}
-                <img class="thumb" src="{{ product['image5'] }}" onclick="changeImage(this.src)">
+                <img class="thumb" src="{{ product['image5'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
                 {% endif %}
             </div>
         </div>
@@ -301,7 +301,7 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
             {% for item in related_products %}
             <a class="rel-card" href="/product/{{ item[0] }}">
                 {% if item[4] %}
-                <img src="{{ item[4] }}">
+                <img src="{{ item[4] }}" loading="lazy" decoding="async">
                 {% else %}
                 <div class="no-img" style="height:130px;font-size:14px;">No Image</div>
                 {% endif %}

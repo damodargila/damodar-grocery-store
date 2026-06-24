@@ -100,7 +100,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
             {% for item in products %}
             <article class="card">
                 {% if item[0][4] %}
-                <img class="product-img" src="{{ item[0][4] }}" alt="{{ item[0][1] }}">
+                <img class="product-img" src="{{ item[0][4] }}" alt="{{ item[0][1] }}" loading="lazy" decoding="async">
                 {% else %}
                 <div class="no-img">No Image</div>
                 {% endif %}

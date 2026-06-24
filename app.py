@@ -398,6 +398,21 @@ def init_db():
                     conn.rollback()
                     cursor = conn.cursor()
 
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
+            "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id)",
+            "CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email)",
+            "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)",
+            "CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)",
+        ]
+
+        for index_sql in indexes:
+            try:
+                cursor.execute(index_sql)
+            except Exception:
+                conn.rollback()
+                cursor = conn.cursor()
+
     else:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS products (
@@ -504,6 +519,17 @@ def init_db():
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {name} {col_type}")
                 except sqlite3.OperationalError:
                     pass
+
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
+            "CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id)",
+            "CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email)",
+            "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)",
+            "CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)",
+        ]
+
+        for index_sql in indexes:
+            cursor.execute(index_sql)
 
     conn.commit()
     conn.close()
@@ -679,23 +705,26 @@ def home():
     products = cursor.fetchall()
 
     ratings = {}
+    product_ids = [fetch_product_id(product) for product in products]
 
-    for product in products:
-        product_id = fetch_product_id(product)
+    if product_ids:
+        placeholders = ",".join(["?"] * len(product_ids))
         execute(
             cursor,
-            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
-            (product_id,)
+            f"""
+            SELECT product_id, AVG(rating), COUNT(*)
+            FROM reviews
+            WHERE product_id IN ({placeholders})
+            GROUP BY product_id
+            """,
+            product_ids
         )
-        data = cursor.fetchone()
 
-        avg_rating = round(data[0], 1) if data and data[0] else 0
-        total_reviews = data[1] if data else 0
-
-        ratings[product_id] = {
-            "avg": avg_rating,
-            "count": total_reviews
-        }
+        for product_id, avg_rating, total_reviews in cursor.fetchall():
+            ratings[product_id] = {
+                "avg": round(avg_rating, 1) if avg_rating else 0,
+                "count": total_reviews
+            }
 
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()

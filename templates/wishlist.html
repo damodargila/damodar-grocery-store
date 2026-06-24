@@ -79,7 +79,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <article class="card">
             <div class="image-wrap">
                 {% if product[4] %}
-                <img src="{{ product[4] }}" alt="{{ product[1] }}">
+                <img src="{{ product[4] }}" alt="{{ product[1] }}" loading="lazy" decoding="async">
                 {% else %}
                 <div class="no-img">No Image</div>
                 {% endif %}

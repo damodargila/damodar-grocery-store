@@ -174,7 +174,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 <div class="card" onclick="window.location='/product/{{ product[0] }}'" style="cursor:pointer;">
     <div class="img-wrap">
         {% if product[4] %}
-        <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}">
+        <img class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}" loading="lazy" decoding="async">
         {% else %}
         <div class="no-img">No Image</div>
         {% endif %}
@@ -191,10 +191,10 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     </div>
 
     <div class="extra-images">
-        {% if product['image2'] %}<img src="{{ product['image2'] }}">{% endif %}
-        {% if product['image3'] %}<img src="{{ product['image3'] }}">{% endif %}
-        {% if product['image4'] %}<img src="{{ product['image4'] }}">{% endif %}
-        {% if product['image5'] %}<img src="{{ product['image5'] }}">{% endif %}
+        {% if product['image2'] %}<img src="{{ product['image2'] }}" loading="lazy" decoding="async">{% endif %}
+        {% if product['image3'] %}<img src="{{ product['image3'] }}" loading="lazy" decoding="async">{% endif %}
+        {% if product['image4'] %}<img src="{{ product['image4'] }}" loading="lazy" decoding="async">{% endif %}
+        {% if product['image5'] %}<img src="{{ product['image5'] }}" loading="lazy" decoding="async">{% endif %}
     </div>
 
     <h2>{{ product[1] }}</h2>
