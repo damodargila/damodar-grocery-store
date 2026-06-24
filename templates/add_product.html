@@ -33,8 +33,11 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
 .upload-box{border:2px dashed #cbd5df;border-radius:14px;padding:18px;background:#f8faf9}
 .note{color:#6b7280;font-size:13px;margin-top:8px}
 .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
-.thumb{height:78px;background:#edf2f7;border-radius:10px;overflow:hidden;border:1px solid #dce3e7}
+.thumb{height:78px;background:#edf2f7;border-radius:10px;overflow:hidden;border:1px solid #dce3e7;position:relative;cursor:pointer}
+.thumb.active{border:2px solid #0b8f3a;box-shadow:0 0 0 3px rgba(11,143,58,.14)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.remove-img{position:absolute;top:5px;right:5px;width:22px;height:22px;border:none;border-radius:50%;background:#ef4444;color:white;font-weight:bold;line-height:22px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.remove-img:hover{background:#dc2626}
 .counter{display:inline-block;margin-top:12px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;padding:8px 10px;border-radius:999px;font-size:13px;font-weight:bold}
 .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
 .submit{background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px 20px;font-size:16px;font-weight:bold;cursor:pointer}
@@ -168,6 +171,8 @@ const submitBtn = document.getElementById('submitBtn');
 const imageInput = document.getElementById('imageInput');
 const thumbs = document.getElementById('thumbs');
 const imageCounter = document.getElementById('imageCounter');
+let selectedFiles = [];
+let activeImageIndex = 0;
 
 function value(id, fallback){
     return document.getElementById(id).value.trim() || fallback;
@@ -186,33 +191,81 @@ function updatePreview(){
     document.getElementById(id).addEventListener('change', updatePreview);
 });
 
-imageInput.addEventListener('change', function(){
-    thumbs.innerHTML = '';
-    const files = Array.from(imageInput.files || []);
-    imageCounter.textContent = files.length + ' / 5 selected';
+function setPreviewImage(src){
+    document.getElementById('previewImage').innerHTML = '<img src="' + src + '" alt="Preview">';
+}
 
-    if(files.length > 5){
-        alert('Maximum 5 images select kare.');
-        imageInput.value = '';
-        imageCounter.textContent = '0 / 5 selected';
+function syncFileInput(){
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach(function(file){
+        dataTransfer.items.add(file);
+    });
+    imageInput.files = dataTransfer.files;
+}
+
+function renderImages(){
+    thumbs.innerHTML = '';
+    imageCounter.textContent = selectedFiles.length + ' / 5 selected';
+
+    if(!selectedFiles.length){
+        activeImageIndex = 0;
         document.getElementById('previewImage').innerHTML = 'Image Preview';
+        syncFileInput();
         return;
     }
 
-    files.forEach(function(file, index){
+    if(activeImageIndex >= selectedFiles.length){
+        activeImageIndex = selectedFiles.length - 1;
+    }
+
+    selectedFiles.forEach(function(file, index){
         const reader = new FileReader();
         reader.onload = function(event){
             const box = document.createElement('div');
-            box.className = 'thumb';
-            box.innerHTML = '<img src="' + event.target.result + '" alt="Preview">';
+            box.className = 'thumb' + (index === activeImageIndex ? ' active' : '');
+            box.innerHTML = '<img src="' + event.target.result + '" alt="Preview"><button class="remove-img" type="button" aria-label="Remove image">x</button>';
+
+            box.addEventListener('click', function(){
+                activeImageIndex = index;
+                setPreviewImage(event.target.result);
+                renderImages();
+            });
+
+            box.querySelector('.remove-img').addEventListener('click', function(removeEvent){
+                removeEvent.stopPropagation();
+                selectedFiles.splice(index, 1);
+                if(activeImageIndex === index){
+                    activeImageIndex = Math.max(0, index - 1);
+                }else if(activeImageIndex > index){
+                    activeImageIndex -= 1;
+                }
+                renderImages();
+            });
+
             thumbs.appendChild(box);
 
-            if(index === 0){
-                document.getElementById('previewImage').innerHTML = '<img src="' + event.target.result + '" alt="Preview">';
+            if(index === activeImageIndex){
+                setPreviewImage(event.target.result);
             }
         };
         reader.readAsDataURL(file);
     });
+
+    syncFileInput();
+}
+
+imageInput.addEventListener('change', function(){
+    const files = Array.from(imageInput.files || []);
+
+    if(files.length > 5){
+        alert('Maximum 5 images select kare.');
+        imageInput.value = '';
+        return;
+    }
+
+    selectedFiles = files;
+    activeImageIndex = 0;
+    renderImages();
 });
 
 form.addEventListener('submit', function(){
