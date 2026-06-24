@@ -183,6 +183,17 @@ def order_totals(total):
     return gst, discount_percent, discount_amount, grand_total
 
 
+def empty_checkout_context():
+    return {
+        "products": [],
+        "total": 0,
+        "gst": 0,
+        "discount_percent": 0,
+        "discount_amount": 0,
+        "grand_total": 0,
+    }
+
+
 def order_col(order, key, index, default=""):
     try:
         if hasattr(order, "keys") and key in order.keys():
@@ -1009,22 +1020,26 @@ def checkout():
 
         return render_template("success.html", order_id=order_id)
 
-    products, total, order_products = build_cart_summary()
+    try:
+        products, total, order_products = build_cart_summary()
 
-    if not order_products:
-        return redirect("/cart")
+        if not order_products:
+            return redirect("/cart")
 
-    gst, discount_percent, discount_amount, grand_total = order_totals(total)
+        gst, discount_percent, discount_amount, grand_total = order_totals(total)
 
-    return render_template(
-        "checkout.html",
-        products=products,
-        total=total,
-        gst=gst,
-        discount_percent=discount_percent,
-        discount_amount=discount_amount,
-        grand_total=grand_total
-    )
+        return render_template(
+            "checkout.html",
+            products=products,
+            total=total,
+            gst=gst,
+            discount_percent=discount_percent,
+            discount_amount=discount_amount,
+            grand_total=grand_total
+        )
+    except Exception as error:
+        app.logger.exception("Checkout page error: %s", error)
+        return render_template("checkout.html", **empty_checkout_context())
 
 
 @app.route("/invoice/<int:order_id>")
