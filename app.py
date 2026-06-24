@@ -1826,11 +1826,30 @@ def edit_product(product_id):
         return "Product not found"
 
     if request.method == "POST":
-        name = request.form.get("name", "")
-        category = request.form.get("category", "")
-        price = request.form.get("price", "")
-        stock = request.form.get("stock", "")
-        description = request.form.get("description", "")
+        name = request.form.get("name", "").strip()
+        category = request.form.get("category", "").strip()
+        price = request.form.get("price", "").strip()
+        stock = request.form.get("stock", "").strip()
+        description = request.form.get("description", "").strip()
+
+        try:
+            price_value = int(price)
+            stock_value = int(stock)
+        except ValueError:
+            conn.close()
+            return render_template("edit_product.html", product=product, error="Price aur stock valid number hone chahiye.")
+
+        if not name or not category:
+            conn.close()
+            return render_template("edit_product.html", product=product, error="Product name aur category required hai.")
+
+        if price_value < 1:
+            conn.close()
+            return render_template("edit_product.html", product=product, error="Price 1 se kam nahi ho sakta.")
+
+        if stock_value < 0:
+            conn.close()
+            return render_template("edit_product.html", product=product, error="Stock 0 se kam nahi ho sakta.")
 
         old_images = [
             product_col(product, "image", 4, ""),
@@ -1845,11 +1864,14 @@ def edit_product(product_id):
 
         for index, field_name in enumerate(fields):
             file = request.files.get(field_name)
+            remove_image = request.form.get(f"remove_{field_name}") == "1"
 
             if file and file.filename:
                 secure_filename(file.filename)
                 upload_result = cloudinary.uploader.upload(file)
                 new_images.append(upload_result["secure_url"])
+            elif remove_image:
+                new_images.append("")
             else:
                 new_images.append(old_images[index])
 
@@ -1872,9 +1894,9 @@ def edit_product(product_id):
             (
                 name,
                 category,
-                price,
+                price_value,
                 new_images[0],
-                stock,
+                stock_value,
                 description,
                 new_images[1],
                 new_images[2],
@@ -1886,15 +1908,12 @@ def edit_product(product_id):
 
         conn.commit()
 
-        execute(cursor, "SELECT description FROM products WHERE id=?", (product_id,))
-        saved_description = cursor.fetchone()
+        execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
+        updated_product = cursor.fetchone()
 
         conn.close()
 
-        if saved_description and saved_description[0] == description:
-            return redirect("/product/" + str(product_id))
-
-        return "Description save nahi hua. Database column problem hai."
+        return render_template("edit_product.html", product=updated_product, success="Product update ho gaya.")
 
     conn.close()
     return render_template("edit_product.html", product=product)
