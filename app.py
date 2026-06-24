@@ -3,6 +3,7 @@ import sqlite3
 import os
 import random
 import smtplib
+import threading
 from io import BytesIO
 from email.message import EmailMessage
 
@@ -434,11 +435,20 @@ def send_email(to_email, subject, body):
         msg["Subject"] = subject
         msg.set_content(body)
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=8) as smtp:
             smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
             smtp.send_message(msg)
     except Exception as e:
         print("Email send error:", e)
+
+
+def send_email_async(to_email, subject, body):
+    thread = threading.Thread(
+        target=send_email,
+        args=(to_email, subject, body),
+        daemon=True
+    )
+    thread.start()
 
 
 @app.route("/")
@@ -1005,7 +1015,7 @@ def checkout():
         conn.commit()
         conn.close()
 
-        send_email(
+        send_email_async(
             email,
             "Order Placed Successfully",
             f"Your order #{order_id} has been placed. Total amount: Rs.{grand_total}"
