@@ -4,3 +4,12 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: damodar-grocery-db
+          property: connectionString
+
+databases:
+  - name: damodar-grocery-db
+    plan: free
