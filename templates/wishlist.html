@@ -1,33 +1,120 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Wishlist</title>
+<title>Wishlist - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{font-family:Arial;background:#f5f5f5;padding:20px;}
-.products{display:flex;gap:20px;flex-wrap:wrap;}
-.card{background:white;width:250px;padding:15px;border-radius:10px;box-shadow:0 0 5px gray;}
-.card img{width:100%;height:150px;object-fit:cover;border-radius:10px;}
-.btn{background:green;color:white;padding:10px;text-decoration:none;border-radius:5px;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
+
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.nav a{color:white;text-decoration:none;margin-left:18px;font-weight:bold;font-size:14px}
+
+.page{max-width:1180px;margin:0 auto;padding:30px 18px 44px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px}
+.head h1{font-size:34px}
+.head p{color:#555;margin-top:7px}
+.back{color:#0b6623;text-decoration:none;font-weight:bold}
+
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.card{background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.10);transition:.2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.image-wrap{height:175px;background:#eee;position:relative}
+.image-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.no-img{height:100%;display:flex;align-items:center;justify-content:center;color:#777}
+.heart{position:absolute;top:12px;right:12px;background:white;color:#e53935;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:22px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+
+.content{padding:15px}
+.category{display:inline-block;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;margin-bottom:10px}
+.title{font-size:21px;margin-bottom:10px}
+.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.price{font-size:23px;font-weight:bold;color:#0b6623}
+.stock{font-size:13px;color:#555}
+.actions{display:grid;grid-template-columns:1fr 44px;gap:9px}
+.btn{display:flex;align-items:center;justify-content:center;border-radius:9px;text-decoration:none;font-weight:bold;padding:11px 12px}
+.cart{background:#ff9900;color:#111}
+.remove{background:#fff1f1;color:#d32f2f;border:1px solid #ffd0d0;font-size:20px}
+.out{background:#f3f3f3;color:#d32f2f;border-radius:9px;padding:11px 12px;text-align:center;font-weight:bold;grid-column:1 / -1}
+
+.empty{background:white;border-radius:14px;padding:46px 20px;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.10)}
+.empty h2{font-size:28px;margin-bottom:8px}
+.empty p{color:#555;margin-bottom:20px}
+.shop{display:inline-flex;background:#ff9900;color:#111;text-decoration:none;border-radius:10px;padding:13px 20px;font-weight:bold}
+
+@media(max-width:760px){
+.topbar{align-items:flex-start;gap:10px;flex-direction:column}
+.nav a{margin:0 14px 0 0}
+.head{align-items:flex-start;flex-direction:column}
+.head h1{font-size:29px}
+}
 </style>
 </head>
+
 <body>
 
-<h1>❤️ Wishlist</h1>
-<a href="/">Back To Store</a>
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/cart">Cart</a>
+        <a href="/profile">Profile</a>
+    </div>
+</div>
 
-<div class="products">
-{% for product in products %}
-<div class="card">
-{% if product[4] %}
-<img src="{{ product[4] }}">
-{% endif %}
-<h2>{{ product[1] }}</h2>
-<p>{{ product[2] }}</p>
-<h3>₹{{ product[3] }}</h3>
-<a class="btn" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
-</div>
-{% endfor %}
-</div>
+<main class="page">
+    <div class="head">
+        <div>
+            <h1>Wishlist</h1>
+            <p>Your saved grocery products in one place.</p>
+        </div>
+        <a class="back" href="/">Back to Store</a>
+    </div>
+
+    {% if products %}
+    <div class="products">
+        {% for product in products %}
+        <article class="card">
+            <div class="image-wrap">
+                {% if product[4] %}
+                <img src="{{ product[4] }}" alt="{{ product[1] }}">
+                {% else %}
+                <div class="no-img">No Image</div>
+                {% endif %}
+                <a class="heart" href="/wishlist/{{ product[0] }}" title="Remove from wishlist">x</a>
+            </div>
+
+            <div class="content">
+                <span class="category">{{ product[2] }}</span>
+                <h2 class="title">{{ product[1] }}</h2>
+
+                <div class="price-row">
+                    <span class="price">&#8377;{{ product[3] }}</span>
+                    <span class="stock">Stock: {{ product[5] }}</span>
+                </div>
+
+                <div class="actions">
+                    {% if (product[5] | int) > 0 %}
+                    <a class="btn cart" href="/add_to_cart/{{ product[0] }}">Add To Cart</a>
+                    <a class="btn remove" href="/wishlist/{{ product[0] }}" title="Remove">x</a>
+                    {% else %}
+                    <div class="out">Out of Stock</div>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+        <h2>Your wishlist is empty</h2>
+        <p>Save products you like and find them here later.</p>
+        <a class="shop" href="/">Start Shopping</a>
+    </div>
+    {% endif %}
+</main>
 
 </body>
 </html>
