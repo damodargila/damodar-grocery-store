@@ -138,10 +138,10 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
                 {% for item in products %}
                 <div class="item">
                     <div>
-                        <span class="item-name">{{ item.name }}</span>
-                        <small>Qty: {{ item.quantity }} x &#8377;{{ item.price }}</small>
+                        <span class="item-name">{{ item['name'] }}</span>
+                        <small>Qty: {{ item['quantity'] }} x &#8377;{{ item['price'] }}</small>
                     </div>
-                    <strong>&#8377;{{ item.subtotal }}</strong>
+                    <strong>&#8377;{{ item['subtotal'] }}</strong>
                 </div>
                 {% endfor %}
 

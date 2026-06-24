@@ -120,6 +120,69 @@ def coupon_value(coupon):
         return 0
 
 
+def get_cart_items():
+    cart_items = session.get("cart", {})
+    if isinstance(cart_items, list) or not isinstance(cart_items, dict):
+        session["cart"] = {}
+        return {}
+    return cart_items
+
+
+def safe_quantity(quantity):
+    try:
+        return max(0, int(quantity))
+    except (TypeError, ValueError):
+        return 0
+
+
+def build_cart_summary():
+    cart_items = get_cart_items()
+    products = []
+    total = 0
+    order_products = []
+
+    if not cart_items:
+        return products, total, order_products
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        for product_id, quantity in cart_items.items():
+            quantity = safe_quantity(quantity)
+            if quantity <= 0:
+                continue
+
+            execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
+            product = cursor.fetchone()
+
+            if not product:
+                continue
+
+            price = int(product_col(product, "price", 3, 0) or 0)
+            subtotal = price * quantity
+            total += subtotal
+            order_products.append((product, quantity))
+            products.append({
+                "name": product_col(product, "name", 1),
+                "price": price,
+                "quantity": quantity,
+                "subtotal": subtotal,
+            })
+    finally:
+        conn.close()
+
+    return products, total, order_products
+
+
+def order_totals(total):
+    gst = int(total * 0.05)
+    discount_percent = int(session.get("discount", 0) or 0)
+    discount_amount = int(total * discount_percent / 100)
+    grand_total = total + gst - discount_amount
+    return gst, discount_percent, discount_amount, grand_total
+
+
 def order_col(order, key, index, default=""):
     try:
         if hasattr(order, "keys") and key in order.keys():
@@ -852,40 +915,19 @@ def checkout():
         email = request.form.get("email", "").strip()
         full_address = f"{address}, District: {district}, State: {state}, Pincode: {pincode}"
 
-        cart_items = session.get("cart", {})
-        if isinstance(cart_items, list):
-            cart_items = {}
+        products, total, order_products = build_cart_summary()
 
-        if not cart_items:
+        if not order_products:
             return redirect("/cart")
+
+        for product, quantity in order_products:
+            if product_stock(product) < quantity:
+                return f"Not enough stock for {product_col(product, 'name', 1)}"
+
+        gst, discount_percent, discount_amount, grand_total = order_totals(total)
 
         conn = get_db()
         cursor = conn.cursor()
-
-        total = 0
-        order_products = []
-
-        for product_id, quantity in cart_items.items():
-            quantity = int(quantity)
-            execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
-            product = cursor.fetchone()
-
-            if product:
-                stock = product_stock(product)
-                price = int(product_col(product, "price", 3, 0))
-
-                if stock < quantity:
-                    conn.close()
-                    return f"Not enough stock for {product_col(product, 'name', 1)}"
-
-                subtotal = price * quantity
-                total += subtotal
-                order_products.append((product, quantity))
-
-        gst = int(total * 0.05)
-        discount_percent = int(session.get("discount", 0) or 0)
-        discount_amount = int(total * discount_percent / 100)
-        grand_total = total + gst - discount_amount
 
         if is_postgres():
             execute(
@@ -967,38 +1009,12 @@ def checkout():
 
         return render_template("success.html", order_id=order_id)
 
-    cart_items = session.get("cart", {})
-    if isinstance(cart_items, list):
-        cart_items = {}
+    products, total, order_products = build_cart_summary()
 
-    conn = get_db()
-    cursor = conn.cursor()
+    if not order_products:
+        return redirect("/cart")
 
-    products = []
-    total = 0
-
-    for product_id, quantity in cart_items.items():
-        quantity = int(quantity)
-        execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
-        product = cursor.fetchone()
-
-        if product:
-            price = int(product_col(product, "price", 3, 0))
-            subtotal = price * quantity
-            total += subtotal
-            products.append({
-                "name": product_col(product, "name", 1),
-                "price": price,
-                "quantity": quantity,
-                "subtotal": subtotal,
-            })
-
-    conn.close()
-
-    gst = int(total * 0.05)
-    discount_percent = int(session.get("discount", 0) or 0)
-    discount_amount = int(total * discount_percent / 100)
-    grand_total = total + gst - discount_amount
+    gst, discount_percent, discount_amount, grand_total = order_totals(total)
 
     return render_template(
         "checkout.html",
