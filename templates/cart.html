@@ -1,140 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Cart</title>
+<title>Cart - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-font-family:Arial;
-background:#f5f5f5;
-padding:20px;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
-.card{
-background:white;
-padding:15px;
-margin:10px;
-border-radius:10px;
-box-shadow:0 0 5px gray;
-}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.nav a{color:white;text-decoration:none;margin-left:18px;font-weight:bold;font-size:14px}
 
-.btn{
-padding:8px 15px;
-text-decoration:none;
-color:white;
-border-radius:5px;
-}
+.page{max-width:1180px;margin:0 auto;padding:28px 18px 40px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px}
+.page-head h1{font-size:34px}
+.page-head p{color:#555;margin-top:6px}
+.continue{color:#0b6623;text-decoration:none;font-weight:bold}
 
-.plus{
-background:green;
-}
+.cart-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start}
+.items{display:flex;flex-direction:column;gap:16px}
 
-.minus{
-background:orange;
-}
+.card{background:white;border-radius:14px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.10);display:grid;grid-template-columns:112px 1fr auto;gap:16px;align-items:center}
+.product-img{width:112px;height:100px;border-radius:12px;object-fit:cover;background:#eee}
+.no-img{width:112px;height:100px;border-radius:12px;background:#eee;color:#777;display:flex;align-items:center;justify-content:center;font-size:13px}
+.item-title{font-size:22px;margin-bottom:8px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;color:#555;font-size:14px}
+.pill{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;padding:6px 10px;border-radius:999px;font-weight:bold}
+.subtotal{font-size:18px;font-weight:bold;color:#0b6623;margin-top:12px}
 
-.checkout{
-background:blue;
-padding:10px 20px;
-color:white;
-text-decoration:none;
-border-radius:5px;
-}
+.qty-box{text-align:right;min-width:150px}
+.qty-label{font-size:13px;color:#555;margin-bottom:8px}
+.qty-controls{display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.qty{min-width:38px;text-align:center;font-weight:bold;background:#f4f6f8;border-radius:8px;padding:9px 10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;font-weight:bold;border:none}
+.minus,.plus{width:38px;height:38px;color:white;font-size:20px}
+.minus{background:#ff9900}
+.plus{background:#0b6623}
+.stock-msg{display:block;margin-top:10px;color:#d32f2f;font-size:13px;font-weight:bold}
 
-.whatsapp{
-background:#25D366;
-padding:10px 20px;
-color:white;
-text-decoration:none;
-border-radius:5px;
-}
+.summary{background:white;border-radius:14px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.10);position:sticky;top:86px}
+.summary h2{font-size:22px;margin-bottom:16px}
+.coupon{display:flex;gap:8px;margin-bottom:18px}
+.coupon input{flex:1;border:1px solid #ddd;border-radius:9px;padding:12px;font-size:14px;min-width:0}
+.coupon button{background:#131921;color:white;border:none;border-radius:9px;padding:12px 14px;font-weight:bold;cursor:pointer}
+.line{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #eee;color:#444}
+.line strong{color:#111}
+.grand{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:24px;font-weight:bold;color:#0b6623}
+.checkout,.whatsapp{width:100%;padding:14px;margin-top:10px;color:white;text-decoration:none;text-align:center;border-radius:10px;font-weight:bold}
+.checkout{background:#ff9900;color:#111}
+.whatsapp{background:#25D366}
+.back{display:block;text-align:center;margin-top:14px;color:#0b6623;text-decoration:none;font-weight:bold}
 
-.total{
-font-size:22px;
-font-weight:bold;
-color:green;
+.empty{background:white;border-radius:14px;padding:42px;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.10)}
+.empty h2{font-size:28px;margin-bottom:8px}
+.empty p{color:#555;margin-bottom:20px}
+
+@media(max-width:850px){
+.topbar{align-items:flex-start;gap:10px;flex-direction:column}
+.nav a{margin:0 14px 0 0}
+.page-head{align-items:flex-start;flex-direction:column}
+.cart-layout{grid-template-columns:1fr}
+.summary{position:static}
+.card{grid-template-columns:90px 1fr;align-items:start}
+.product-img,.no-img{width:90px;height:84px}
+.qty-box{grid-column:1 / -1;text-align:left}
+.qty-controls{justify-content:flex-start}
 }
 </style>
-
 </head>
 
 <body>
 
-<h1>🛒 Cart</h1>
-
-{% for item in products %}
-
-<div class="card">
-
-<h2>{{ item[0][1] }}</h2>
-
-<p>Price: ₹{{ item[0][3] }}</p>
-
-<p>Quantity: {{ item[1] }}</p>
-
-<p>Available Stock: {{ item[0][5] }}</p>
-
-<p>Subtotal: ₹{{ item[2] }}</p>
-
-<a class="btn minus"
-href="/decrease/{{ item[0][0] }}">
--
-</a>
-
-{% if item[1] < (item[0][5] | int) %}
-<a class="btn plus" href="/increase/{{ item[0][0] }}">+</a>
-{% else %}
-<span style="color:red;font-weight:bold;">No more stock available</span>
-{% endif %}
-
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/wishlist">Wishlist</a>
+        <a href="/profile">Profile</a>
+    </div>
 </div>
 
-{% endfor %}
+<main class="page">
+    <div class="page-head">
+        <div>
+            <h1>Your Cart</h1>
+            <p>Review your items before checkout.</p>
+        </div>
+        <a class="continue" href="/">Continue Shopping</a>
+    </div>
 
-<form action="/apply_coupon" method="POST">
+    {% if products %}
+    <div class="cart-layout">
+        <section class="items">
+            {% for item in products %}
+            <article class="card">
+                {% if item[0][4] %}
+                <img class="product-img" src="{{ item[0][4] }}" alt="{{ item[0][1] }}">
+                {% else %}
+                <div class="no-img">No Image</div>
+                {% endif %}
 
-<input type="text"
-name="coupon"
-placeholder="Enter coupon SAVE10">
+                <div>
+                    <h2 class="item-title">{{ item[0][1] }}</h2>
+                    <div class="meta">
+                        <span>Price: &#8377;{{ item[0][3] }}</span>
+                        <span class="pill">Stock: {{ item[0][5] }}</span>
+                    </div>
+                    <div class="subtotal">Subtotal: &#8377;{{ item[2] }}</div>
+                </div>
 
-<button type="submit">
-Apply Coupon
-</button>
+                <div class="qty-box">
+                    <div class="qty-label">Quantity</div>
+                    <div class="qty-controls">
+                        <a class="btn minus" href="/decrease/{{ item[0][0] }}">-</a>
+                        <span class="qty">{{ item[1] }}</span>
+                        {% if item[1] < (item[0][5] | int) %}
+                        <a class="btn plus" href="/increase/{{ item[0][0] }}">+</a>
+                        {% endif %}
+                    </div>
+                    {% if item[1] >= (item[0][5] | int) %}
+                    <span class="stock-msg">No more stock available</span>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </section>
 
-</form>
+        <aside class="summary">
+            <h2>Order Summary</h2>
 
-<p class="total">
-Subtotal: ₹{{ total }}
-</p>
+            <form class="coupon" action="/apply_coupon" method="POST">
+                <input type="text" name="coupon" placeholder="Enter coupon SAVE10">
+                <button type="submit">Apply</button>
+            </form>
 
-<p class="total">
-GST: ₹{{ gst }}
-</p>
+            <div class="line"><span>Subtotal</span><strong>&#8377;{{ total }}</strong></div>
+            <div class="line"><span>GST</span><strong>&#8377;{{ gst }}</strong></div>
+            <div class="line"><span>Discount {{ discount_percent }}%</span><strong>- &#8377;{{ discount_amount }}</strong></div>
+            <div class="grand"><span>Total</span><span>&#8377;{{ grand_total }}</span></div>
 
-<p class="total">
-Discount {{ discount_percent }}%: ₹{{ discount_amount }}
-</p>
-
-<p class="total">
-Grand Total: ₹{{ grand_total }}
-</p>
-
-<a class="checkout" href="/checkout">
-Checkout
-</a>
-
-<br><br>
-
-<a class="whatsapp"
-href="https://wa.me/918209049778?text=Hello%20Damodar%20Grocery%20Store,%20I%20want%20to%20place%20an%20order.%20Grand%20Total:%20₹{{ grand_total }}">
-📱 Order on WhatsApp
-</a>
-
-<br><br>
-
-<a href="/">
-Back
-</a>
+            <a class="checkout" href="/checkout">Checkout</a>
+            <a class="whatsapp" href="https://wa.me/918209049778?text=Hello%20Damodar%20Grocery%20Store,%20I%20want%20to%20place%20an%20order.%20Grand%20Total:%20%E2%82%B9{{ grand_total }}">Order on WhatsApp</a>
+            <a class="back" href="/">Back to store</a>
+        </aside>
+    </div>
+    {% else %}
+    <div class="empty">
+        <h2>Your cart is empty</h2>
+        <p>Add grocery items to see them here.</p>
+        <a class="checkout" href="/">Start Shopping</a>
+    </div>
+    {% endif %}
+</main>
 
 </body>
 </html>
