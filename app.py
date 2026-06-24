@@ -108,6 +108,32 @@ def can_add_to_cart(product_id, current_quantity):
     return product_stock(product) > current_quantity
 
 
+def add_product_to_cart(product_id, quantity):
+    cart = session.get("cart", {})
+    if isinstance(cart, list):
+        cart = {}
+
+    quantity = safe_quantity(quantity)
+    if quantity <= 0:
+        quantity = 1
+
+    cart_key = str(product_id)
+    current_quantity = int(cart.get(cart_key, 0) or 0)
+    added = 0
+
+    for _ in range(quantity):
+        if not can_add_to_cart(product_id, current_quantity + added):
+            break
+        added += 1
+
+    if added > 0:
+        cart[cart_key] = current_quantity + added
+        session["cart"] = cart
+        session.modified = True
+
+    return added
+
+
 def coupon_value(coupon):
     try:
         if hasattr(coupon, "keys") and "discount" in coupon.keys():
@@ -818,22 +844,17 @@ def customer_login():
 
 @app.route("/add_to_cart/<int:product_id>")
 def add_to_cart(product_id):
-    cart = session.get("cart", {})
-    if isinstance(cart, list):
-        cart = {}
-
-    cart_key = str(product_id)
-    current_quantity = int(cart.get(cart_key, 0))
-
-    if not can_add_to_cart(product_id, current_quantity):
-        return redirect("/cart")
-
-    cart[cart_key] = current_quantity + 1
-
-    session["cart"] = cart
-    session.modified = True
+    quantity = request.args.get("quantity", request.form.get("quantity", 1))
+    add_product_to_cart(product_id, quantity)
 
     return redirect("/cart")
+
+
+@app.route("/buy_now/<int:product_id>")
+def buy_now(product_id):
+    quantity = request.args.get("quantity", 1)
+    add_product_to_cart(product_id, quantity)
+    return redirect("/checkout")
 
 
 @app.route("/increase/<int:product_id>")
