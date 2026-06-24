@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bulk Add Products - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111827}
+a{text-decoration:none}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:24px;font-weight:bold;color:white}
+.brand span{color:#ff9900}
+.nav{display:flex;gap:12px;flex-wrap:wrap}
+.nav a{color:white;font-weight:bold;font-size:14px}
+.page{max-width:980px;margin:0 auto;padding:28px 18px 44px}
+.hero{background:linear-gradient(135deg,#0b6623,#0b8f3a);color:white;border-radius:18px;padding:26px;margin-bottom:22px;box-shadow:0 12px 30px rgba(11,102,35,.22)}
+.hero h1{font-size:34px;margin-bottom:8px}
+.hero p{color:#e7fff0;line-height:1.5}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
+.panel{background:white;border:1px solid #e7ecef;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(0,0,0,.07)}
+.panel h2{font-size:22px;margin-bottom:14px}
+.upload-box{border:2px dashed #cbd5df;border-radius:14px;padding:22px;background:#f8faf9}
+label{display:block;font-size:13px;font-weight:bold;color:#374151;margin-bottom:8px}
+input{width:100%;border:1px solid #dce3e7;border-radius:10px;padding:13px;background:white}
+.note{color:#6b7280;font-size:14px;line-height:1.5;margin-top:12px}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:10px;padding:13px 16px;font-weight:bold;font-size:15px;cursor:pointer}
+button{background:#ff9900;color:#111}
+.btn{background:#eef3f0;color:#0b6623}
+.success{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold}
+ul{padding-left:18px;color:#4b5563;line-height:1.8}
+.columns{display:grid;gap:8px;margin-top:10px}
+.col{background:#f8faf9;border:1px solid #e7ecef;border-radius:10px;padding:10px;font-weight:bold;color:#374151}
+@media(max-width:850px){
+.topbar{align-items:flex-start;flex-direction:column}
+.grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="topbar">
+    <a class="brand" href="/orders">Damodar <span>Admin</span></a>
+    <nav class="nav">
+        <a href="/orders">Dashboard</a>
+        <a href="/add_product">Add Product</a>
+        <a href="/">Store Front</a>
+        <a href="/logout">Logout</a>
+    </nav>
+</div>
+
+<main class="page">
+    <section class="hero">
+        <h1>Bulk Add Products</h1>
+        <p>Excel ya CSV upload karke ek saath multiple products add kare. Images optional URL columns se add ho sakti hain.</p>
+    </section>
+
+    <div class="grid">
+        <section class="panel">
+            <h2>Upload File</h2>
+
+            {% if success %}
+            <div class="success">{{ success }}{% if skipped %} {{ skipped }} rows skip hui.{% endif %}</div>
+            {% endif %}
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            {% if errors %}
+            <div class="error">
+                <strong>Skipped rows:</strong>
+                <ul>
+                    {% for item in errors %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="upload-box">
+                    <label>CSV / Excel File</label>
+                    <input type="file" name="product_file" accept=".csv,.xlsx" required>
+                    <p class="note">Recommended: template download karke usi format me products fill kare.</p>
+                </div>
+
+                <div class="actions">
+                    <button type="submit">Upload Products</button>
+                    <a class="btn" href="/download_product_template">Download Template</a>
+                    <a class="btn" href="/add_product">Single Add</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="panel">
+            <h2>Required Columns</h2>
+            <p class="note">Column names same rakho. `image` columns me direct image URL optional hai.</p>
+            <div class="columns">
+                <div class="col">name</div>
+                <div class="col">category</div>
+                <div class="col">price</div>
+                <div class="col">stock</div>
+                <div class="col">description</div>
+                <div class="col">image, image2, image3, image4, image5</div>
+            </div>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

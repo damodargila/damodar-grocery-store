@@ -30,6 +30,7 @@ input,textarea,select{width:100%;border:1px solid #dce3e7;border-radius:10px;pad
 textarea{min-height:120px;resize:vertical}
 input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
 .error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold}
+.success{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold}
 .upload-box{border:2px dashed #cbd5df;border-radius:14px;padding:18px;background:#f8faf9}
 .note{color:#6b7280;font-size:13px;margin-top:8px}
 .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
@@ -83,6 +84,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
         </div>
         <div class="hero-actions">
             <a href="/orders">Back to Dashboard</a>
+            <a href="/bulk_add_products">Bulk Add Products</a>
             <a href="/">View Store</a>
         </div>
     </section>
@@ -93,6 +95,10 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
 
             {% if error %}
             <div class="error">{{ error }}</div>
+            {% endif %}
+
+            {% if success %}
+            <div class="success">{{ success }}</div>
             {% endif %}
 
             <form id="productForm" action="/add_product" method="POST" enctype="multipart/form-data">

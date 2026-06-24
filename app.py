@@ -4,13 +4,14 @@ import os
 import random
 import smtplib
 import threading
+import csv
 from io import BytesIO
 from email.message import EmailMessage
 
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.pdfgen import canvas
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from dotenv import load_dotenv
 
 import psycopg2
@@ -510,6 +511,36 @@ def init_db():
 
 def ensure_product_columns():
     init_db()
+
+
+def insert_product_record(cursor, name, category, price, stock, description="", images=None):
+    images = (images or [])[:5]
+    image1 = images[0] if len(images) > 0 else ""
+    image2 = images[1] if len(images) > 1 else ""
+    image3 = images[2] if len(images) > 2 else ""
+    image4 = images[3] if len(images) > 3 else ""
+    image5 = images[4] if len(images) > 4 else ""
+
+    execute(
+        cursor,
+        """
+        INSERT INTO products
+        (name, category, price, image, stock, description, image2, image3, image4, image5)
+        VALUES (?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            name,
+            category,
+            price,
+            image1,
+            stock,
+            description,
+            image2,
+            image3,
+            image4,
+            image5
+        )
+    )
 
 
 init_db()
@@ -1640,42 +1671,141 @@ def add_product():
                 upload_result = cloudinary.uploader.upload(file)
                 images.append(upload_result["secure_url"])
 
-        image1 = images[0] if len(images) > 0 else ""
-        image2 = images[1] if len(images) > 1 else ""
-        image3 = images[2] if len(images) > 2 else ""
-        image4 = images[3] if len(images) > 3 else ""
-        image5 = images[4] if len(images) > 4 else ""
-
         conn = get_db()
         cursor = conn.cursor()
 
-        execute(
+        insert_product_record(
             cursor,
-            """
-            INSERT INTO products
-            (name, category, price, image, stock, description, image2, image3, image4, image5)
-            VALUES (?,?,?,?,?,?,?,?,?,?)
-            """,
-            (
-                name,
-                category,
-                price_value,
-                image1,
-                stock_value,
-                description,
-                image2,
-                image3,
-                image4,
-                image5
-            )
+            name,
+            category,
+            price_value,
+            stock_value,
+            description,
+            images
         )
 
         conn.commit()
         conn.close()
 
-        return redirect("/")
+        return render_template("add_product.html", success=f"{name} product add ho gaya.", form_data={})
 
     return render_template("add_product.html", form_data={})
+
+
+@app.route("/download_product_template")
+def download_product_template():
+    if not is_admin():
+        return redirect("/admin_login")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Products"
+    ws.append(["name", "category", "price", "stock", "description", "image", "image2", "image3", "image4", "image5"])
+    ws.append(["HP Laptop Backpack", "Electronics", 999, 10, "Durable laptop backpack", "", "", "", "", ""])
+    ws.append(["Face Cream", "Beauty", 199, 25, "Daily use skin cream", "", "", "", "", ""])
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="product_upload_template.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
+@app.route("/bulk_add_products", methods=["GET", "POST"])
+def bulk_add_products():
+    if not is_admin():
+        return redirect("/admin_login")
+
+    ensure_product_columns()
+
+    if request.method == "POST":
+        upload = request.files.get("product_file")
+
+        if not upload or not upload.filename:
+            return render_template("bulk_add_products.html", error="CSV ya Excel file select kare.")
+
+        filename = upload.filename.lower()
+        rows = []
+
+        try:
+            if filename.endswith(".xlsx"):
+                workbook = load_workbook(upload.stream, data_only=True)
+                sheet = workbook.active
+                headers = [str(cell.value or "").strip().lower() for cell in next(sheet.iter_rows(min_row=1, max_row=1))]
+
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    if not any(row):
+                        continue
+                    rows.append({
+                        headers[index]: value
+                        for index, value in enumerate(row)
+                        if index < len(headers)
+                    })
+            elif filename.endswith(".csv"):
+                text = upload.read().decode("utf-8-sig")
+                reader = csv.DictReader(text.splitlines())
+                rows = [row for row in reader if any((value or "").strip() for value in row.values())]
+            else:
+                return render_template("bulk_add_products.html", error="Sirf .xlsx ya .csv file upload kare.")
+        except Exception:
+            return render_template("bulk_add_products.html", error="File read nahi ho payi. Template format check kare.")
+
+        if not rows:
+            return render_template("bulk_add_products.html", error="File me product rows nahi mile.")
+
+        conn = get_db()
+        cursor = conn.cursor()
+        added = 0
+        skipped = 0
+        errors = []
+
+        for row_number, row in enumerate(rows, start=2):
+            name = str(row.get("name") or "").strip()
+            category = str(row.get("category") or "").strip()
+            description = str(row.get("description") or "").strip()
+
+            try:
+                price = int(float(row.get("price") or 0))
+                stock = int(float(row.get("stock") or 0))
+            except (TypeError, ValueError):
+                skipped += 1
+                errors.append(f"Row {row_number}: price/stock invalid")
+                continue
+
+            if not name or not category or price < 1 or stock < 0:
+                skipped += 1
+                errors.append(f"Row {row_number}: required data missing")
+                continue
+
+            images = [
+                str(row.get(field) or "").strip()
+                for field in ["image", "image2", "image3", "image4", "image5"]
+                if str(row.get(field) or "").strip()
+            ]
+
+            try:
+                insert_product_record(cursor, name, category, price, stock, description, images)
+                added += 1
+            except Exception:
+                skipped += 1
+                errors.append(f"Row {row_number}: save failed")
+
+        conn.commit()
+        conn.close()
+
+        return render_template(
+            "bulk_add_products.html",
+            success=f"{added} products add ho gaye.",
+            skipped=skipped,
+            errors=errors[:10]
+        )
+
+    return render_template("bulk_add_products.html")
 
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
