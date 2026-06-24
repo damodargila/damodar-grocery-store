@@ -672,7 +672,29 @@ def reviews(product_id):
 def profile():
     if "user" not in session:
         return redirect("/customer_login")
-    return render_template("profile.html", name=session["user"])
+
+    conn = get_db()
+    cursor = conn.cursor()
+    user_email_or_name = session["user"]
+    execute(
+        cursor,
+        "SELECT * FROM orders WHERE customer_email=? OR customer_name=?",
+        (user_email_or_name, user_email_or_name)
+    )
+    orders = cursor.fetchall()
+    conn.close()
+
+    total_orders = len(orders)
+    delivered_orders = sum(1 for order in orders if order_col(order, "status", 8) == "Delivered")
+    pending_orders = total_orders - delivered_orders
+
+    return render_template(
+        "profile.html",
+        name=session["user"],
+        total_orders=total_orders,
+        delivered_orders=delivered_orders,
+        pending_orders=pending_orders
+    )
 
 
 @app.route("/my_orders")
