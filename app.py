@@ -523,6 +523,8 @@ def send_email_async(to_email, subject, body):
 def home():
     search = request.args.get("search", "")
     category = request.args.get("category", "")
+    stock_filter = request.args.get("stock", "")
+    sort = request.args.get("sort", "")
 
     conn = get_db()
     cursor = conn.cursor()
@@ -537,6 +539,20 @@ def home():
     if category:
         query += " AND category=?"
         params.append(category)
+
+    if stock_filter == "in":
+        query += " AND stock > 0"
+    elif stock_filter == "out":
+        query += " AND stock <= 0"
+
+    sort_options = {
+        "price_low": "price ASC",
+        "price_high": "price DESC",
+        "stock_low": "stock ASC",
+        "stock_high": "stock DESC",
+        "newest": "id DESC",
+    }
+    query += " ORDER BY " + sort_options.get(sort, "id DESC")
 
     execute(cursor, query, params)
     products = cursor.fetchall()
@@ -574,6 +590,8 @@ def home():
         ratings=ratings,
         search=search,
         category=category,
+        stock_filter=stock_filter,
+        sort=sort,
         categories=categories,
         wishlist_ids=wishlist_ids
     )

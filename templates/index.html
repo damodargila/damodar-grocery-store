@@ -12,9 +12,9 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .logo{font-size:24px;font-weight:bold;white-space:nowrap}
 .logo span{color:#ff9900}
 
-.search-form{display:flex;flex:1;max-width:850px;border-radius:8px;overflow:hidden}
+.search-form{display:flex;flex:1;max-width:1080px;border-radius:10px;overflow:hidden;background:white;box-shadow:0 2px 10px rgba(0,0,0,.12)}
 .search-form input{flex:1;padding:14px;border:none;font-size:15px}
-.search-form select{width:165px;border:none;border-left:1px solid #ddd;padding:14px;background:#f3f3f3}
+.search-form select{width:150px;border:none;border-left:1px solid #ddd;padding:14px;background:#f3f3f3}
 .search-form button{background:#ff9900;color:#111;border:none;padding:14px 24px;font-weight:bold;cursor:pointer}
 
 .top-links a{color:white;text-decoration:none;margin-left:12px;font-weight:bold;font-size:14px}
@@ -29,9 +29,9 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
 .section-title{padding:5px 22px 15px;font-size:26px}
 
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;padding:0 22px 35px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;padding:0 22px 35px;align-items:stretch}
 
-.card{background:white;border-radius:16px;padding:12px;box-shadow:0 3px 14px rgba(0,0,0,.13);transition:.25s;position:relative}
+.card{background:white;border-radius:16px;padding:12px;box-shadow:0 3px 14px rgba(0,0,0,.13);transition:.25s;position:relative;display:flex;flex-direction:column;height:100%}
 .card:hover{transform:translateY(-5px);box-shadow:0 10px 26px rgba(0,0,0,.22)}
 
 .img-wrap{position:relative;background:#f1f1f1;border-radius:14px;overflow:hidden}
@@ -39,6 +39,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .no-img{height:175px;display:flex;align-items:center;justify-content:center;color:#777;background:#eee}
 
 .stock-badge{position:absolute;top:10px;left:10px;background:#009245;color:white;font-size:12px;padding:6px 10px;border-radius:20px;font-weight:bold;z-index:10}
+.low-badge{background:#ffcc00;color:#111}
 .out-badge{background:#d32f2f}
 
 .heart-btn{position:absolute;top:10px;right:10px;width:44px;height:44px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;color:#666;text-decoration:none;box-shadow:0 2px 12px rgba(0,0,0,.25);z-index:20;transition:.2s}
@@ -61,6 +62,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .review-count{font-size:13px;color:#555;margin-left:5px}
 .stock{font-size:13px;margin:8px 0;color:#444}
 
+.card-actions{margin-top:auto}
 .btn{display:block;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;padding:10px;margin:7px 0;text-align:center}
 .details-btn{background:#0b6623;color:white}
 .cart-btn{background:#ffd814;color:#111}
@@ -73,7 +75,14 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .delete-btn{background:#e53935}
 .out{color:red;font-weight:bold;margin:10px 0}
 
-.footer{background:#131921;color:white;text-align:center;padding:24px;margin-top:10px}
+.empty-products{grid-column:1/-1;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:35px;text-align:center;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+.empty-products h3{font-size:24px;margin-bottom:8px}
+.empty-products p{color:#555;margin-bottom:16px}
+.empty-products a{display:inline-block;background:#0b6623;color:white;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:bold}
+
+.footer{background:#131921;color:white;text-align:center;padding:22px;margin-top:10px}
+.footer-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:8px}
+.footer-links a{color:#ffd814;text-decoration:none;font-weight:bold;font-size:14px}
 
 @media(max-width:800px){
 .topbar{flex-direction:column;align-items:flex-start}
@@ -99,6 +108,18 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
             {% for cat in categories %}
             <option value="{{ cat[0] }}" {% if category == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
             {% endfor %}
+        </select>
+        <select name="stock">
+            <option value="">All Stock</option>
+            <option value="in" {% if stock_filter == 'in' %}selected{% endif %}>In Stock</option>
+            <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Out of Stock</option>
+        </select>
+        <select name="sort">
+            <option value="">Newest</option>
+            <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price Low</option>
+            <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price High</option>
+            <option value="stock_low" {% if sort == 'stock_low' %}selected{% endif %}>Low Stock</option>
+            <option value="stock_high" {% if sort == 'stock_high' %}selected{% endif %}>High Stock</option>
         </select>
         <button type="submit">Search</button>
     </form>
@@ -137,6 +158,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 <h2 class="section-title">Featured Products</h2>
 
 <div class="products">
+{% if products %}
 {% for product in products %}
 
 <div class="card" onclick="window.location='/product/{{ product[0] }}'" style="cursor:pointer;">
@@ -147,7 +169,9 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <div class="no-img">No Image</div>
         {% endif %}
 
-        {% if (product[5] | int) > 0 %}
+        {% if (product[5] | int) > 0 and (product[5] | int) <= 5 %}
+        <div class="stock-badge low-badge">Only {{ product[5] }} left</div>
+        {% elif (product[5] | int) > 0 %}
         <div class="stock-badge">In Stock</div>
         {% else %}
         <div class="stock-badge out-badge">Out of Stock</div>
@@ -186,25 +210,40 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     <p class="stock">Stock: {{ product[5] }}</p>
 
 
-    {% if (product[5] | int) > 0 %}
-    <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
-    <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
-    {% else %}
-    <p class="out">Out Of Stock</p>
-    {% endif %}
-
-    <div class="small-btns">
-        {% if session.get('admin') %}
-        <a class="mini edit" href="/edit_product/{{ product[0] }}">Edit</a>
-        <a class="mini delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>
+    <div class="card-actions">
+        {% if (product[5] | int) > 0 %}
+        <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
+        <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
+        {% else %}
+        <p class="out">Out Of Stock</p>
         {% endif %}
+
+        <div class="small-btns">
+            {% if session.get('admin') %}
+            <a class="mini edit" href="/edit_product/{{ product[0] }}">Edit</a>
+            <a class="mini delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>
+            {% endif %}
+        </div>
     </div>
 </div>
 
 {% endfor %}
+{% else %}
+<div class="empty-products">
+    <h3>No products found</h3>
+    <p>Search ya filter me product nahi mila. Filter clear karke dobara try kare.</p>
+    <a href="/">Clear Filters</a>
+</div>
+{% endif %}
 </div>
 
 <div class="footer">
+    <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/cart">Cart</a>
+        <a href="/wishlist">Wishlist</a>
+        <a href="/my_orders">My Orders</a>
+    </div>
     © 2026 Damodar Grocery Store | Fresh Grocery, Fast Delivery
 </div>
 
