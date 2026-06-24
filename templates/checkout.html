@@ -1,38 +1,160 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Checkout</title>
+<title>Buy Now - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
+
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.nav a{color:white;text-decoration:none;margin-left:18px;font-weight:bold;font-size:14px}
+
+.page{max-width:1180px;margin:0 auto;padding:28px 18px 42px}
+.head{margin-bottom:22px}
+.head h1{font-size:34px}
+.head p{color:#555;margin-top:7px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start}
+.panel,.summary{background:white;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.10)}
+.panel{padding:22px}
+.summary{padding:18px;position:sticky;top:86px}
+
+.section-title{font-size:22px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.field.full{grid-column:1 / -1}
+label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
+input,textarea,select{width:100%;border:1px solid #ddd;border-radius:10px;padding:13px;font-size:15px;background:white}
+textarea{min-height:100px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+
+.pay-box{margin-top:20px}
+.actions{display:flex;gap:12px;margin-top:22px;align-items:center}
+.buy-btn{background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px 22px;font-weight:bold;font-size:16px;cursor:pointer}
+.back{color:#0b6623;text-decoration:none;font-weight:bold}
+
+.summary h2{font-size:22px;margin-bottom:16px}
+.item{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #eee}
+.item-name{font-weight:bold}
+.item small{display:block;color:#666;margin-top:3px}
+.line{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eee;color:#444}
+.line strong{color:#111}
+.grand{display:flex;justify-content:space-between;align-items:center;padding-top:16px;font-size:24px;font-weight:bold;color:#0b6623}
+.empty{padding:28px;text-align:center;color:#555}
+
+@media(max-width:850px){
+.topbar{align-items:flex-start;gap:10px;flex-direction:column}
+.nav a{margin:0 14px 0 0}
+.layout{grid-template-columns:1fr}
+.summary{position:static}
+.grid{grid-template-columns:1fr}
+.actions{flex-direction:column;align-items:stretch}
+.buy-btn{text-align:center;width:100%}
+}
+</style>
 </head>
+
 <body>
 
-<h1>Checkout</h1>
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/cart">Cart</a>
+        <a href="/profile">Profile</a>
+    </div>
+</div>
 
-<form method="POST">
+<main class="page">
+    <div class="head">
+        <h1>Buy Now</h1>
+        <p>Enter delivery details and confirm your order.</p>
+    </div>
 
-<input type="text" name="name" placeholder="Name" required>
-<br><br>
+    <div class="layout">
+        <section class="panel">
+            <h2 class="section-title">Delivery Details</h2>
 
-<input type="email" name="email" placeholder="Email" required>
-<br><br>
+            <form method="POST">
+                <div class="grid">
+                    <div class="field">
+                        <label>Name</label>
+                        <input type="text" name="name" placeholder="Your full name" required>
+                    </div>
 
-<input type="text" name="phone" placeholder="Phone" required>
-<br><br>
+                    <div class="field">
+                        <label>Mobile Number</label>
+                        <input type="tel" name="phone" placeholder="10 digit mobile number" pattern="[0-9]{10}" maxlength="10" required>
+                    </div>
 
-<textarea name="address" placeholder="Address" required></textarea>
-<br><br>
+                    <div class="field full">
+                        <label>Email</label>
+                        <input type="email" name="email" placeholder="example@email.com" required>
+                    </div>
 
-<select name="payment_method">
-<option value="COD">Cash On Delivery</option>
-<option value="Demo Payment">Demo Payment</option>
-</select>
+                    <div class="field full">
+                        <label>Full Address</label>
+                        <textarea name="address" placeholder="House no, street, area, landmark" required></textarea>
+                    </div>
 
-<br><br>
+                    <div class="field">
+                        <label>District</label>
+                        <input type="text" name="district" placeholder="District" required>
+                    </div>
 
-<button type="submit">
-Place Order
-</button>
+                    <div class="field">
+                        <label>State</label>
+                        <input type="text" name="state" placeholder="State" required>
+                    </div>
 
-</form>
+                    <div class="field">
+                        <label>Pin Code</label>
+                        <input type="text" name="pincode" placeholder="6 digit pincode" pattern="[0-9]{6}" maxlength="6" required>
+                    </div>
+
+                    <div class="field">
+                        <label>Payment Method</label>
+                        <select name="payment_method" required>
+                            <option value="COD">Cash On Delivery</option>
+                            <option value="Demo Payment">Demo Payment</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="buy-btn" type="submit">Place Order</button>
+                    <a class="back" href="/cart">Back to cart</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="summary">
+            <h2>Order Summary</h2>
+
+            {% if products %}
+                {% for item in products %}
+                <div class="item">
+                    <div>
+                        <span class="item-name">{{ item[0][1] }}</span>
+                        <small>Qty: {{ item[1] }} x &#8377;{{ item[0][3] }}</small>
+                    </div>
+                    <strong>&#8377;{{ item[2] }}</strong>
+                </div>
+                {% endfor %}
+
+                <div class="line"><span>Subtotal</span><strong>&#8377;{{ total }}</strong></div>
+                <div class="line"><span>GST</span><strong>&#8377;{{ gst }}</strong></div>
+                <div class="line"><span>Discount {{ discount_percent }}%</span><strong>- &#8377;{{ discount_amount }}</strong></div>
+                <div class="grand"><span>Total</span><span>&#8377;{{ grand_total }}</span></div>
+            {% else %}
+                <div class="empty">Your cart is empty.</div>
+            {% endif %}
+        </aside>
+    </div>
+</main>
 
 </body>
 </html>

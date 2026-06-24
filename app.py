@@ -845,8 +845,12 @@ def checkout():
         name = request.form["name"]
         phone = request.form["phone"]
         address = request.form["address"]
+        district = request.form["district"]
+        state = request.form["state"]
+        pincode = request.form["pincode"]
         payment_method = request.form["payment_method"]
         email = request.form["email"]
+        full_address = f"{address}, District: {district}, State: {state}, Pincode: {pincode}"
 
         cart_items = session.get("cart", {})
         if isinstance(cart_items, list):
@@ -893,7 +897,7 @@ def checkout():
                 (
                     name,
                     phone,
-                    address,
+                    full_address,
                     grand_total,
                     payment_method,
                     "Paid" if payment_method == "Demo Payment" else "Pending",
@@ -913,7 +917,7 @@ def checkout():
                 (
                     name,
                     phone,
-                    address,
+                    full_address,
                     grand_total,
                     payment_method,
                     "Paid" if payment_method == "Demo Payment" else "Pending",
@@ -956,11 +960,48 @@ def checkout():
         session["cart"] = {}
         session["discount"] = 0
         session["coupon_code"] = ""
+        session["coupon_message"] = ""
+        session["coupon_status"] = ""
         session["last_order_id"] = order_id
 
         return render_template("success.html", order_id=order_id)
 
-    return render_template("checkout.html")
+    cart_items = session.get("cart", {})
+    if isinstance(cart_items, list):
+        cart_items = {}
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    products = []
+    total = 0
+
+    for product_id, quantity in cart_items.items():
+        execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
+        product = cursor.fetchone()
+
+        if product:
+            price = int(product_col(product, "price", 3, 0))
+            subtotal = price * quantity
+            total += subtotal
+            products.append((product, quantity, subtotal))
+
+    conn.close()
+
+    gst = int(total * 0.05)
+    discount_percent = int(session.get("discount", 0) or 0)
+    discount_amount = int(total * discount_percent / 100)
+    grand_total = total + gst - discount_amount
+
+    return render_template(
+        "checkout.html",
+        products=products,
+        total=total,
+        gst=gst,
+        discount_percent=discount_percent,
+        discount_amount=discount_amount,
+        grand_total=grand_total
+    )
 
 
 @app.route("/invoice/<int:order_id>")
