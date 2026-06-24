@@ -713,9 +713,23 @@ def my_orders():
     )
     orders = cursor.fetchall()
 
+    order_items_map = {}
+    for order in orders:
+        order_id = order_col(order, "id", 0)
+        execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
+        items = []
+        for item in cursor.fetchall():
+            items.append({
+                "product_id": order_col(item, "product_id", 5, ""),
+                "product_name": order_col(item, "product_name", 2, ""),
+                "price": order_col(item, "price", 3, 0),
+                "quantity": order_col(item, "quantity", 4, 0),
+            })
+        order_items_map[order_id] = items
+
     conn.close()
 
-    return render_template("my_orders.html", orders=orders)
+    return render_template("my_orders.html", orders=orders, order_items_map=order_items_map)
 
 
 @app.route("/admin_login", methods=["GET", "POST"])

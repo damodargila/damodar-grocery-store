@@ -1,92 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>My Orders</title>
+<title>My Orders - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{font-family:Arial;background:#f5f5f5;padding:20px;}
-h1{color:green;}
-
-.order{
-background:white;
-padding:20px;
-margin:20px 0;
-border-radius:12px;
-box-shadow:0 0 8px gray;
-}
-
-.step{
-display:inline-block;
-padding:10px 15px;
-margin:5px;
-border-radius:20px;
-background:#ddd;
-color:black;
-font-weight:bold;
-}
-
-.active{
-background:green;
-color:white;
-}
-
-.btn{
-background:green;
-color:white;
-padding:10px 15px;
-text-decoration:none;
-border-radius:6px;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.nav a{color:white;text-decoration:none;margin-left:18px;font-weight:bold;font-size:14px}
+.page{max-width:1180px;margin:0 auto;padding:30px 18px 44px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:20px}
+.hero h1{font-size:34px;margin-bottom:7px}.hero p{color:#5f6b76}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.search,.filter{border:1px solid #dce3e7;border-radius:10px;padding:12px 14px;font-size:15px;background:white}
+.search{min-width:280px;flex:1}.filter{min-width:170px}
+.orders{display:grid;gap:18px}
+.order{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.08);overflow:hidden}
+.order-head{display:flex;justify-content:space-between;gap:18px;padding:20px 22px;border-bottom:1px solid #edf0f2;background:#fbfdfb}
+.order-title h2{font-size:23px;margin-bottom:6px}.muted{color:#64707d;font-size:14px;line-height:1.5}
+.amount{font-size:28px;font-weight:bold;color:#0b6623;text-align:right}
+.status{display:inline-block;margin-top:8px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:bold;background:#fff7e6;color:#b45309}
+.status.Delivered{background:#ecfdf3;color:#0b6623}.status.Cancelled{background:#fff1f1;color:#dc2626}.status.Shipped{background:#eef5ff;color:#2563eb}.status.Packed{background:#f4efff;color:#7c3aed}
+.order-body{padding:20px 22px}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.info{background:#f8faf9;border:1px solid #edf0f2;border-radius:12px;padding:13px}
+.info span{display:block;color:#64707d;font-size:13px;margin-bottom:5px}.info strong{font-size:15px}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.step{background:#eef1f3;color:#64707d;border-radius:12px;padding:12px;text-align:center;font-weight:bold}
+.step.active{background:#0b8f3a;color:white}.step.cancelled{background:#fff1f1;color:#dc2626}
+.items{border-top:1px solid #edf0f2;padding-top:16px;margin-top:16px}
+.items h3{font-size:18px;margin-bottom:10px}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f3;align-items:center}
+.item:last-child{border-bottom:none}
+.qty{color:#64707d}.price{font-weight:bold;color:#0b6623}
+.review-btn,.invoice-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 13px;font-weight:bold;margin-top:12px;margin-right:8px}
+.invoice-btn{background:#ff9900;color:#111}.review-btn{background:#0b8f3a;color:white}
+.empty{background:white;border-radius:16px;text-align:center;padding:50px 20px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
+.empty h2{font-size:28px;margin-bottom:8px}.empty p{color:#64707d;margin-bottom:18px}
+.shop{display:inline-flex;background:#ff9900;color:#111;text-decoration:none;border-radius:10px;padding:13px 20px;font-weight:bold}
+@media(max-width:850px){.topbar,.hero,.order-head{align-items:flex-start;flex-direction:column}.nav a{margin:0 14px 0 0}.info-grid,.timeline{grid-template-columns:1fr}.item{grid-template-columns:1fr}.amount{text-align:left}}
 </style>
 </head>
 
 <body>
-
-<h1>📦 My Orders Tracking</h1>
-
-<a class="btn" href="/">🏠 Back To Store</a>
-
-{% for order in orders %}
-
-<div class="order">
-
-<h2>Order ID: #{{ order[0] }}</h2>
-
-<p><b>Name:</b> {{ order[1] }}</p>
-<p><b>Phone:</b> {{ order[2] }}</p>
-<p><b>Address:</b> {{ order[3] }}</p>
-<p><b>Total:</b> ₹{{ order[4] }}</p>
-
-{% if order|length > 8 %}
-<p><b>Current Status:</b> {{ order[8] }}</p>
-
-<div>
-
-<span class="step {% if order[8] == 'Pending' or order[8] == 'Packed' or order[8] == 'Shipped' or order[8] == 'Delivered' %}active{% endif %}">
-📦 Pending
-</span>
-
-<span class="step {% if order[8] == 'Packed' or order[8] == 'Shipped' or order[8] == 'Delivered' %}active{% endif %}">
-📦 Packed
-</span>
-
-<span class="step {% if order[8] == 'Shipped' or order[8] == 'Delivered' %}active{% endif %}">
-🚚 Shipped
-</span>
-
-<span class="step {% if order[8] == 'Delivered' %}active{% endif %}">
-🎉 Delivered
-</span>
-
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <div class="nav">
+        <a href="/">Home</a>
+        <a href="/cart">Cart</a>
+        <a href="/profile">Profile</a>
+        <a href="/logout">Logout</a>
+    </div>
 </div>
 
-{% else %}
-<p><b>Current Status:</b> Pending</p>
-{% endif %}
+<main class="page">
+    <section class="hero">
+        <div>
+            <h1>My Orders</h1>
+            <p>Track orders, download invoice and review delivered products.</p>
+        </div>
+        <a class="shop" href="/">Continue Shopping</a>
+    </section>
 
-</div>
+    {% if orders %}
+    <div class="tools">
+        <input class="search" id="orderSearch" type="text" placeholder="Search order, phone, address...">
+        <select class="filter" id="statusFilter">
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Packed">Packed</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+        </select>
+    </div>
 
-{% endfor %}
+    <section class="orders" id="ordersList">
+        {% for order in orders %}
+        {% set status = order[8] if order|length > 8 and order[8] else 'Pending' %}
+        {% set items = order_items_map.get(order[0], []) %}
+        <article class="order" data-status="{{ status }}">
+            <div class="order-head">
+                <div class="order-title">
+                    <h2>Order #{{ order[0] }}</h2>
+                    <p class="muted">Payment: {{ order[5] if order|length > 5 else 'COD' }} | {{ order[6] if order|length > 6 else 'Pending' }}</p>
+                    <span class="status {{ status }}">{{ status }}</span>
+                </div>
+                <div class="amount">&#8377;{{ order[4] }}</div>
+            </div>
+
+            <div class="order-body">
+                <div class="info-grid">
+                    <div class="info"><span>Name</span><strong>{{ order[1] }}</strong></div>
+                    <div class="info"><span>Mobile</span><strong>{{ order[2] }}</strong></div>
+                    <div class="info"><span>Delivery Address</span><strong>{{ order[3] }}</strong></div>
+                </div>
+
+                <div class="timeline">
+                    <div class="step {% if status in ['Pending','Packed','Shipped','Delivered'] %}active{% endif %}">Pending</div>
+                    <div class="step {% if status in ['Packed','Shipped','Delivered'] %}active{% endif %}">Packed</div>
+                    <div class="step {% if status in ['Shipped','Delivered'] %}active{% endif %}">Shipped</div>
+                    <div class="step {% if status == 'Delivered' %}active{% endif %} {% if status == 'Cancelled' %}cancelled{% endif %}">Delivered</div>
+                </div>
+
+                <div class="items">
+                    <h3>Products</h3>
+                    {% if items %}
+                        {% for item in items %}
+                        <div class="item">
+                            <strong>{{ item.product_name }}</strong>
+                            <span class="qty">Qty: {{ item.quantity }}</span>
+                            <span class="price">&#8377;{{ item.price }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="muted">Product details not available for this order.</p>
+                    {% endif %}
+                </div>
+
+                <a class="invoice-btn" href="/invoice/{{ order[0] }}">Download Invoice</a>
+
+                {% if status == 'Delivered' and items %}
+                    {% for item in items %}
+                        {% if item.product_id %}
+                        <a class="review-btn" href="/review/{{ item.product_id }}">Review {{ item.product_name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <div class="empty">
+        <h2>No orders yet</h2>
+        <p>Your orders will appear here after you place them.</p>
+        <a class="shop" href="/">Start Shopping</a>
+    </div>
+    {% endif %}
+</main>
+
+<script>
+function applyFilters(){
+    var query = document.getElementById("orderSearch").value.toLowerCase();
+    var status = document.getElementById("statusFilter").value;
+    document.querySelectorAll(".order").forEach(function(card){
+        var matchesText = card.innerText.toLowerCase().includes(query);
+        var matchesStatus = status === "All" || card.dataset.status === status;
+        card.style.display = matchesText && matchesStatus ? "" : "none";
+    });
+}
+document.getElementById("orderSearch")?.addEventListener("input", applyFilters);
+document.getElementById("statusFilter")?.addEventListener("change", applyFilters);
+</script>
 
 </body>
 </html>
