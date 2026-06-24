@@ -561,6 +561,7 @@ def register_pending_user():
     if not pending:
         return None
 
+    ensure_user_phone_column()
     hashed_password = generate_password_hash(pending["password"])
 
     conn = get_db()
@@ -580,6 +581,19 @@ def register_pending_user():
 
     conn.close()
     return pending
+
+
+def ensure_user_phone_column():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        execute(cursor, "ALTER TABLE users ADD COLUMN phone TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    finally:
+        conn.close()
 
 
 @app.route("/")
@@ -662,6 +676,8 @@ def home():
 
 @app.route("/send_otp", methods=["GET", "POST"])
 def send_otp():
+    ensure_user_phone_column()
+
     if request.method == "POST":
         login_id = request.form.get("login_id", "").strip().lower()
         otp = make_otp()
@@ -698,7 +714,7 @@ def send_otp():
 
         return redirect("/verify_otp")
 
-    return render_template("send_otp.html")
+    return render_template("send_otp.html", form_data={})
 
 
 @app.route("/verify_otp", methods=["GET", "POST"])
@@ -928,6 +944,8 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    ensure_user_phone_column()
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
@@ -979,11 +997,13 @@ def register():
 
         return redirect("/verify_otp")
 
-    return render_template("register.html")
+    return render_template("register.html", form_data={})
 
 
 @app.route("/customer_login", methods=["GET", "POST"])
 def customer_login():
+    ensure_user_phone_column()
+
     if request.method == "POST":
         login_id = request.form.get("login_id", "").strip().lower()
         password = request.form.get("password", "")
@@ -1018,7 +1038,7 @@ def customer_login():
 
         return render_template("customer_login.html", error="Email/phone ya password galat hai.", form_data=request.form)
 
-    return render_template("customer_login.html")
+    return render_template("customer_login.html", form_data={})
 
 
 @app.route("/add_to_cart/<int:product_id>")
