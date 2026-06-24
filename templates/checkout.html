@@ -24,6 +24,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .summary{padding:18px;position:sticky;top:86px}
 
 .section-title{font-size:22px;margin-bottom:16px}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:12px;margin-bottom:16px;font-weight:bold;line-height:1.4}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .field.full{grid-column:1 / -1}
 label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
@@ -78,48 +79,52 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
         <section class="panel">
             <h2 class="section-title">Delivery Details</h2>
 
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
             <form method="POST">
                 <div class="grid">
                     <div class="field">
                         <label>Name</label>
-                        <input type="text" name="name" placeholder="Your full name" required>
+                        <input type="text" name="name" placeholder="Your full name" value="{{ form_data.get('name', '') if form_data else '' }}" required>
                     </div>
 
                     <div class="field">
                         <label>Mobile Number</label>
-                        <input type="tel" name="phone" placeholder="10 digit mobile number" pattern="[0-9]{10}" maxlength="10" required>
+                        <input type="tel" name="phone" placeholder="10 digit mobile number" value="{{ form_data.get('phone', '') if form_data else '' }}" pattern="[0-9]{10}" maxlength="10" required>
                     </div>
 
                     <div class="field full">
                         <label>Email</label>
-                        <input type="email" name="email" placeholder="example@email.com" required>
+                        <input type="email" name="email" placeholder="example@email.com" value="{{ form_data.get('email', '') if form_data else '' }}" required>
                     </div>
 
                     <div class="field full">
                         <label>Full Address</label>
-                        <textarea name="address" placeholder="House no, street, area, landmark" required></textarea>
+                        <textarea name="address" placeholder="House no, street, area, landmark" required>{{ form_data.get('address', '') if form_data else '' }}</textarea>
                     </div>
 
                     <div class="field">
                         <label>District</label>
-                        <input type="text" name="district" placeholder="District" required>
+                        <input type="text" name="district" placeholder="District" value="{{ form_data.get('district', '') if form_data else '' }}" required>
                     </div>
 
                     <div class="field">
                         <label>State</label>
-                        <input type="text" name="state" placeholder="State" required>
+                        <input type="text" name="state" placeholder="State" value="{{ form_data.get('state', '') if form_data else '' }}" required>
                     </div>
 
                     <div class="field">
                         <label>Pin Code</label>
-                        <input type="text" name="pincode" placeholder="6 digit pincode" pattern="[0-9]{6}" maxlength="6" required>
+                        <input type="text" name="pincode" placeholder="6 digit pincode" value="{{ form_data.get('pincode', '') if form_data else '' }}" pattern="[0-9]{6}" maxlength="6" required>
                     </div>
 
                     <div class="field">
                         <label>Payment Method</label>
                         <select name="payment_method" required>
-                            <option value="COD">Cash On Delivery</option>
-                            <option value="Demo Payment">Demo Payment</option>
+                            <option value="COD" {% if form_data and form_data.get('payment_method') == 'COD' %}selected{% endif %}>Cash On Delivery</option>
+                            <option value="Demo Payment" {% if form_data and form_data.get('payment_method') == 'Demo Payment' %}selected{% endif %}>Demo Payment</option>
                         </select>
                     </div>
                 </div>

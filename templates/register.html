@@ -1,93 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Register</title>
+<title>Register - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{box-sizing:border-box;}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:linear-gradient(135deg,#4CAF50,#0b6623);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.register-box{
-    background:white;
-    width:420px;
-    padding:35px;
-    border-radius:15px;
-    box-shadow:0 0 20px rgba(0,0,0,0.3);
-    text-align:center;
-}
-
-.register-box h1{
-    color:green;
-    margin-bottom:25px;
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:1px solid #ccc;
-    border-radius:8px;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    background:green;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#0b6623;
-}
-
-a{
-    text-decoration:none;
-    color:green;
-    font-weight:bold;
-}
-
-.login-link{
-    margin-top:20px;
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111;min-height:100vh}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.topbar a{color:white;text-decoration:none;font-weight:bold}
+.auth-page{min-height:calc(100vh - 58px);display:grid;grid-template-columns:1fr 440px}
+.hero{background:linear-gradient(135deg,#0b6623,#00a859);color:white;padding:60px;display:flex;flex-direction:column;justify-content:center}
+.hero h1{font-size:44px;max-width:560px;line-height:1.1}
+.hero p{font-size:18px;margin-top:16px;max-width:520px;line-height:1.5}
+.badges{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);padding:10px 14px;border-radius:999px;font-weight:bold}
+.panel-wrap{display:flex;align-items:center;justify-content:center;padding:28px}
+.card{width:100%;background:white;border-radius:16px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.14)}
+.card h2{font-size:28px;margin-bottom:8px}
+.card p{color:#555;margin-bottom:20px}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:11px;margin-bottom:14px;font-weight:bold}
+label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
+.field{margin-bottom:14px}
+input{width:100%;border:1px solid #ddd;border-radius:10px;padding:13px;font-size:15px}
+input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+.password-row{position:relative}
+.toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:#eef3f0;color:#0b6623;border-radius:8px;padding:7px 9px;font-weight:bold;cursor:pointer}
+.submit{width:100%;background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:4px}
+.submit:hover{background:#f08b00}
+.switch{margin-top:18px;text-align:center;color:#555}
+.switch a{color:#0b6623;text-decoration:none;font-weight:bold}
+@media(max-width:850px){
+.auth-page{grid-template-columns:1fr}
+.hero{padding:34px 22px}
+.hero h1{font-size:32px}
+.panel-wrap{padding:20px}
 }
 </style>
 </head>
 
 <body>
-
-<div class="register-box">
-
-<h1>👤 Create Account</h1>
-
-<form method="POST">
-
-<input type="text" name="name" placeholder="Enter Full Name" required>
-
-<input type="email" name="email" placeholder="Enter Email" required>
-
-<input type="password" name="password" placeholder="Enter Password" required>
-
-<button type="submit">Register</button>
-
-</form>
-
-<div class="login-link">
-<a href="/customer_login">Already have an account? Login</a>
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <a href="/">Back to Store</a>
 </div>
 
-</div>
+<main class="auth-page">
+    <section class="hero">
+        <h1>Create your grocery account</h1>
+        <p>Fast checkout, order tracking, wishlist and delivered-order reviews ek jagah manage kare.</p>
+        <div class="badges">
+            <span class="badge">Fast Delivery</span>
+            <span class="badge">Secure Login</span>
+            <span class="badge">Easy Orders</span>
+        </div>
+    </section>
 
+    <section class="panel-wrap">
+        <div class="card">
+            <h2>Create Account</h2>
+            <p>Apna account banaye aur shopping start kare.</p>
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="field">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Enter full name" value="{{ form_data.get('name', '') if form_data else '' }}" required>
+                </div>
+
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="example@email.com" value="{{ form_data.get('email', '') if form_data else '' }}" required>
+                </div>
+
+                <div class="field">
+                    <label>Password</label>
+                    <div class="password-row">
+                        <input id="password" type="password" name="password" placeholder="Minimum 6 characters" minlength="6" required>
+                        <button class="toggle" type="button" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
+
+                <button class="submit" type="submit">Register</button>
+            </form>
+
+            <div class="switch">
+                Already have an account? <a href="/customer_login">Login</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+function togglePassword(){
+    const input = document.getElementById('password');
+    const button = document.querySelector('.toggle');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+}
+</script>
 </body>
 </html>

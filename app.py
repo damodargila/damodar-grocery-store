@@ -252,6 +252,22 @@ def empty_checkout_context():
         "discount_percent": 0,
         "discount_amount": 0,
         "grand_total": 0,
+        "error": "",
+        "form_data": {},
+    }
+
+
+def checkout_context(products, total, error="", form_data=None):
+    gst, discount_percent, discount_amount, grand_total = order_totals(total)
+    return {
+        "products": products,
+        "total": total,
+        "gst": gst,
+        "discount_percent": discount_percent,
+        "discount_amount": discount_amount,
+        "grand_total": grand_total,
+        "error": error,
+        "form_data": form_data or {},
     }
 
 
@@ -796,9 +812,18 @@ def logout():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        password = request.form["password"]
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not name:
+            return render_template("register.html", error="Name required hai.", form_data=request.form)
+
+        if "@" not in email or "." not in email:
+            return render_template("register.html", error="Valid email enter kare.", form_data=request.form)
+
+        if len(password) < 6:
+            return render_template("register.html", error="Password kam se kam 6 characters ka hona chahiye.", form_data=request.form)
 
         hashed_password = generate_password_hash(password)
 
@@ -815,7 +840,7 @@ def register():
         except Exception:
             conn.rollback()
             conn.close()
-            return "Email already registered"
+            return render_template("register.html", error="Ye email already registered hai.", form_data=request.form)
 
         conn.close()
         return redirect("/customer_login")
@@ -826,8 +851,8 @@ def register():
 @app.route("/customer_login", methods=["GET", "POST"])
 def customer_login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
 
         conn = get_db()
         cursor = conn.cursor()
@@ -855,7 +880,7 @@ def customer_login():
 
                 return redirect("/")
 
-        return "Wrong email or password"
+        return render_template("customer_login.html", error="Email ya password galat hai.", form_data=request.form)
 
     return render_template("customer_login.html")
 
@@ -1076,9 +1101,39 @@ def checkout():
         if not order_products:
             return redirect("/cart")
 
+        errors = []
+        if not name:
+            errors.append("Name required hai.")
+        if not phone.isdigit() or len(phone) != 10:
+            errors.append("Mobile number 10 digit ka hona chahiye.")
+        if not email or "@" not in email or "." not in email:
+            errors.append("Valid email enter kare.")
+        if not address:
+            errors.append("Full address required hai.")
+        if not district:
+            errors.append("District required hai.")
+        if not state:
+            errors.append("State required hai.")
+        if not pincode.isdigit() or len(pincode) != 6:
+            errors.append("Pin code 6 digit ka hona chahiye.")
+
+        if errors:
+            return render_template(
+                "checkout.html",
+                **checkout_context(products, total, " ".join(errors), request.form)
+            )
+
         for product, quantity in order_products:
             if product_stock(product) < quantity:
-                return f"Not enough stock for {product_col(product, 'name', 1)}"
+                return render_template(
+                    "checkout.html",
+                    **checkout_context(
+                        products,
+                        total,
+                        f"{product_col(product, 'name', 1)} ke liye enough stock nahi hai.",
+                        request.form
+                    )
+                )
 
         gst, discount_percent, discount_amount, grand_total = order_totals(total)
 
@@ -1172,16 +1227,9 @@ def checkout():
         if not order_products:
             return redirect("/cart")
 
-        gst, discount_percent, discount_amount, grand_total = order_totals(total)
-
         return render_template(
             "checkout.html",
-            products=products,
-            total=total,
-            gst=gst,
-            discount_percent=discount_percent,
-            discount_amount=discount_amount,
-            grand_total=grand_total
+            **checkout_context(products, total)
         )
     except Exception as error:
         app.logger.exception("Checkout page error: %s", error)

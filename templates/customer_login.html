@@ -1,103 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Customer Login</title>
+<title>Login - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:linear-gradient(135deg,#4CAF50,#0b6623);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.login-box{
-    background:white;
-    width:400px;
-    padding:35px;
-    border-radius:15px;
-    box-shadow:0 0 20px rgba(0,0,0,0.3);
-    text-align:center;
-}
-
-.login-box h1{
-    color:green;
-    margin-bottom:25px;
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:1px solid #ccc;
-    border-radius:8px;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    background:green;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#0b6623;
-}
-
-a{
-    text-decoration:none;
-    color:green;
-    font-weight:bold;
-}
-
-.register{
-    margin-top:20px;
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111;min-height:100vh}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.topbar a{color:white;text-decoration:none;font-weight:bold}
+.auth-page{min-height:calc(100vh - 58px);display:grid;grid-template-columns:1fr 420px}
+.hero{background:linear-gradient(135deg,#0b6623,#00a859);color:white;padding:60px;display:flex;flex-direction:column;justify-content:center}
+.hero h1{font-size:44px;max-width:560px;line-height:1.1}
+.hero p{font-size:18px;margin-top:16px;max-width:520px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px;max-width:520px}
+.stat{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:16px}
+.stat strong{display:block;font-size:22px}
+.stat span{font-size:13px}
+.panel-wrap{display:flex;align-items:center;justify-content:center;padding:28px}
+.card{width:100%;background:white;border-radius:16px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.14)}
+.card h2{font-size:28px;margin-bottom:8px}
+.card p{color:#555;margin-bottom:20px}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:11px;margin-bottom:14px;font-weight:bold}
+label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
+.field{margin-bottom:14px}
+input{width:100%;border:1px solid #ddd;border-radius:10px;padding:13px;font-size:15px}
+input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+.password-row{position:relative}
+.toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:#eef3f0;color:#0b6623;border-radius:8px;padding:7px 9px;font-weight:bold;cursor:pointer}
+.submit{width:100%;background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:4px}
+.submit:hover{background:#f08b00}
+.switch{margin-top:18px;text-align:center;color:#555}
+.switch a{color:#0b6623;text-decoration:none;font-weight:bold}
+@media(max-width:850px){
+.auth-page{grid-template-columns:1fr}
+.hero{padding:34px 22px}
+.hero h1{font-size:32px}
+.stats{grid-template-columns:1fr}
+.panel-wrap{padding:20px}
 }
 </style>
-
 </head>
+
 <body>
-
-<div class="login-box">
-
-<h1>🔑 Customer Login</h1>
-
-<form method="POST">
-
-<input type="email"
-name="email"
-placeholder="Enter Email"
-required>
-
-<input type="password"
-name="password"
-placeholder="Enter Password"
-required>
-
-<button type="submit">
-Login
-</button>
-
-</form>
-
-<div class="register">
-<a href="/register">
-Create New Account
-</a>
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <a href="/">Back to Store</a>
 </div>
 
-</div>
+<main class="auth-page">
+    <section class="hero">
+        <h1>Welcome back to Damodar Grocery</h1>
+        <p>Login karke cart, wishlist, order tracking aur invoice sab quickly access kare.</p>
+        <div class="stats">
+            <div class="stat"><strong>Fresh</strong><span>Daily deals</span></div>
+            <div class="stat"><strong>Fast</strong><span>Easy checkout</span></div>
+            <div class="stat"><strong>Secure</strong><span>Account login</span></div>
+        </div>
+    </section>
 
+    <section class="panel-wrap">
+        <div class="card">
+            <h2>Customer Login</h2>
+            <p>Apne account me login kare.</p>
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="example@email.com" value="{{ form_data.get('email', '') if form_data else '' }}" required>
+                </div>
+
+                <div class="field">
+                    <label>Password</label>
+                    <div class="password-row">
+                        <input id="password" type="password" name="password" placeholder="Enter password" required>
+                        <button class="toggle" type="button" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
+
+                <button class="submit" type="submit">Login</button>
+            </form>
+
+            <div class="switch">
+                New customer? <a href="/register">Create account</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+function togglePassword(){
+    const input = document.getElementById('password');
+    const button = document.querySelector('.toggle');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+}
+</script>
 </body>
 </html>
