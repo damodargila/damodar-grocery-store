@@ -147,10 +147,10 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <div class="no-img">No Image</div>
         {% endif %}
 
-        {% if product[5] > 0 %}
+        {% if (product[5] | int) > 0 %}
         <div class="stock-badge">In Stock</div>
         {% else %}
-        <div class="stock-badge out-badge">Out</div>
+        <div class="stock-badge out-badge">Out of Stock</div>
         {% endif %}
 
         <a onclick="event.stopPropagation();" class="heart-btn {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
@@ -186,7 +186,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     <p class="stock">Stock: {{ product[5] }}</p>
 
 
-    {% if product[5] > 0 %}
+    {% if (product[5] | int) > 0 %}
     <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
     <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
     {% else %}

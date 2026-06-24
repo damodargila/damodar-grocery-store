@@ -207,7 +207,7 @@ color:#111;background:#fafafa;transition:.2s;
                 <div class="info">🔒 Secure Order</div>
             </div>
 
-            {% if product[5] > 0 %}
+            {% if (product[5] | int) > 0 %}
             <div class="stock">In Stock: {{ product[5] }} units</div>
             {% else %}
             <div class="stock" style="color:red;">Out of Stock</div>
@@ -217,7 +217,7 @@ color:#111;background:#fafafa;transition:.2s;
                 Fresh and trusted product from Damodar Grocery Store.
             </div>
 
-            {% if product[5] > 0 %}
+            {% if (product[5] | int) > 0 %}
             <div class="actions">
                 <a class="btn cart" href="/add_to_cart/{{ product[0] }}">🛒 Add to Cart</a>
                 <a class="btn buy" href="/add_to_cart/{{ product[0] }}">⚡ Buy Now</a>

@@ -3,8 +3,11 @@ import sqlite3
 import os
 import random
 import smtplib
+from io import BytesIO
 from email.message import EmailMessage
+
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from dotenv import load_dotenv
@@ -17,6 +20,18 @@ import cloudinary.uploader
 
 load_dotenv()
 
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-key")
+
+UPLOAD_FOLDER = "static/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "1234")
+
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
+
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -24,18 +39,16 @@ cloudinary.config(
     secure=True
 )
 
-app = Flask(__name__)
-app.secret_key = "damodar123"
+
+def is_postgres():
+    return bool(os.getenv("DATABASE_URL"))
 
 
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "1234"
-
-EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
-EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
+def fix_sql(sql):
+    """Convert SQLite ? placeholders to PostgreSQL %s placeholders."""
+    if is_postgres():
+        return sql.replace("?", "%s")
+    return sql
 
 
 def get_db():
@@ -49,11 +62,65 @@ def get_db():
     return conn
 
 
+def execute(cursor, sql, params=()):
+    cursor.execute(fix_sql(sql), params)
+
+
+def fetch_product_id(product):
+    return product["id"] if hasattr(product, "keys") and "id" in product.keys() else product[0]
+
+
+def product_col(product, key, index, default=""):
+    try:
+        if hasattr(product, "keys") and key in product.keys():
+            return product[key]
+    except Exception:
+        pass
+
+    try:
+        return product[index]
+    except Exception:
+        return default
+
+
+def product_stock(product):
+    try:
+        return int(product_col(product, "stock", 5, 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def can_add_to_cart(product_id, current_quantity):
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
+    product = cursor.fetchone()
+    conn.close()
+
+    if not product:
+        return False
+
+    return product_stock(product) > current_quantity
+
+
+def order_col(order, key, index, default=""):
+    try:
+        if hasattr(order, "keys") and key in order.keys():
+            return order[key]
+    except Exception:
+        pass
+
+    try:
+        return order[index]
+    except Exception:
+        return default
+
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    if os.getenv("DATABASE_URL"):
+    if is_postgres():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS products (
                 id SERIAL PRIMARY KEY,
@@ -84,7 +151,7 @@ def init_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS wishlist (
                 id SERIAL PRIMARY KEY,
-                product_id INTEGER
+                product_id INTEGER UNIQUE
             )
         """)
 
@@ -107,7 +174,8 @@ def init_db():
                 payment_method TEXT,
                 payment_status TEXT,
                 gst_amount INTEGER,
-                status TEXT
+                status TEXT,
+                customer_email TEXT
             )
         """)
 
@@ -129,21 +197,128 @@ def init_db():
             )
         """)
 
-    else:
-        columns = [
-            ("description", "TEXT"),
-            ("image2", "TEXT"),
-            ("image3", "TEXT"),
-            ("image4", "TEXT"),
-            ("image5", "TEXT"),
-            ("discount", "INTEGER DEFAULT 10")
-        ]
+        # Add columns safely for old deployed databases.
+        extra_columns = {
+            "products": [
+                ("description", "TEXT"),
+                ("image2", "TEXT"),
+                ("image3", "TEXT"),
+                ("image4", "TEXT"),
+                ("image5", "TEXT"),
+                ("discount", "INTEGER DEFAULT 10"),
+            ],
+            "orders": [
+                ("status", "TEXT"),
+                ("customer_email", "TEXT"),
+            ],
+        }
 
-        for name, column_type in columns:
-            try:
-                cursor.execute(f"ALTER TABLE products ADD COLUMN {name} {column_type}")
-            except sqlite3.OperationalError:
-                pass
+        for table, columns in extra_columns.items():
+            for name, col_type in columns:
+                try:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {name} {col_type}")
+                except Exception:
+                    conn.rollback()
+                    cursor = conn.cursor()
+
+    else:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                category TEXT,
+                price INTEGER,
+                image TEXT,
+                stock INTEGER,
+                description TEXT,
+                image2 TEXT,
+                image3 TEXT,
+                image4 TEXT,
+                image5 TEXT,
+                discount INTEGER DEFAULT 10
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER,
+                customer_name TEXT,
+                rating INTEGER,
+                comment TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wishlist (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER UNIQUE
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                email TEXT UNIQUE,
+                password TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_name TEXT,
+                phone TEXT,
+                address TEXT,
+                total INTEGER,
+                payment_method TEXT,
+                payment_status TEXT,
+                gst_amount INTEGER,
+                status TEXT,
+                customer_email TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER,
+                product_name TEXT,
+                price INTEGER,
+                quantity INTEGER
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS coupons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT UNIQUE,
+                discount INTEGER
+            )
+        """)
+
+        extra_columns = {
+            "products": [
+                ("description", "TEXT"),
+                ("image2", "TEXT"),
+                ("image3", "TEXT"),
+                ("image4", "TEXT"),
+                ("image5", "TEXT"),
+                ("discount", "INTEGER DEFAULT 10"),
+            ],
+            "orders": [
+                ("status", "TEXT"),
+                ("customer_email", "TEXT"),
+            ],
+        }
+
+        for table, columns in extra_columns.items():
+            for name, col_type in columns:
+                try:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {name} {col_type}")
+                except sqlite3.OperationalError:
+                    pass
 
     conn.commit()
     conn.close()
@@ -152,63 +327,66 @@ def init_db():
 def ensure_product_columns():
     init_db()
 
+
 init_db()
+
 
 def send_email(to_email, subject, body):
     if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD:
         print("Email settings missing")
         return
 
-    msg = EmailMessage()
-    msg["From"] = EMAIL_ADDRESS
-    msg["To"] = to_email
-    msg["Subject"] = subject
-    msg.set_content(body)
+    try:
+        msg = EmailMessage()
+        msg["From"] = EMAIL_ADDRESS
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.set_content(body)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
-        smtp.send_message(msg)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
+            smtp.send_message(msg)
+    except Exception as e:
+        print("Email send error:", e)
 
 
 @app.route("/")
 def home():
-
     search = request.args.get("search", "")
     category = request.args.get("category", "")
 
     conn = get_db()
     cursor = conn.cursor()
 
-    is_postgres = bool(os.getenv("DATABASE_URL"))
-
     query = "SELECT * FROM products WHERE 1=1"
     params = []
 
     if search:
-        query += " AND name LIKE  ?" if is_postgres else " AND name LIKE ?"
+        query += " AND name LIKE ?"
         params.append("%" + search + "%")
 
     if category:
-        query += " AND category= ?" if is_postgres else " AND category=?"
+        query += " AND category=?"
         params.append(category)
 
-    cursor.execute(query, params)
+    execute(cursor, query, params)
     products = cursor.fetchall()
 
     ratings = {}
 
     for product in products:
-        cursor.execute(
-            "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id= ?" if is_postgres else
+        product_id = fetch_product_id(product)
+        execute(
+            cursor,
             "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
-            (product[0],)
+            (product_id,)
         )
         data = cursor.fetchone()
 
-        avg_rating = round(data[0], 1) if data[0] else 0
-        total_reviews = data[1]
+        avg_rating = round(data[0], 1) if data and data[0] else 0
+        total_reviews = data[1] if data else 0
 
-        ratings[product[0]] = {
+        ratings[product_id] = {
             "avg": avg_rating,
             "count": total_reviews
         }
@@ -261,20 +439,20 @@ def verify_otp():
             session["user"] = session.get("otp_email")
             session.pop("otp", None)
             return redirect("/")
-        else:
-            return "Wrong OTP"
+
+        return "Wrong OTP"
 
     return render_template("verify_otp.html")
 
 
 @app.route("/apply_coupon", methods=["POST"])
 def apply_coupon():
-    code = request.form["coupon"].upper()
+    code = request.form["coupon"].upper().strip()
 
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT discount FROM coupons WHERE code=?", (code,))
+    execute(cursor, "SELECT discount FROM coupons WHERE code=?", (code,))
     coupon = cursor.fetchone()
 
     conn.close()
@@ -299,7 +477,8 @@ def review(product_id):
         conn = get_db()
         cursor = conn.cursor()
 
-        cursor.execute(
+        execute(
+            cursor,
             "INSERT INTO reviews(product_id, customer_name, rating, comment) VALUES(?,?,?,?)",
             (product_id, customer_name, rating, comment)
         )
@@ -317,7 +496,7 @@ def reviews(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM reviews WHERE product_id=?", (product_id,))
+    execute(cursor, "SELECT * FROM reviews WHERE product_id=?", (product_id,))
     reviews_data = cursor.fetchall()
 
     conn.close()
@@ -339,8 +518,15 @@ def my_orders():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM orders ORDER BY id DESC")
+
+    user_email_or_name = session["user"]
+    execute(
+        cursor,
+        "SELECT * FROM orders WHERE customer_email=? OR customer_name=? ORDER BY id DESC",
+        (user_email_or_name, user_email_or_name)
+    )
     orders = cursor.fetchall()
+
     conn.close()
 
     return render_template("my_orders.html", orders=orders)
@@ -370,16 +556,20 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
 
+        hashed_password = generate_password_hash(password)
+
         conn = get_db()
         cursor = conn.cursor()
 
         try:
-            cursor.execute(
+            execute(
+                cursor,
                 "INSERT INTO users(name, email, password) VALUES(?,?,?)",
-                (name, email, password)
+                (name, email, hashed_password)
             )
             conn.commit()
-        except sqlite3.IntegrityError:
+        except Exception:
+            conn.rollback()
             conn.close()
             return "Email already registered"
 
@@ -397,16 +587,29 @@ def customer_login():
 
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM users WHERE email=? AND password=?",
-            (email, password)
-        )
+        execute(cursor, "SELECT * FROM users WHERE email=?", (email,))
         user = cursor.fetchone()
         conn.close()
 
         if user:
-            session["user"] = user[1]
-            return redirect("/")
+            stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[3]
+
+            # Supports old plain-text passwords and upgrades them after login.
+            if check_password_hash(stored_password, password) or stored_password == password:
+                session["user"] = email
+
+                if stored_password == password:
+                    conn = get_db()
+                    cursor = conn.cursor()
+                    execute(
+                        cursor,
+                        "UPDATE users SET password=? WHERE email=?",
+                        (generate_password_hash(password), email)
+                    )
+                    conn.commit()
+                    conn.close()
+
+                return redirect("/")
 
         return "Wrong email or password"
 
@@ -419,8 +622,13 @@ def add_to_cart(product_id):
     if isinstance(cart, list):
         cart = {}
 
-    product_id = str(product_id)
-    cart[product_id] = cart.get(product_id, 0) + 1
+    cart_key = str(product_id)
+    current_quantity = int(cart.get(cart_key, 0))
+
+    if not can_add_to_cart(product_id, current_quantity):
+        return redirect("/cart")
+
+    cart[cart_key] = current_quantity + 1
 
     session["cart"] = cart
     session.modified = True
@@ -434,8 +642,13 @@ def increase(product_id):
     if isinstance(cart, list):
         cart = {}
 
-    product_id = str(product_id)
-    cart[product_id] = cart.get(product_id, 0) + 1
+    cart_key = str(product_id)
+    current_quantity = int(cart.get(cart_key, 0))
+
+    if not can_add_to_cart(product_id, current_quantity):
+        return redirect("/cart")
+
+    cart[cart_key] = current_quantity + 1
 
     session["cart"] = cart
     session.modified = True
@@ -476,11 +689,12 @@ def cart():
     total = 0
 
     for product_id, quantity in cart_items.items():
-        cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+        execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
         product = cursor.fetchone()
 
         if product:
-            subtotal = int(product[3]) * quantity
+            price = int(product_col(product, "price", 3, 0))
+            subtotal = price * quantity
             total += subtotal
             products.append((product, quantity, subtotal))
 
@@ -501,36 +715,39 @@ def cart():
         grand_total=grand_total
     )
 
+
 @app.route("/product/<int:product_id>")
 def product_details(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+    execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
     product = cursor.fetchone()
 
     if not product:
         conn.close()
         return "Product not found"
 
-    cursor.execute(
+    execute(
+        cursor,
         "SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id=?",
         (product_id,)
     )
     data = cursor.fetchone()
 
-    avg_rating = round(data[0], 1) if data[0] else 0
-    total_reviews = data[1]
+    avg_rating = round(data[0], 1) if data and data[0] else 0
+    total_reviews = data[1] if data else 0
 
-    cursor.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (product_id,))
+    execute(cursor, "SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (product_id,))
     reviews_data = cursor.fetchall()
 
     cursor.execute("SELECT product_id FROM wishlist")
     wishlist_ids = {row[0] for row in cursor.fetchall()}
 
-    cursor.execute(
+    execute(
+        cursor,
         "SELECT * FROM products WHERE category=? AND id!=? LIMIT 5",
-        (product[2], product_id)
+        (product_col(product, "category", 2), product_id)
     )
     related_products = cursor.fetchall()
 
@@ -546,18 +763,22 @@ def product_details(product_id):
         related_products=related_products
     )
 
+
 @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM wishlist WHERE product_id=?", (product_id,))
+    execute(cursor, "SELECT * FROM wishlist WHERE product_id=?", (product_id,))
     existing = cursor.fetchone()
 
     if existing:
-        cursor.execute("DELETE FROM wishlist WHERE product_id=?", (product_id,))
+        execute(cursor, "DELETE FROM wishlist WHERE product_id=?", (product_id,))
     else:
-        cursor.execute("INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
+        try:
+            execute(cursor, "INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
+        except Exception:
+            conn.rollback()
 
     conn.commit()
     conn.close()
@@ -595,6 +816,9 @@ def checkout():
         if isinstance(cart_items, list):
             cart_items = {}
 
+        if not cart_items:
+            return redirect("/cart")
+
         conn = get_db()
         cursor = conn.cursor()
 
@@ -602,47 +826,86 @@ def checkout():
         order_products = []
 
         for product_id, quantity in cart_items.items():
-            cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+            execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
             product = cursor.fetchone()
 
             if product:
-                subtotal = int(product[3]) * quantity
+                stock = product_stock(product)
+                price = int(product_col(product, "price", 3, 0))
+
+                if stock < quantity:
+                    conn.close()
+                    return f"Not enough stock for {product_col(product, 'name', 1)}"
+
+                subtotal = price * quantity
                 total += subtotal
                 order_products.append((product, quantity))
-
-                cursor.execute(
-                    "UPDATE products SET stock = stock - ? WHERE id=? AND stock >= ?",
-                    (quantity, product_id, quantity)
-                )
 
         gst = int(total * 0.05)
         discount_percent = session.get("discount", 0)
         discount_amount = int(total * discount_percent / 100)
         grand_total = total + gst - discount_amount
 
-        cursor.execute(
-            """
-            INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status)
-            VALUES(?,?,?,?,?,?,?,?)
-            """,
-            (
-                name,
-                phone,
-                address,
-                grand_total,
-                payment_method,
-                "Paid" if payment_method == "Demo Payment" else "Pending",
-                gst,
-                "Pending"
+        if is_postgres():
+            execute(
+                cursor,
+                """
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
+                VALUES(?,?,?,?,?,?,?,?,?)
+                RETURNING id
+                """,
+                (
+                    name,
+                    phone,
+                    address,
+                    grand_total,
+                    payment_method,
+                    "Paid" if payment_method == "Demo Payment" else "Pending",
+                    gst,
+                    "Pending",
+                    email
+                )
             )
-        )
-
-        order_id = cursor.lastrowid
+            order_id = cursor.fetchone()[0]
+        else:
+            execute(
+                cursor,
+                """
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
+                VALUES(?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    name,
+                    phone,
+                    address,
+                    grand_total,
+                    payment_method,
+                    "Paid" if payment_method == "Demo Payment" else "Pending",
+                    gst,
+                    "Pending",
+                    email
+                )
+            )
+            order_id = cursor.lastrowid
 
         for product, quantity in order_products:
-            cursor.execute(
+            product_id = fetch_product_id(product)
+
+            execute(
+                cursor,
+                "UPDATE products SET stock = stock - ? WHERE id=? AND stock >= ?",
+                (quantity, product_id, quantity)
+            )
+
+            execute(
+                cursor,
                 "INSERT INTO order_items(order_id, product_name, price, quantity) VALUES(?,?,?,?)",
-                (order_id, product[1], product[3], quantity)
+                (
+                    order_id,
+                    product_col(product, "name", 1),
+                    product_col(product, "price", 3),
+                    quantity
+                )
             )
 
         conn.commit()
@@ -666,15 +929,13 @@ def checkout():
 
 @app.route("/invoice/<int:order_id>")
 def invoice(order_id):
-    filename = f"invoice_{order_id}.pdf"
-
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM orders WHERE id=?", (order_id,))
+    execute(cursor, "SELECT * FROM orders WHERE id=?", (order_id,))
     order = cursor.fetchone()
 
-    cursor.execute("SELECT * FROM order_items WHERE order_id=?", (order_id,))
+    execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
     items = cursor.fetchall()
 
     conn.close()
@@ -682,23 +943,33 @@ def invoice(order_id):
     if not order:
         return "Order not found"
 
-    pdf = canvas.Canvas(filename)
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer)
     pdf.drawString(100, 800, "Damodar Grocery Store Invoice")
-    pdf.drawString(100, 770, f"Order ID: {order[0]}")
-    pdf.drawString(100, 750, f"Customer: {order[1]}")
-    pdf.drawString(100, 730, f"Phone: {order[2]}")
-    pdf.drawString(100, 710, f"Address: {order[3]}")
+    pdf.drawString(100, 770, f"Order ID: {order_col(order, 'id', 0)}")
+    pdf.drawString(100, 750, f"Customer: {order_col(order, 'customer_name', 1)}")
+    pdf.drawString(100, 730, f"Phone: {order_col(order, 'phone', 2)}")
+    pdf.drawString(100, 710, f"Address: {order_col(order, 'address', 3)}")
 
     y = 670
 
     for item in items:
-        pdf.drawString(100, y, f"{item[2]} | Price: Rs.{item[3]} | Qty: {item[4]}")
+        item_name = order_col(item, "product_name", 2)
+        item_price = order_col(item, "price", 3)
+        item_qty = order_col(item, "quantity", 4)
+        pdf.drawString(100, y, f"{item_name} | Price: Rs.{item_price} | Qty: {item_qty}")
         y -= 20
 
-    pdf.drawString(100, y - 20, f"Grand Total: Rs.{order[4]}")
+    pdf.drawString(100, y - 20, f"Grand Total: Rs.{order_col(order, 'total', 4)}")
     pdf.save()
+    buffer.seek(0)
 
-    return send_file(filename, as_attachment=True)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"invoice_{order_id}.pdf",
+        mimetype="application/pdf"
+    )
 
 
 @app.route("/orders")
@@ -709,17 +980,17 @@ def orders():
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM orders")
+    cursor.execute("SELECT * FROM orders ORDER BY id DESC")
     all_orders = cursor.fetchall()
 
     total_orders = len(all_orders)
-    total_sales = sum(order[4] for order in all_orders)
+    total_sales = sum(int(order_col(order, "total", 4, 0) or 0) for order in all_orders)
 
     pending_orders = 0
     delivered_orders = 0
 
     for order in all_orders:
-        if len(order) > 8 and order[8] == "Delivered":
+        if order_col(order, "status", 8) == "Delivered":
             delivered_orders += 1
         else:
             pending_orders += 1
@@ -741,9 +1012,13 @@ def update_status(order_id, status):
     if "admin" not in session:
         return redirect("/admin_login")
 
+    allowed_status = ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"]
+    if status not in allowed_status:
+        return "Invalid status"
+
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
+    execute(cursor, "UPDATE orders SET status=? WHERE id=?", (status, order_id))
     conn.commit()
     conn.close()
 
@@ -757,7 +1032,7 @@ def export_orders():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM orders")
+    cursor.execute("SELECT * FROM orders ORDER BY id DESC")
     orders = cursor.fetchall()
     conn.close()
 
@@ -765,15 +1040,32 @@ def export_orders():
     ws = wb.active
     ws.title = "Orders"
 
-    ws.append(["ID", "Name", "Phone", "Address", "Total"])
+    ws.append(["ID", "Name", "Phone", "Address", "Total", "Payment Method", "Payment Status", "GST", "Status", "Email"])
 
     for order in orders:
-        ws.append([order[0], order[1], order[2], order[3], order[4]])
+        ws.append([
+            order_col(order, "id", 0),
+            order_col(order, "customer_name", 1),
+            order_col(order, "phone", 2),
+            order_col(order, "address", 3),
+            order_col(order, "total", 4),
+            order_col(order, "payment_method", 5),
+            order_col(order, "payment_status", 6),
+            order_col(order, "gst_amount", 7),
+            order_col(order, "status", 8),
+            order_col(order, "customer_email", 9),
+        ])
 
-    filename = "orders_export.xlsx"
-    wb.save(filename)
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
 
-    return send_file(filename, as_attachment=True)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="orders_export.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 
 @app.route("/add_product", methods=["GET", "POST"])
@@ -793,9 +1085,9 @@ def add_product():
         image_files = request.files.getlist("images")
         images = []
 
-        for file in image_files:
+        for file in image_files[:5]:
             if file and file.filename:
-                filename = secure_filename(file.filename)
+                secure_filename(file.filename)
                 upload_result = cloudinary.uploader.upload(file)
                 images.append(upload_result["secure_url"])
 
@@ -808,11 +1100,12 @@ def add_product():
         conn = get_db()
         cursor = conn.cursor()
 
-        cursor.execute(
+        execute(
+            cursor,
             """
             INSERT INTO products
             (name, category, price, image, stock, description, image2, image3, image4, image5)
-             VALUES (?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 name,
@@ -846,7 +1139,7 @@ def edit_product(product_id):
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+    execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
     product = cursor.fetchone()
 
     if not product:
@@ -860,33 +1153,29 @@ def edit_product(product_id):
         stock = request.form.get("stock", "")
         description = request.form.get("description", "")
 
-        image1 = product[4] if len(product) > 4 else ""
-        image2 = product[7] if len(product) > 7 else ""
-        image3 = product[8] if len(product) > 8 else ""
-        image4 = product[9] if len(product) > 9 else ""
-        image5 = product[10] if len(product) > 10 else ""
-
-        files = [
-            ("image1", image1),
-            ("image2", image2),
-            ("image3", image3),
-            ("image4", image4),
-            ("image5", image5)
+        old_images = [
+            product_col(product, "image", 4, ""),
+            product_col(product, "image2", 7, ""),
+            product_col(product, "image3", 8, ""),
+            product_col(product, "image4", 9, ""),
+            product_col(product, "image5", 10, ""),
         ]
 
+        fields = ["image1", "image2", "image3", "image4", "image5"]
         new_images = []
 
-        for field_name, old_image in files:
+        for index, field_name in enumerate(fields):
             file = request.files.get(field_name)
 
             if file and file.filename:
-                filename = secure_filename(file.filename)
+                secure_filename(file.filename)
                 upload_result = cloudinary.uploader.upload(file)
                 new_images.append(upload_result["secure_url"])
             else:
-                new_images.append(old_image)
+                new_images.append(old_images[index])
 
-        cursor.execute(
+        execute(
+            cursor,
             """
             UPDATE products
             SET name=?,
@@ -918,18 +1207,19 @@ def edit_product(product_id):
 
         conn.commit()
 
-        cursor.execute("SELECT description FROM products WHERE id=?", (product_id,))
+        execute(cursor, "SELECT description FROM products WHERE id=?", (product_id,))
         saved_description = cursor.fetchone()
 
         conn.close()
 
         if saved_description and saved_description[0] == description:
             return redirect("/product/" + str(product_id))
-        else:
-            return "Description save nahi hua. Database column problem hai."
+
+        return "Description save nahi hua. Database column problem hai."
 
     conn.close()
     return render_template("edit_product.html", product=product)
+
 
 @app.route("/delete_product/<int:product_id>")
 def delete_product(product_id):
@@ -938,7 +1228,7 @@ def delete_product(product_id):
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM products WHERE id=?", (product_id,))
+    execute(cursor, "DELETE FROM products WHERE id=?", (product_id,))
     conn.commit()
     conn.close()
 
