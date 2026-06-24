@@ -36,8 +36,8 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .item{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f3;align-items:center}
 .item:last-child{border-bottom:none}
 .qty{color:#64707d}.price{font-weight:bold;color:#0b6623}
-.review-btn,.invoice-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 13px;font-weight:bold;margin-top:12px;margin-right:8px}
-.invoice-btn{background:#ff9900;color:#111}.review-btn{background:#0b8f3a;color:white}
+.review-btn,.invoice-btn,.cancel-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:9px;padding:10px 13px;font-weight:bold;margin-top:12px;margin-right:8px}
+.invoice-btn{background:#ff9900;color:#111}.review-btn{background:#0b8f3a;color:white}.cancel-btn{background:#fff1f1;color:#d32f2f;border:1px solid #ffd0d0}
 .empty{background:white;border-radius:16px;text-align:center;padding:50px 20px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
 .empty h2{font-size:28px;margin-bottom:8px}.empty p{color:#64707d;margin-bottom:18px}
 .shop{display:inline-flex;background:#ff9900;color:#111;text-decoration:none;border-radius:10px;padding:13px 20px;font-weight:bold}
@@ -122,6 +122,10 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                 </div>
 
                 <a class="invoice-btn" href="/invoice/{{ order[0] }}">Download Invoice</a>
+
+                {% if status in ['Pending', 'Packed'] %}
+                <a class="cancel-btn" href="/cancel_order/{{ order[0] }}" onclick="return confirm('Kya aap is order ko cancel karna chahte hain?')">Cancel Order</a>
+                {% endif %}
 
                 {% if status == 'Delivered' and items %}
                     {% for item in items %}

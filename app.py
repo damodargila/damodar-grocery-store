@@ -1235,6 +1235,52 @@ def update_status(order_id, status):
     return redirect("/orders")
 
 
+@app.route("/cancel_order/<int:order_id>")
+def cancel_order(order_id):
+    if "user" not in session:
+        return redirect("/customer_login")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    user_email_or_name = session["user"]
+
+    execute(
+        cursor,
+        "SELECT * FROM orders WHERE id=? AND (customer_email=? OR customer_name=?)",
+        (order_id, user_email_or_name, user_email_or_name)
+    )
+    order = cursor.fetchone()
+
+    if not order:
+        conn.close()
+        return redirect("/my_orders")
+
+    status = order_col(order, "status", 8, "Pending") or "Pending"
+    if status not in ["Pending", "Packed"]:
+        conn.close()
+        return "Order sirf Pending ya Packed status me cancel ho sakta hai."
+
+    execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
+    items = cursor.fetchall()
+
+    for item in items:
+        product_id = order_col(item, "product_id", 5, "")
+        quantity = int(order_col(item, "quantity", 4, 0) or 0)
+
+        if product_id and quantity > 0:
+            execute(
+                cursor,
+                "UPDATE products SET stock = stock + ? WHERE id=?",
+                (quantity, product_id)
+            )
+
+    execute(cursor, "UPDATE orders SET status=? WHERE id=?", ("Cancelled", order_id))
+    conn.commit()
+    conn.close()
+
+    return redirect("/my_orders")
+
+
 @app.route("/export_orders")
 def export_orders():
     if "admin" not in session:
