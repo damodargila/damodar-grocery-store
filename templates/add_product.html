@@ -104,7 +104,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
                         <select id="categoryInput" name="category" required>
                             {% set selected_category = form_data.get('category', '') if form_data else '' %}
                             <option value="">Select category</option>
-                            {% for cat in ['Grocery','Vegetable','Fruits','Dairy','Kitchen','Snacks','Beverages'] %}
+                            {% for cat in ['Electronics','Mobiles','Fashion','Home & Kitchen','Appliances','Beauty','Books','Sports','Toys','Automotive','Groceries','Health'] %}
                             <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
                             {% endfor %}
                         </select>
