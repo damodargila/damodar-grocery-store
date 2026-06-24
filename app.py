@@ -842,14 +842,14 @@ def wishlist_page():
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
     if request.method == "POST":
-        name = request.form["name"]
-        phone = request.form["phone"]
-        address = request.form["address"]
-        district = request.form["district"]
-        state = request.form["state"]
-        pincode = request.form["pincode"]
-        payment_method = request.form["payment_method"]
-        email = request.form["email"]
+        name = request.form.get("name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        address = request.form.get("address", "").strip()
+        district = request.form.get("district", "").strip()
+        state = request.form.get("state", "").strip()
+        pincode = request.form.get("pincode", "").strip()
+        payment_method = request.form.get("payment_method", "COD")
+        email = request.form.get("email", "").strip()
         full_address = f"{address}, District: {district}, State: {state}, Pincode: {pincode}"
 
         cart_items = session.get("cart", {})
@@ -866,6 +866,7 @@ def checkout():
         order_products = []
 
         for product_id, quantity in cart_items.items():
+            quantity = int(quantity)
             execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
             product = cursor.fetchone()
 
@@ -977,6 +978,7 @@ def checkout():
     total = 0
 
     for product_id, quantity in cart_items.items():
+        quantity = int(quantity)
         execute(cursor, "SELECT * FROM products WHERE id=?", (product_id,))
         product = cursor.fetchone()
 
@@ -984,7 +986,12 @@ def checkout():
             price = int(product_col(product, "price", 3, 0))
             subtotal = price * quantity
             total += subtotal
-            products.append((product, quantity, subtotal))
+            products.append({
+                "name": product_col(product, "name", 1),
+                "price": price,
+                "quantity": quantity,
+                "subtotal": subtotal,
+            })
 
     conn.close()
 
