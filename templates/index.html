@@ -125,26 +125,36 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     </form>
 
     <div class="top-links">
+        {% if session.get('admin') %}
+        <a href="/orders">Admin</a>
+        <a href="/add_product">Add Product</a>
+        {% else %}
         <a href="/cart">Cart</a>
         <a href="/wishlist">Wishlist</a>
         <a href="/profile">Profile</a>
+        {% endif %}
     </div>
 </div>
 
 <div class="navbar">
     <a href="/">Home</a>
+    {% if session.get('admin') %}
+    <a href="/orders">Admin Dashboard</a>
+    <a href="/add_product">Add Product</a>
+    <a href="/export_orders">Export Excel</a>
+    {% else %}
     <a href="/cart">Cart</a>
     <a href="/wishlist">Wishlist</a>
+        {% if session.get('user') %}
+    <a href="/my_orders">My Orders</a>
+        {% else %}
     <a href="/register">Register</a>
     <a href="/customer_login">Login</a>
-    <a href="/my_orders">My Orders</a>
-
-    {% if session.get('admin') %}
-    <a href="/add_product">Add Product</a>
-    <a href="/orders">Admin Dashboard</a>
+        {% endif %}
     {% endif %}
-
+    {% if session.get('admin') or session.get('user') %}
     <a href="/logout">Logout</a>
+    {% endif %}
 </div>
 
 <div class="hero">
@@ -211,19 +221,19 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
 
     <div class="card-actions">
+        {% if session.get('admin') %}
+        <div class="small-btns">
+            <a class="mini edit" href="/edit_product/{{ product[0] }}" onclick="event.stopPropagation();">Edit</a>
+            <a class="mini delete-btn" href="/delete_product/{{ product[0] }}" onclick="event.stopPropagation(); return confirm('Delete Product?')">Delete</a>
+        </div>
+        {% else %}
         {% if (product[5] | int) > 0 %}
         <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
         <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
         {% else %}
         <p class="out">Out Of Stock</p>
         {% endif %}
-
-        <div class="small-btns">
-            {% if session.get('admin') %}
-            <a class="mini edit" href="/edit_product/{{ product[0] }}">Edit</a>
-            <a class="mini delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete</a>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 </div>
 

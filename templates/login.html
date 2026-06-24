@@ -1,225 +1,97 @@
-```html
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
+<title>Admin Login - Damodar Grocery</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login</title>
 
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111;min-height:100vh}
+.page{min-height:100vh;display:grid;grid-template-columns:1fr 430px}
+.hero{background:linear-gradient(135deg,#0b3d1b,#0b8f3a);color:white;padding:60px;display:flex;flex-direction:column;justify-content:center}
+.brand{font-size:32px;font-weight:bold;margin-bottom:28px}
+.brand span{display:block;color:#ff9900;font-size:20px;margin-top:5px}
+.hero h1{font-size:48px;line-height:1.1;max-width:620px}
+.hero p{font-size:18px;color:#e7fff0;margin-top:16px;max-width:560px;line-height:1.5}
+.features{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.feature{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:10px 14px;font-weight:bold}
+.panel{display:flex;align-items:center;justify-content:center;padding:28px}
+.card{width:100%;background:white;border-radius:16px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.14)}
+.card h2{font-size:28px;margin-bottom:8px}
+.card p{color:#555;margin-bottom:20px}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:11px;margin-bottom:14px;font-weight:bold}
+label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
+.field{margin-bottom:14px}
+input{width:100%;border:1px solid #ddd;border-radius:10px;padding:13px;font-size:15px}
+input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+.password-row{position:relative}
+.toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:#eef3f0;color:#0b6623;border-radius:8px;padding:7px 9px;font-weight:bold;cursor:pointer}
+.submit{width:100%;background:#0b8f3a;color:white;border:none;border-radius:10px;padding:14px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:4px}
+.submit:hover{background:#0b6623}
+.back{display:block;text-align:center;margin-top:18px;color:#0b6623;text-decoration:none;font-weight:bold}
+.secure{margin-top:18px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:10px;padding:12px;text-align:center;font-weight:bold}
+@media(max-width:850px){
+.page{grid-template-columns:1fr}
+.hero{padding:34px 22px}
+.hero h1{font-size:34px}
+.panel{padding:20px}
 }
-
-body{
-    min-height:100vh;
-    display:flex;
-    background:linear-gradient(135deg,#014421,#0b8f3a);
-}
-
-.left{
-    width:55%;
-    color:white;
-    padding:60px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-}
-
-.logo{
-    font-size:48px;
-    font-weight:bold;
-    margin-bottom:15px;
-}
-
-.store{
-    color:#8fff9f;
-}
-
-.heading{
-    font-size:65px;
-    font-weight:bold;
-    margin:30px 0;
-}
-
-.subtitle{
-    font-size:22px;
-    margin-bottom:40px;
-}
-
-.features{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-}
-
-.feature{
-    background:rgba(255,255,255,0.15);
-    padding:15px;
-    border-radius:12px;
-}
-
-.right{
-    width:45%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:30px;
-}
-
-.login-box{
-    width:100%;
-    max-width:520px;
-    background:white;
-    padding:40px;
-    border-radius:25px;
-    box-shadow:0 10px 40px rgba(0,0,0,0.3);
-}
-
-.login-box h1{
-    text-align:center;
-    margin-bottom:10px;
-}
-
-.login-box p{
-    text-align:center;
-    color:#666;
-    margin-bottom:30px;
-}
-
-label{
-    font-weight:bold;
-}
-
-input{
-    width:100%;
-    padding:14px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin-top:8px;
-    margin-bottom:20px;
-    font-size:16px;
-}
-
-button{
-    width:100%;
-    padding:15px;
-    border:none;
-    border-radius:10px;
-    background:#0b8f3a;
-    color:white;
-    font-size:18px;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#06722e;
-}
-
-.back{
-    display:block;
-    text-align:center;
-    margin-top:20px;
-    text-decoration:none;
-    color:#0b8f3a;
-    font-weight:bold;
-}
-
-.security{
-    margin-top:25px;
-    background:#e8fff0;
-    border-radius:10px;
-    padding:15px;
-    text-align:center;
-    color:#0b8f3a;
-    font-weight:bold;
-}
-
-@media(max-width:900px){
-
-body{
-    flex-direction:column;
-}
-
-.left,
-.right{
-    width:100%;
-}
-
-.heading{
-    font-size:42px;
-}
-
-}
-
 </style>
 </head>
 
 <body>
+<main class="page">
+    <section class="hero">
+        <div class="brand">DAMODAR <span>GROCERY STORE</span></div>
+        <h1>Admin Dashboard Access</h1>
+        <p>Products, orders, stock and reports ko secure admin panel se manage kare.</p>
+        <div class="features">
+            <span class="feature">Manage Products</span>
+            <span class="feature">Track Orders</span>
+            <span class="feature">Export Reports</span>
+            <span class="feature">Update Delivery</span>
+        </div>
+    </section>
 
-<div class="left">
+    <section class="panel">
+        <div class="card">
+            <h2>Admin Login</h2>
+            <p>Authorized admin account se login kare.</p>
 
-<div class="logo">
-🛒 DAMODAR
-<span class="store">GROCERY STORE</span>
-</div>
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
 
-<div class="heading">
-Admin Dashboard
-</div>
+            <form action="/admin_login" method="POST">
+                <div class="field">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="Enter username" required>
+                </div>
 
-<div class="subtitle">
-Manage your store easily
-</div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="password-row">
+                        <input id="password" type="password" name="password" placeholder="Enter password" required>
+                        <button class="toggle" type="button" onclick="togglePassword()">Show</button>
+                    </div>
+                </div>
 
-<div class="features">
+                <button class="submit" type="submit">Login</button>
+            </form>
 
-<div class="feature">📦 Manage Products</div>
+            <a class="back" href="/">Back to Store</a>
+            <div class="secure">Authorized Admin Access Only</div>
+        </div>
+    </section>
+</main>
 
-<div class="feature">🧾 Orders</div>
-
-<div class="feature">⭐ Reviews</div>
-
-<div class="feature">📊 Reports</div>
-
-</div>
-
-</div>
-
-<div class="right">
-
-<div class="login-box">
-
-<h1>🔐 Admin Login</h1>
-
-<p>Welcome back! Please login to continue.</p>
-
-<form action="/admin_login" method="POST">
-
-<label>Username</label>
-<input type="text" name="username" placeholder="Enter username" required>
-
-<label>Password</label>
-<input type="password" name="password" placeholder="Enter password" required>
-
-<button type="submit">Login</button>
-
-</form>
-
-<a href="/" class="back">← Back To Store</a>
-
-<div class="security">
-✅ Authorized Admin Access Only
-</div>
-
-</div>
-
-</div>
-
+<script>
+function togglePassword(){
+    const input = document.getElementById('password');
+    const button = document.querySelector('.toggle');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+}
+</script>
 </body>
 </html>
-```

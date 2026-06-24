@@ -535,6 +535,10 @@ def send_email_async(to_email, subject, body):
     thread.start()
 
 
+def is_admin():
+    return session.get("admin") is True
+
+
 @app.route("/")
 def home():
     search = request.args.get("search", "")
@@ -796,9 +800,10 @@ def my_orders():
 def admin_login():
     if request.method == "POST":
         if request.form["username"] == ADMIN_USERNAME and request.form["password"] == ADMIN_PASSWORD:
+            session.clear()
             session["admin"] = True
             return redirect("/orders")
-        return "Wrong admin username or password"
+        return render_template("login.html", error="Admin username ya password galat hai.")
 
     return render_template("login.html")
 
@@ -865,6 +870,7 @@ def customer_login():
 
             # Supports old plain-text passwords and upgrades them after login.
             if check_password_hash(stored_password, password) or stored_password == password:
+                session.pop("admin", None)
                 session["user"] = email
 
                 if stored_password == password:
@@ -1283,7 +1289,7 @@ def invoice(order_id):
 
 @app.route("/orders")
 def orders():
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     conn = get_db()
@@ -1318,7 +1324,7 @@ def orders():
 
 @app.route("/update_status/<int:order_id>/<status>")
 def update_status(order_id, status):
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     allowed_status = ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"]
@@ -1382,7 +1388,7 @@ def cancel_order(order_id):
 
 @app.route("/export_orders")
 def export_orders():
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     conn = get_db()
@@ -1425,7 +1431,7 @@ def export_orders():
 
 @app.route("/add_product", methods=["GET", "POST"])
 def add_product():
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     ensure_product_columns()
@@ -1486,7 +1492,7 @@ def add_product():
 
 @app.route("/edit_product/<int:product_id>", methods=["GET", "POST"])
 def edit_product(product_id):
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     ensure_product_columns()
@@ -1578,7 +1584,7 @@ def edit_product(product_id):
 
 @app.route("/delete_product/<int:product_id>")
 def delete_product(product_id):
-    if "admin" not in session:
+    if not is_admin():
         return redirect("/admin_login")
 
     conn = get_db()
