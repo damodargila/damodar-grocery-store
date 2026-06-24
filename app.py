@@ -32,6 +32,10 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "1234")
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
 
+DEFAULT_COUPONS = {
+    "SAVE10": 10,
+}
+
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -101,6 +105,19 @@ def can_add_to_cart(product_id, current_quantity):
         return False
 
     return product_stock(product) > current_quantity
+
+
+def coupon_value(coupon):
+    try:
+        if hasattr(coupon, "keys") and "discount" in coupon.keys():
+            return int(coupon["discount"] or 0)
+    except Exception:
+        pass
+
+    try:
+        return int(coupon[0] or 0)
+    except Exception:
+        return 0
 
 
 def order_col(order, key, index, default=""):
@@ -449,6 +466,13 @@ def verify_otp():
 def apply_coupon():
     code = request.form["coupon"].upper().strip()
 
+    if not code:
+        session["coupon_code"] = ""
+        session["discount"] = 0
+        session["coupon_message"] = "Please enter a coupon code."
+        session["coupon_status"] = "error"
+        return redirect("/cart")
+
     conn = get_db()
     cursor = conn.cursor()
 
@@ -459,10 +483,19 @@ def apply_coupon():
 
     if coupon:
         session["coupon_code"] = code
-        session["discount"] = coupon[0]
+        session["discount"] = coupon_value(coupon)
+        session["coupon_message"] = f"Coupon {code} applied successfully."
+        session["coupon_status"] = "success"
+    elif code in DEFAULT_COUPONS:
+        session["coupon_code"] = code
+        session["discount"] = DEFAULT_COUPONS[code]
+        session["coupon_message"] = f"Coupon {code} applied successfully."
+        session["coupon_status"] = "success"
     else:
         session["coupon_code"] = ""
         session["discount"] = 0
+        session["coupon_message"] = "Invalid coupon code."
+        session["coupon_status"] = "error"
 
     return redirect("/cart")
 
@@ -699,7 +732,7 @@ def cart():
             products.append((product, quantity, subtotal))
 
     gst = int(total * 0.05)
-    discount_percent = session.get("discount", 0)
+    discount_percent = int(session.get("discount", 0) or 0)
     discount_amount = int(total * discount_percent / 100)
     grand_total = total + gst - discount_amount
 
@@ -712,7 +745,10 @@ def cart():
         gst=gst,
         discount_percent=discount_percent,
         discount_amount=discount_amount,
-        grand_total=grand_total
+        grand_total=grand_total,
+        coupon_code=session.get("coupon_code", ""),
+        coupon_message=session.get("coupon_message", ""),
+        coupon_status=session.get("coupon_status", "")
     )
 
 
@@ -842,7 +878,7 @@ def checkout():
                 order_products.append((product, quantity))
 
         gst = int(total * 0.05)
-        discount_percent = session.get("discount", 0)
+        discount_percent = int(session.get("discount", 0) or 0)
         discount_amount = int(total * discount_percent / 100)
         grand_total = total + gst - discount_amount
 

@@ -45,6 +45,9 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .coupon{display:flex;gap:8px;margin-bottom:18px}
 .coupon input{flex:1;border:1px solid #ddd;border-radius:9px;padding:12px;font-size:14px;min-width:0}
 .coupon button{background:#131921;color:white;border:none;border-radius:9px;padding:12px 14px;font-weight:bold;cursor:pointer}
+.coupon-message{margin:-6px 0 14px;padding:10px 12px;border-radius:9px;font-size:14px;font-weight:bold}
+.coupon-message.success{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5}
+.coupon-message.error{background:#fff1f1;color:#d32f2f;border:1px solid #ffd0d0}
 .line{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #eee;color:#444}
 .line strong{color:#111}
 .grand{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:24px;font-weight:bold;color:#0b6623}
@@ -132,9 +135,13 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
             <h2>Order Summary</h2>
 
             <form class="coupon" action="/apply_coupon" method="POST">
-                <input type="text" name="coupon" placeholder="Enter coupon SAVE10">
+                <input type="text" name="coupon" placeholder="Enter coupon SAVE10" value="{{ coupon_code }}">
                 <button type="submit">Apply</button>
             </form>
+
+            {% if coupon_message %}
+            <div class="coupon-message {{ coupon_status }}">{{ coupon_message }}</div>
+            {% endif %}
 
             <div class="line"><span>Subtotal</span><strong>&#8377;{{ total }}</strong></div>
             <div class="line"><span>GST</span><strong>&#8377;{{ gst }}</strong></div>
