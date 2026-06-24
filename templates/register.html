@@ -79,6 +79,11 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
                 </div>
 
                 <div class="field">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" placeholder="10 digit phone number" value="{{ form_data.get('phone', '') if form_data else '' }}" pattern="[0-9]{10}" maxlength="10" required>
+                </div>
+
+                <div class="field">
                     <label>Password</label>
                     <div class="password-row">
                         <input id="password" type="password" name="password" placeholder="Minimum 6 characters" minlength="6" required>

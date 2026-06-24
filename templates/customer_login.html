@@ -34,6 +34,7 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
 .submit:hover{background:#f08b00}
 .switch{margin-top:18px;text-align:center;color:#555}
 .switch a{color:#0b6623;text-decoration:none;font-weight:bold}
+.otp-link{display:block;text-align:center;margin-top:14px;color:#0b6623;text-decoration:none;font-weight:bold}
 @media(max-width:850px){
 .auth-page{grid-template-columns:1fr}
 .hero{padding:34px 22px}
@@ -53,7 +54,7 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
 <main class="auth-page">
     <section class="hero">
         <h1>Welcome back to Damodar Grocery</h1>
-        <p>Login karke cart, wishlist, order tracking aur invoice sab quickly access kare.</p>
+        <p>Email ya phone number se login karke cart, wishlist, order tracking aur invoice sab quickly access kare.</p>
         <div class="stats">
             <div class="stat"><strong>Fresh</strong><span>Daily deals</span></div>
             <div class="stat"><strong>Fast</strong><span>Easy checkout</span></div>
@@ -72,8 +73,8 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
 
             <form method="POST">
                 <div class="field">
-                    <label>Email</label>
-                    <input type="email" name="email" placeholder="example@email.com" value="{{ form_data.get('email', '') if form_data else '' }}" required>
+                    <label>Email or Phone Number</label>
+                    <input type="text" name="login_id" placeholder="example@email.com or 9876543210" value="{{ form_data.get('login_id', '') if form_data else '' }}" required>
                 </div>
 
                 <div class="field">
@@ -86,6 +87,8 @@ input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,3
 
                 <button class="submit" type="submit">Login</button>
             </form>
+
+            <a class="otp-link" href="/send_otp">Login with OTP</a>
 
             <div class="switch">
                 New customer? <a href="/register">Create account</a>

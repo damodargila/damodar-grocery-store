@@ -1,31 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Send OTP</title>
+<title>OTP Login - Damodar Grocery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111;min-height:100vh}
+.topbar{background:#131921;color:white;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:24px;font-weight:bold;text-decoration:none;color:white}
+.logo span{color:#ff9900}
+.topbar a{color:white;text-decoration:none;font-weight:bold}
+.wrap{min-height:calc(100vh - 58px);display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:440px;background:white;border-radius:16px;padding:28px;box-shadow:0 10px 28px rgba(0,0,0,.14)}
+h1{font-size:28px;margin-bottom:8px}
+p{color:#555;margin-bottom:20px;line-height:1.5}
+.error{background:#fff1f1;color:#d60000;border:1px solid #ffc7c7;border-radius:10px;padding:11px;margin-bottom:14px;font-weight:bold}
+label{display:block;font-size:13px;font-weight:bold;color:#444;margin-bottom:7px}
+input{width:100%;border:1px solid #ddd;border-radius:10px;padding:13px;font-size:15px;margin-bottom:14px}
+input:focus{outline:none;border-color:#0b6623;box-shadow:0 0 0 3px rgba(11,102,35,.12)}
+button{width:100%;background:#ff9900;color:#111;border:none;border-radius:10px;padding:14px;font-weight:bold;font-size:16px;cursor:pointer}
+.links{display:flex;justify-content:space-between;gap:12px;margin-top:18px}
+.links a{color:#0b6623;text-decoration:none;font-weight:bold}
+</style>
 </head>
+
 <body>
+<div class="topbar">
+    <a class="logo" href="/">Damodar <span>Grocery</span></a>
+    <a href="/">Back to Store</a>
+</div>
 
-<h1>📧 OTP Login</h1>
+<main class="wrap">
+    <section class="card">
+        <h1>OTP Login</h1>
+        <p>Email ya phone number enter kare. Email par OTP mail hoga, phone OTP demo mode me verify page par dikhega.</p>
 
-<form method="POST">
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
 
-<input
-type="email"
-name="email"
-placeholder="Enter Gmail"
-required>
+        <form method="POST">
+            <label>Email or Phone Number</label>
+            <input type="text" name="login_id" placeholder="example@email.com or 9876543210" value="{{ form_data.get('login_id', '') if form_data else '' }}" required>
+            <button type="submit">Send OTP</button>
+        </form>
 
-<br><br>
-
-<button type="submit">
-Send OTP
-</button>
-
-</form>
-
-<br>
-
-<a href="/">Home</a>
-
+        <div class="links">
+            <a href="/customer_login">Password Login</a>
+            <a href="/register">Create Account</a>
+        </div>
+    </section>
+</main>
 </body>
 </html>

@@ -328,6 +328,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 name TEXT,
                 email TEXT UNIQUE,
+                phone TEXT UNIQUE,
                 password TEXT
             )
         """)
@@ -379,6 +380,9 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+            ],
+            "users": [
+                ("phone", "TEXT"),
             ],
             "order_items": [
                 ("product_id", "INTEGER"),
@@ -433,6 +437,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
                 email TEXT UNIQUE,
+                phone TEXT UNIQUE,
                 password TEXT
             )
         """)
@@ -483,6 +488,9 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+            ],
+            "users": [
+                ("phone", "TEXT"),
             ],
             "order_items": [
                 ("product_id", "INTEGER"),
@@ -537,6 +545,41 @@ def send_email_async(to_email, subject, body):
 
 def is_admin():
     return session.get("admin") is True
+
+
+def make_otp():
+    return str(random.randint(100000, 999999))
+
+
+def send_phone_otp(phone, otp):
+    # SMS gateway nahi laga hai, isliye phone OTP demo mode me verify page par dikhega.
+    print(f"Phone OTP for {phone}: {otp}")
+
+
+def register_pending_user():
+    pending = session.get("pending_register")
+    if not pending:
+        return None
+
+    hashed_password = generate_password_hash(pending["password"])
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        execute(
+            cursor,
+            "INSERT INTO users(name, email, phone, password) VALUES(?,?,?,?)",
+            (pending["name"], pending["email"], pending["phone"], hashed_password)
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        conn.close()
+        return None
+
+    conn.close()
+    return pending
 
 
 @app.route("/")
@@ -620,17 +663,38 @@ def home():
 @app.route("/send_otp", methods=["GET", "POST"])
 def send_otp():
     if request.method == "POST":
-        email = request.form["email"]
-        otp = str(random.randint(100000, 999999))
+        login_id = request.form.get("login_id", "").strip().lower()
+        otp = make_otp()
 
-        session["otp_email"] = email
+        conn = get_db()
+        cursor = conn.cursor()
+        execute(cursor, "SELECT * FROM users WHERE email=? OR phone=?", (login_id, login_id))
+        user = cursor.fetchone()
+        conn.close()
+
+        if not user:
+            return render_template("send_otp.html", error="Is email ya phone se account nahi mila.", form_data=request.form)
+
+        user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
+        user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else user[3]
+
+        session["otp_user"] = user_email
+        session["otp_login_id"] = login_id
         session["otp"] = otp
+        session["otp_flow"] = "login"
 
-        send_email(
-            email,
-            "Your Damodar Grocery Store OTP",
-            f"Your OTP is {otp}"
-        )
+        if "@" in login_id:
+            send_email_async(
+                user_email,
+                "Your Damodar Grocery Store OTP",
+                f"Your login OTP is {otp}"
+            )
+            session["phone_demo_otp"] = ""
+            session["email_demo_otp"] = otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
+        else:
+            send_phone_otp(user_phone, otp)
+            session["phone_demo_otp"] = otp
+            session["email_demo_otp"] = ""
 
         return redirect("/verify_otp")
 
@@ -640,16 +704,64 @@ def send_otp():
 @app.route("/verify_otp", methods=["GET", "POST"])
 def verify_otp():
     if request.method == "POST":
-        user_otp = request.form["otp"]
+        user_otp = request.form.get("otp", "").strip()
+        user_phone_otp = request.form.get("phone_otp", "").strip()
+
+        if session.get("otp_flow") == "register":
+            if user_otp == session.get("otp") and user_phone_otp == session.get("phone_otp"):
+                pending = register_pending_user()
+                if not pending:
+                    session.pop("otp", None)
+                    return render_template(
+                        "verify_otp.html",
+                        error="Account create nahi ho paya. Email ya phone already registered ho sakta hai."
+                    )
+
+                session["user"] = pending["email"]
+                session.pop("pending_register", None)
+
+                session.pop("otp", None)
+                session.pop("phone_otp", None)
+                session.pop("otp_flow", None)
+                session.pop("phone_demo_otp", None)
+                session.pop("email_demo_otp", None)
+                session.pop("admin", None)
+                return redirect("/")
+
+            return render_template(
+                "verify_otp.html",
+                error="Email OTP ya Phone OTP galat hai.",
+                email_demo_otp=session.get("email_demo_otp", ""),
+                phone_demo_otp=session.get("phone_demo_otp", ""),
+                otp_flow="register"
+            )
 
         if user_otp == session.get("otp"):
-            session["user"] = session.get("otp_email")
+            session["user"] = session.get("otp_user")
             session.pop("otp", None)
+            session.pop("phone_otp", None)
+            session.pop("otp_flow", None)
+            session.pop("otp_user", None)
+            session.pop("otp_login_id", None)
+            session.pop("phone_demo_otp", None)
+            session.pop("email_demo_otp", None)
+            session.pop("admin", None)
             return redirect("/")
 
-        return "Wrong OTP"
+        return render_template(
+            "verify_otp.html",
+            error="Wrong OTP. Dobara check kare.",
+            email_demo_otp=session.get("email_demo_otp", ""),
+            phone_demo_otp=session.get("phone_demo_otp", ""),
+            otp_flow=session.get("otp_flow", "login")
+        )
 
-    return render_template("verify_otp.html")
+    return render_template(
+        "verify_otp.html",
+        email_demo_otp=session.get("email_demo_otp", ""),
+        phone_demo_otp=session.get("phone_demo_otp", ""),
+        otp_flow=session.get("otp_flow", "login")
+    )
 
 
 @app.route("/apply_coupon", methods=["POST"])
@@ -819,6 +931,7 @@ def register():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
+        phone = request.form.get("phone", "").strip()
         password = request.form.get("password", "")
 
         if not name:
@@ -827,28 +940,44 @@ def register():
         if "@" not in email or "." not in email:
             return render_template("register.html", error="Valid email enter kare.", form_data=request.form)
 
+        if not phone.isdigit() or len(phone) != 10:
+            return render_template("register.html", error="Phone number 10 digit ka hona chahiye.", form_data=request.form)
+
         if len(password) < 6:
             return render_template("register.html", error="Password kam se kam 6 characters ka hona chahiye.", form_data=request.form)
 
-        hashed_password = generate_password_hash(password)
-
         conn = get_db()
         cursor = conn.cursor()
-
-        try:
-            execute(
-                cursor,
-                "INSERT INTO users(name, email, password) VALUES(?,?,?)",
-                (name, email, hashed_password)
-            )
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            conn.close()
-            return render_template("register.html", error="Ye email already registered hai.", form_data=request.form)
-
+        execute(cursor, "SELECT 1 FROM users WHERE email=? OR phone=?", (email, phone))
+        existing_user = cursor.fetchone()
         conn.close()
-        return redirect("/customer_login")
+
+        if existing_user:
+            return render_template("register.html", error="Ye email ya phone already registered hai.", form_data=request.form)
+
+        email_otp = make_otp()
+        phone_otp = make_otp()
+
+        session["pending_register"] = {
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "password": password,
+        }
+        session["otp"] = email_otp
+        session["phone_otp"] = phone_otp
+        session["otp_flow"] = "register"
+        session["phone_demo_otp"] = phone_otp
+        session["email_demo_otp"] = email_otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
+
+        send_email_async(
+            email,
+            "Verify your Damodar Grocery account",
+            f"Your account verification OTP is {email_otp}"
+        )
+        send_phone_otp(phone, phone_otp)
+
+        return redirect("/verify_otp")
 
     return render_template("register.html")
 
@@ -856,22 +985,23 @@ def register():
 @app.route("/customer_login", methods=["GET", "POST"])
 def customer_login():
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
+        login_id = request.form.get("login_id", "").strip().lower()
         password = request.form.get("password", "")
 
         conn = get_db()
         cursor = conn.cursor()
-        execute(cursor, "SELECT * FROM users WHERE email=?", (email,))
+        execute(cursor, "SELECT * FROM users WHERE email=? OR phone=?", (login_id, login_id))
         user = cursor.fetchone()
         conn.close()
 
         if user:
-            stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[3]
+            stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[4]
+            user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
 
             # Supports old plain-text passwords and upgrades them after login.
             if check_password_hash(stored_password, password) or stored_password == password:
                 session.pop("admin", None)
-                session["user"] = email
+                session["user"] = user_email
 
                 if stored_password == password:
                     conn = get_db()
@@ -879,14 +1009,14 @@ def customer_login():
                     execute(
                         cursor,
                         "UPDATE users SET password=? WHERE email=?",
-                        (generate_password_hash(password), email)
+                        (generate_password_hash(password), user_email)
                     )
                     conn.commit()
                     conn.close()
 
                 return redirect("/")
 
-        return render_template("customer_login.html", error="Email ya password galat hai.", form_data=request.form)
+        return render_template("customer_login.html", error="Email/phone ya password galat hai.", form_data=request.form)
 
     return render_template("customer_login.html")
 
