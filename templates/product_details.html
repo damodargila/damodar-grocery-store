@@ -31,11 +31,11 @@ border:1px solid #eee;
 }
 
 .main-img{
-width:100%;height:430px;object-fit:cover;display:block;
-transition:.25s;
+width:100%;height:430px;object-fit:contain;display:block;
+transition:.25s;cursor:zoom-in;background:white;padding:10px;
 }
 
-.main-img:hover{transform:scale(1.05)}
+.main-img:hover{transform:scale(1.01)}
 
 .no-img{
 height:430px;display:flex;align-items:center;justify-content:center;
@@ -47,12 +47,13 @@ display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;
 }
 
 .thumb{
-width:85px;height:75px;object-fit:cover;border-radius:10px;
-border:2px solid #ddd;cursor:pointer;background:#eee;
+width:85px;height:75px;object-fit:contain;border-radius:10px;
+border:2px solid #ddd;cursor:pointer;background:white;padding:4px;
 }
 
-.thumb:hover{
-border-color:#0b8f3a;transform:scale(1.04);
+.thumb:hover,
+.thumb.active{
+border-color:#0b8f3a;transform:scale(1.04);box-shadow:0 0 0 3px rgba(11,143,58,.14);
 }
 
 .heart{
@@ -86,6 +87,14 @@ border-radius:8px;font-weight:bold;margin-bottom:14px;
 background:#f0fff4;border-left:4px solid #0b8f3a;
 padding:12px;margin:15px 0;border-radius:8px;color:#333;
 }
+
+.delivery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.delivery-card{border:1px solid #e8eef2;background:#fbfdfc;border-radius:12px;padding:12px;font-size:13px}
+.delivery-card b{display:block;margin-bottom:4px;color:#0b6623}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+.spec{border:1px solid #edf0f2;border-radius:12px;padding:13px;background:#fbfdff}
+.spec span{display:block;color:#667085;font-size:13px;margin-bottom:5px}
+.spec b{font-size:15px}
 
 .desc{
 font-size:16px;line-height:1.7;color:#444;white-space:pre-line;
@@ -129,12 +138,18 @@ border:1px solid #eee;border-radius:14px;padding:12px;text-decoration:none;
 color:#111;background:#fafafa;transition:.2s;overflow:hidden;
 }
 .rel-card:hover{transform:translateY(-4px);box-shadow:0 6px 14px rgba(0,0,0,.15)}
-.rel-card img{width:100%;height:120px;object-fit:cover;border-radius:10px}
+.rel-card img{width:100%;height:120px;object-fit:contain;background:white;border-radius:10px}
 .rel-card h3{font-size:17px;margin:10px 0 6px}
 .rel-price{color:#0b6623;font-weight:bold;font-size:18px}
 .rel-view{display:block;margin-top:9px;background:#ff9900;color:#111;text-align:center;border-radius:8px;padding:9px;font-weight:bold}
 
 .footer{background:#131921;color:white;text-align:center;padding:24px;margin-top:30px}
+
+.image-modal{position:fixed;inset:0;background:rgba(10,15,20,.84);display:none;align-items:center;justify-content:center;padding:24px;z-index:2000}
+.image-modal.open{display:flex}
+.modal-img{max-width:min(920px,94vw);max-height:86vh;object-fit:contain;background:white;border-radius:12px;padding:12px}
+.modal-close{position:absolute;top:18px;right:22px;border:0;border-radius:999px;width:42px;height:42px;background:white;color:#111;font-size:24px;font-weight:bold;cursor:pointer}
+.mobile-sticky-actions{display:none}
 
 @media(max-width:800px){
 .header{flex-direction:column;gap:10px}
@@ -165,33 +180,33 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
         <div>
             <div class="image-box">
                 {% if product[4] %}
-                <img id="mainProductImage" class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}" decoding="async">
+                <img id="mainProductImage" class="main-img" src="{{ product[4] }}" alt="{{ product[1] }}" decoding="async" onclick="openImageZoom(this.src)">
                 {% else %}
                 <div class="no-img">No Image</div>
                 {% endif %}
 
-                <a class="heart {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
+                <a class="heart {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">&hearts;</a>
             </div>
 
             <div class="thumbs">
                 {% if product[4] %}
-                <img class="thumb" src="{{ product[4] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
+                <img class="thumb active" src="{{ product[4] }}" onclick="changeImage(this)" loading="lazy" decoding="async" alt="{{ product[1] }} thumbnail">
                 {% endif %}
 
                 {% if product['image2'] %}
-                <img class="thumb" src="{{ product['image2'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
+                <img class="thumb" src="{{ product['image2'] }}" onclick="changeImage(this)" loading="lazy" decoding="async" alt="{{ product[1] }} thumbnail">
                 {% endif %}
 
                 {% if product['image3'] %}
-                <img class="thumb" src="{{ product['image3'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
+                <img class="thumb" src="{{ product['image3'] }}" onclick="changeImage(this)" loading="lazy" decoding="async" alt="{{ product[1] }} thumbnail">
                 {% endif %}
 
                 {% if product['image4'] %}
-                <img class="thumb" src="{{ product['image4'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
+                <img class="thumb" src="{{ product['image4'] }}" onclick="changeImage(this)" loading="lazy" decoding="async" alt="{{ product[1] }} thumbnail">
                 {% endif %}
 
                 {% if product['image5'] %}
-                <img class="thumb" src="{{ product['image5'] }}" onclick="changeImage(this.src)" loading="lazy" decoding="async">
+                <img class="thumb" src="{{ product['image5'] }}" onclick="changeImage(this)" loading="lazy" decoding="async" alt="{{ product[1] }} thumbnail">
                 {% endif %}
             </div>
         </div>
@@ -201,23 +216,23 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
             <h1 class="title">{{ product[1] }}</h1>
 
             <div>
-                <span class="stars">★★★★★</span>
+                <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
                 {{ avg_rating }} ({{ total_reviews }} Reviews)
             </div>
 
             <div class="price-row">
-                <span class="price">₹{{ product[3] }}</span>
-                <span class="mrp">₹{{ product[3] + 20 }}</span>
+                <span class="price">&#8377;{{ product[3] }}</span>
+                <span class="mrp">&#8377;{{ product[3] + 20 }}</span>
                 <span class="discount">Best Deal</span>
             </div>
 
             <p>Category: <b>{{ product[2] }}</b></p>
 
             <div class="info-grid">
-                <div class="info">✅ Best Quality</div>
-                <div class="info">🚚 Fast Delivery</div>
-                <div class="info">🔁 Easy Return</div>
-                <div class="info">🔒 Secure Order</div>
+                <div class="info">Best Quality</div>
+                <div class="info">Fast Delivery</div>
+                <div class="info">Easy Return</div>
+                <div class="info">Secure Order</div>
             </div>
 
             {% if (product[5] | int) > 0 %}
@@ -233,6 +248,12 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
                 Fresh and trusted product from Damodar Grocery Store.
             </div>
 
+            <div class="delivery-grid">
+                <div class="delivery-card"><b>Fast Delivery</b>Delivery in 2-4 days</div>
+                <div class="delivery-card"><b>COD Available</b>Pay after delivery</div>
+                <div class="delivery-card"><b>Easy Return</b>7 days support</div>
+            </div>
+
             {% if (product[5] | int) > 0 and not session.get('admin') %}
             <div class="qty-row">
                 <span class="qty-label">Quantity</span>
@@ -243,8 +264,8 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
                 </div>
             </div>
             <div class="actions">
-                <a class="btn cart" href="/add_to_cart/{{ product[0] }}">🛒 Add to Cart</a>
-                <a class="btn buy" href="/add_to_cart/{{ product[0] }}">⚡ Buy Now</a>
+                <a class="btn cart" href="/add_to_cart/{{ product[0] }}">Add to Cart</a>
+                <a class="btn buy" href="/add_to_cart/{{ product[0] }}">Buy Now</a>
             </div>
             {% endif %}
         </div>
@@ -256,6 +277,16 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
         <a class="delete-btn" href="/delete_product/{{ product[0] }}" onclick="return confirm('Delete Product?')">Delete Product</a>
     </div>
     {% endif %}
+
+    <div class="section">
+        <h2>Product Specs</h2>
+        <div class="spec-grid">
+            <div class="spec"><span>Product</span><b>{{ product[1] }}</b></div>
+            <div class="spec"><span>Category</span><b>{{ product[2] }}</b></div>
+            <div class="spec"><span>Availability</span><b>{% if (product[5] | int) > 0 %}In Stock{% else %}Out of Stock{% endif %}</b></div>
+            <div class="spec"><span>Store Promise</span><b>Quality checked</b></div>
+        </div>
+    </div>
 
     <div class="section">
         <h2>Product Description</h2>
@@ -274,12 +305,12 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
                 <div class="review-score">{{ avg_rating }}/5</div>
                 <p class="desc">{{ total_reviews }} customer reviews</p>
             </div>
-            <div class="stars">★★★★★</div>
+            <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
         </div>
         {% if reviews %}
             {% for review in reviews %}
             <div class="review-card">
-                <div class="review-name">{{ review[2] }} - ⭐ {{ review[3] }}</div>
+                <div class="review-name">{{ review[2] }} - Rating {{ review[3] }}</div>
                 <div class="review-text">{{ review[4] }}</div>
             </div>
             {% endfor %}
@@ -307,7 +338,7 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
                 {% endif %}
                 <h3>{{ item[1] }}</h3>
                 <span class="rel-view">View Product</span>
-                <div class="rel-price">₹{{ item[3] }}</div>
+                <div class="rel-price">&#8377;{{ item[3] }}</div>
             </a>
             {% endfor %}
         </div>
@@ -316,15 +347,44 @@ color:#111;background:#fafafa;transition:.2s;overflow:hidden;
 </div>
 
 <div class="footer">
-    © 2026 Damodar Grocery Store | Fresh Grocery, Fast Delivery
+    &copy; 2026 Damodar Grocery Store | Fresh Grocery, Fast Delivery
 </div>
 
+<div class="image-modal" id="imageModal" onclick="closeImageZoom(event)">
+    <button class="modal-close" type="button" onclick="closeImageZoom(event)">X</button>
+    <img class="modal-img" id="modalImage" alt="{{ product[1] }} full image">
+</div>
+
+{% if (product[5] | int) > 0 and not session.get('admin') %}
+<div class="mobile-sticky-actions">
+    <a class="btn cart sticky-cart" href="/add_to_cart/{{ product[0] }}">Add to Cart</a>
+    <a class="btn buy sticky-buy" href="/buy_now/{{ product[0] }}">Buy Now</a>
+</div>
+{% endif %}
+
 <script>
-function changeImage(src){
+function changeImage(thumb){
     var mainImage = document.getElementById("mainProductImage");
-    if(mainImage){
-        mainImage.src = src;
+    if(mainImage && thumb){
+        mainImage.src = thumb.src;
+        document.querySelectorAll(".thumb").forEach(function(item){ item.classList.remove("active"); });
+        thumb.classList.add("active");
     }
+}
+
+function openImageZoom(src){
+    var modal = document.getElementById("imageModal");
+    var modalImage = document.getElementById("modalImage");
+    if(modal && modalImage && src){
+        modalImage.src = src;
+        modal.classList.add("open");
+    }
+}
+
+function closeImageZoom(event){
+    if(event){ event.preventDefault(); }
+    var modal = document.getElementById("imageModal");
+    if(modal){ modal.classList.remove("open"); }
 }
 
 function selectedQty(){
@@ -348,6 +408,8 @@ function changeQty(delta){
 
 var cartButton = document.querySelector(".actions .cart");
 var buyButton = document.querySelector(".actions .buy");
+var stickyCartButton = document.querySelector(".sticky-cart");
+var stickyBuyButton = document.querySelector(".sticky-buy");
 
 if(cartButton){
     cartButton.addEventListener("click", function(event){
@@ -362,6 +424,27 @@ if(buyButton){
         window.location.href = "/buy_now/{{ product[0] }}?quantity=" + selectedQty();
     });
 }
+
+if(stickyCartButton){
+    stickyCartButton.addEventListener("click", function(event){
+        event.preventDefault();
+        window.location.href = "/add_to_cart/{{ product[0] }}?quantity=" + selectedQty();
+    });
+}
+
+if(stickyBuyButton){
+    stickyBuyButton.addEventListener("click", function(event){
+        event.preventDefault();
+        window.location.href = "/buy_now/{{ product[0] }}?quantity=" + selectedQty();
+    });
+}
+
+document.addEventListener("keydown", function(event){
+    if(event.key === "Escape"){
+        var modal = document.getElementById("imageModal");
+        if(modal){ modal.classList.remove("open"); }
+    }
+});
 </script>
 
 </body>
