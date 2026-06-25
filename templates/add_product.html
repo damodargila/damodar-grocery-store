@@ -85,6 +85,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:#0b6623;box-sh
         <div class="hero-actions">
             <a href="/orders">Back to Dashboard</a>
             <a href="/bulk_add_products">Bulk Add Products</a>
+            <a href="/coupons">Coupons</a>
             <a href="/">View Store</a>
         </div>
     </section>
@@ -188,7 +189,7 @@ function updatePreview(){
     document.getElementById('previewName').textContent = value('nameInput', 'Product name');
     document.getElementById('previewCategory').textContent = 'Category: ' + value('categoryInput', '-');
     document.getElementById('previewDesc').textContent = value('descInput', 'Product description will appear here.');
-    document.getElementById('previewPrice').textContent = '₹' + value('priceInput', '0');
+    document.getElementById('previewPrice').textContent = 'â‚¹' + value('priceInput', '0');
     document.getElementById('previewStock').textContent = 'Stock: ' + value('stockInput', '10');
 }
 

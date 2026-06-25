@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupons - Damodar Grocery</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: #eef3f7; color: #111827; }
+        .topbar { height: 56px; background: #101922; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+        .brand { font-size: 24px; font-weight: 800; }
+        .brand span { color: #ff9300; }
+        .nav { display: flex; gap: 18px; align-items: center; }
+        .nav a { color: #fff; text-decoration: none; font-weight: 700; font-size: 14px; }
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 46px; }
+        .hero { background: linear-gradient(135deg, #008f45, #04bd72); border-radius: 8px; color: #fff; padding: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: center; box-shadow: 0 16px 32px rgba(0,0,0,.12); }
+        h1 { margin: 0 0 8px; font-size: 34px; }
+        .hero p { margin: 0; opacity: .92; font-size: 16px; }
+        .hero-badge { background: #ffd21a; color: #111827; border-radius: 999px; padding: 12px 18px; font-weight: 800; white-space: nowrap; }
+        .grid { display: grid; grid-template-columns: .9fr 1.4fr; gap: 22px; margin-top: 24px; align-items: start; }
+        .panel { background: #fff; border-radius: 8px; padding: 22px; box-shadow: 0 10px 28px rgba(15,23,42,.08); }
+        .panel h2 { margin: 0 0 16px; font-size: 24px; }
+        label { display: block; margin: 14px 0 7px; font-weight: 800; }
+        input { width: 100%; border: 1px solid #d8e0e8; border-radius: 8px; padding: 13px 14px; font-size: 15px; outline: none; }
+        input:focus { border-color: #009846; box-shadow: 0 0 0 3px rgba(0,152,70,.12); }
+        .submit { width: 100%; margin-top: 18px; border: 0; border-radius: 8px; padding: 14px 16px; background: #ff9300; color: #111827; font-weight: 900; cursor: pointer; }
+        .message { border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-weight: 800; }
+        .success { background: #e6f8ed; color: #007a35; }
+        .error { background: #ffe8e8; color: #d00000; }
+        .coupon-list { display: grid; gap: 12px; }
+        .coupon-card { border: 1px solid #e5ebf0; border-radius: 8px; padding: 14px; display: grid; grid-template-columns: 1fr 130px auto auto; gap: 10px; align-items: end; background: #fbfdff; }
+        .mini-label { display: block; font-size: 12px; color: #5b6776; font-weight: 800; margin-bottom: 6px; }
+        .save { border: 0; border-radius: 8px; padding: 13px 16px; background: #008f45; color: #fff; font-weight: 900; cursor: pointer; }
+        .delete { border: 0; border-radius: 8px; padding: 13px 16px; background: #ff2525; color: #fff; font-weight: 900; cursor: pointer; }
+        .empty { color: #5b6776; background: #f7fafc; border: 1px dashed #cbd5df; border-radius: 8px; padding: 18px; }
+        .hint { color: #5b6776; line-height: 1.6; margin-top: 14px; }
+        @media (max-width: 850px) {
+            .topbar, .hero { flex-direction: column; align-items: flex-start; height: auto; }
+            .topbar { gap: 12px; padding: 16px 20px; }
+            .nav { flex-wrap: wrap; }
+            .grid { grid-template-columns: 1fr; }
+            .coupon-card { grid-template-columns: 1fr; }
+            h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">Damodar <span>Admin</span></div>
+        <nav class="nav">
+            <a href="/orders">Dashboard</a>
+            <a href="/add_product">Add Product</a>
+            <a href="/bulk_add_products">Bulk Add</a>
+            <a href="/">Store Front</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <main class="wrap">
+        <section class="hero">
+            <div>
+                <h1>Manage Coupons</h1>
+                <p>Admin yahan se coupon code add, edit aur delete kar sakta hai. Customer cart me code dalte hi discount milega.</p>
+            </div>
+            <div class="hero-badge">Example: DAMODAR10</div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <h2>Add Coupon</h2>
+                {% if success %}<div class="message success">{{ success }}</div>{% endif %}
+                {% if error %}<div class="message error">{{ error }}</div>{% endif %}
+
+                <form method="POST" action="/coupons">
+                    <label for="code">Coupon Code</label>
+                    <input id="code" name="code" type="text" placeholder="DAMODAR10" required>
+
+                    <label for="discount">Discount Percent</label>
+                    <input id="discount" name="discount" type="number" min="1" max="100" placeholder="10" required>
+
+                    <button class="submit" type="submit">Save Coupon</button>
+                </form>
+                <p class="hint">Coupon code automatic capital me save hoga. Discount percent 1 se 100 ke beech rakho.</p>
+            </div>
+
+            <div class="panel">
+                <h2>Active Coupons</h2>
+                {% if coupons %}
+                <div class="coupon-list">
+                    {% for coupon in coupons %}
+                    <form class="coupon-card" action="/edit_coupon/{{ coupon[0] }}" method="POST">
+                        <div>
+                            <span class="mini-label">Coupon Code</span>
+                            <input name="code" type="text" value="{{ coupon[1] }}" required>
+                        </div>
+                        <div>
+                            <span class="mini-label">Discount %</span>
+                            <input name="discount" type="number" min="1" max="100" value="{{ coupon[2] }}" required>
+                        </div>
+                        <button class="save" type="submit">Update</button>
+                        <button class="delete" type="submit" formaction="/delete_coupon/{{ coupon[0] }}" onclick="return confirm('Ye coupon delete karna hai?')">Delete</button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty">Abhi koi coupon nahi hai. Pehla coupon left side se add karo.</div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

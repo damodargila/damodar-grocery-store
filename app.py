@@ -853,6 +853,86 @@ def verify_otp():
     )
 
 
+@app.route("/coupons", methods=["GET", "POST"])
+def coupons():
+    if not is_admin():
+        return redirect("/admin_login")
+
+    message = ""
+    error = ""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        code = request.form.get("code", "").strip().upper()
+        discount = request.form.get("discount", "").strip()
+
+        try:
+            discount_value = int(discount)
+        except ValueError:
+            discount_value = 0
+
+        if not code:
+            error = "Coupon code required hai."
+        elif discount_value < 1 or discount_value > 100:
+            error = "Discount 1 se 100 percent ke beech hona chahiye."
+        else:
+            try:
+                execute(cursor, "INSERT INTO coupons(code, discount) VALUES(?,?)", (code, discount_value))
+                conn.commit()
+                message = f"Coupon {code} add ho gaya."
+            except Exception:
+                conn.rollback()
+                cursor = conn.cursor()
+                execute(cursor, "UPDATE coupons SET discount=? WHERE code=?", (discount_value, code))
+                conn.commit()
+                message = f"Coupon {code} update ho gaya."
+
+    execute(cursor, "SELECT * FROM coupons ORDER BY id DESC")
+    all_coupons = cursor.fetchall()
+    conn.close()
+    return render_template("coupons.html", coupons=all_coupons, success=message, error=error)
+
+
+@app.route("/edit_coupon/<int:coupon_id>", methods=["POST"])
+def edit_coupon(coupon_id):
+    if not is_admin():
+        return redirect("/admin_login")
+
+    code = request.form.get("code", "").strip().upper()
+    discount = request.form.get("discount", "").strip()
+
+    try:
+        discount_value = int(discount)
+    except ValueError:
+        discount_value = 0
+
+    if not code or discount_value < 1 or discount_value > 100:
+        return redirect("/coupons")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        execute(cursor, "UPDATE coupons SET code=?, discount=? WHERE id=?", (code, discount_value, coupon_id))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+    conn.close()
+    return redirect("/coupons")
+
+
+@app.route("/delete_coupon/<int:coupon_id>", methods=["POST"])
+def delete_coupon(coupon_id):
+    if not is_admin():
+        return redirect("/admin_login")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(cursor, "DELETE FROM coupons WHERE id=?", (coupon_id,))
+    conn.commit()
+    conn.close()
+    return redirect("/coupons")
+
 @app.route("/apply_coupon", methods=["POST"])
 def apply_coupon():
     code = request.form["coupon"].upper().strip()
