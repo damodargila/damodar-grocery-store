@@ -1962,5 +1962,34 @@ def delete_product(product_id):
     return redirect("/")
 
 
+@app.route("/bulk_delete_products", methods=["POST"])
+def bulk_delete_products():
+    if not is_admin():
+        return redirect("/admin_login")
+
+    product_ids = []
+    for value in request.form.getlist("product_ids"):
+        try:
+            product_ids.append(int(value))
+        except (TypeError, ValueError):
+            pass
+
+    if not product_ids:
+        return redirect("/")
+
+    placeholders = ",".join(["?"] * len(product_ids))
+    conn = get_db()
+    cursor = conn.cursor()
+
+    execute(cursor, f"DELETE FROM wishlist WHERE product_id IN ({placeholders})", product_ids)
+    execute(cursor, f"DELETE FROM reviews WHERE product_id IN ({placeholders})", product_ids)
+    execute(cursor, f"DELETE FROM products WHERE id IN ({placeholders})", product_ids)
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
