@@ -487,7 +487,8 @@ def init_db():
                 payment_status TEXT,
                 gst_amount INTEGER,
                 status TEXT,
-                customer_email TEXT
+                customer_email TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
@@ -537,6 +538,7 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+                ("created_at", "TEXT DEFAULT CURRENT_TIMESTAMP"),
             ],
             "users": [
                 ("phone", "TEXT"),
@@ -626,7 +628,8 @@ def init_db():
                 payment_status TEXT,
                 gst_amount INTEGER,
                 status TEXT,
-                customer_email TEXT
+                customer_email TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
@@ -675,6 +678,7 @@ def init_db():
             "orders": [
                 ("status", "TEXT"),
                 ("customer_email", "TEXT"),
+                ("created_at", "TEXT DEFAULT CURRENT_TIMESTAMP"),
             ],
             "users": [
                 ("phone", "TEXT"),
@@ -1240,22 +1244,48 @@ def my_orders():
     orders = cursor.fetchall()
 
     order_items_map = {}
+    order_meta_map = {}
     for order in orders:
         order_id = order_col(order, "id", 0)
+        placed_raw = order_col(order, "created_at", 10, "")
+        placed_text = str(placed_raw or "").replace("T", " ")[:16] or "Recent order"
+
         execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
         items = []
+        item_count = 0
         for item in cursor.fetchall():
+            product_id = order_col(item, "product_id", 5, "")
+            quantity = int(order_col(item, "quantity", 4, 0) or 0)
+            image = ""
+            if product_id:
+                execute(cursor, "SELECT image FROM products WHERE id=?", (product_id,))
+                product_row = cursor.fetchone()
+                if product_row:
+                    image = product_row[0] or ""
+
+            item_count += quantity
             items.append({
-                "product_id": order_col(item, "product_id", 5, ""),
+                "product_id": product_id,
                 "product_name": order_col(item, "product_name", 2, ""),
                 "price": order_col(item, "price", 3, 0),
-                "quantity": order_col(item, "quantity", 4, 0),
+                "quantity": quantity,
+                "image": image,
             })
         order_items_map[order_id] = items
+        order_meta_map[order_id] = {
+            "item_count": item_count,
+            "placed_at": placed_text,
+            "expected_delivery": "2-4 days",
+        }
 
     conn.close()
 
-    return render_template("my_orders.html", orders=orders, order_items_map=order_items_map)
+    return render_template(
+        "my_orders.html",
+        orders=orders,
+        order_items_map=order_items_map,
+        order_meta_map=order_meta_map
+    )
 
 
 @app.route("/admin_login", methods=["GET", "POST"])

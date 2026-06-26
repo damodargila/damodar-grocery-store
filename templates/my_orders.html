@@ -25,12 +25,16 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .status{display:inline-block;margin-top:8px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:bold;background:#fff7e6;color:#b45309}
 .status.Delivered{background:#ecfdf3;color:#0b6623}.status.Cancelled{background:#fff1f1;color:#dc2626}.status.Shipped{background:#eef5ff;color:#2563eb}.status.Packed{background:#f4efff;color:#7c3aed}
 .order-body{padding:20px 22px}
-.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
 .info{background:#f8faf9;border:1px solid #edf0f2;border-radius:12px;padding:13px}
 .info span{display:block;color:#64707d;font-size:13px;margin-bottom:5px}.info strong{font-size:15px}
-.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
-.step{background:#eef1f3;color:#64707d;border-radius:12px;padding:12px;text-align:center;font-weight:bold}
-.step.active{background:#0b8f3a;color:white}.step.cancelled{background:#fff1f1;color:#dc2626}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0;position:relative}
+.step{background:#eef1f3;color:#64707d;border-radius:12px;padding:12px;text-align:center;font-weight:bold;border:1px solid transparent}
+.step.active{background:#0b8f3a;color:white}.step.current{background:#ff9900;color:#111;border-color:#f59e0b}.step.cancelled{background:#fff1f1;color:#dc2626;border-color:#ffd0d0}
+.order-summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:#475569;font-size:14px}
+.summary-pill{background:#f8fafc;border:1px solid #e7ecef;border-radius:999px;padding:7px 10px;font-weight:bold}
+.product-row{display:grid;grid-template-columns:58px 1fr auto auto;gap:12px;padding:11px 0;border-bottom:1px solid #f0f2f3;align-items:center}
+.product-row:last-child{border-bottom:none}.product-img{width:58px;height:52px;border-radius:10px;object-fit:contain;background:#f8fafc;border:1px solid #edf0f2;padding:4px}.product-placeholder{width:58px;height:52px;border-radius:10px;background:#eef1f3;color:#64707d;display:flex;align-items:center;justify-content:center;font-size:11px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .items{border-top:1px solid #edf0f2;padding-top:16px;margin-top:16px}
 .items h3{font-size:18px;margin-bottom:10px}
 .item{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f3;align-items:center}
@@ -41,7 +45,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .empty{background:white;border-radius:16px;text-align:center;padding:50px 20px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
 .empty h2{font-size:28px;margin-bottom:8px}.empty p{color:#64707d;margin-bottom:18px}
 .shop{display:inline-flex;background:#ff9900;color:#111;text-decoration:none;border-radius:10px;padding:13px 20px;font-weight:bold}
-@media(max-width:850px){.topbar,.hero,.order-head{align-items:flex-start;flex-direction:column}.nav a{margin:0 14px 0 0}.info-grid,.timeline{grid-template-columns:1fr}.item{grid-template-columns:1fr}.amount{text-align:left}}
+@media(max-width:850px){.topbar,.hero,.order-head{align-items:flex-start;flex-direction:column}.nav a{margin:0 14px 0 0}.info-grid,.timeline{grid-template-columns:1fr}.item,.product-row{grid-template-columns:58px 1fr}.product-row .qty,.product-row .price{grid-column:2}.amount{text-align:left}.review-btn,.invoice-btn,.cancel-btn{width:100%;margin-right:0}.actions{flex-direction:column}}
 </style>
 </head>
 
@@ -82,12 +86,20 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         {% for order in orders %}
         {% set status = order[8] if order|length > 8 and order[8] else 'Pending' %}
         {% set items = order_items_map.get(order[0], []) %}
+        {% set meta = order_meta_map.get(order[0], {}) %}
+        {% set step_order = ['Pending', 'Packed', 'Shipped', 'Delivered'] %}
+        {% set current_step = step_order.index(status) if status in step_order else -1 %}
         <article class="order" data-status="{{ status }}">
             <div class="order-head">
                 <div class="order-title">
                     <h2>Order #{{ order[0] }}</h2>
                     <p class="muted">Payment: {{ order[5] if order|length > 5 else 'COD' }} | {{ order[6] if order|length > 6 else 'Pending' }}</p>
                     <span class="status {{ status }}">{{ status }}</span>
+                    <div class="order-summary">
+                        <span class="summary-pill">Items: {{ meta.item_count or 0 }}</span>
+                        <span class="summary-pill">Placed: {{ meta.placed_at or 'Recent order' }}</span>
+                        <span class="summary-pill">Expected: {{ meta.expected_delivery or '2-4 days' }}</span>
+                    </div>
                 </div>
                 <div class="amount">&#8377;{{ order[4] }}</div>
             </div>
@@ -97,20 +109,26 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                     <div class="info"><span>Name</span><strong>{{ order[1] }}</strong></div>
                     <div class="info"><span>Mobile</span><strong>{{ order[2] }}</strong></div>
                     <div class="info"><span>Delivery Address</span><strong>{{ order[3] }}</strong></div>
+                    <div class="info"><span>Expected Delivery</span><strong>{{ meta.expected_delivery or '2-4 days' }}</strong></div>
                 </div>
 
                 <div class="timeline">
-                    <div class="step {% if status in ['Pending','Packed','Shipped','Delivered'] %}active{% endif %}">Pending</div>
-                    <div class="step {% if status in ['Packed','Shipped','Delivered'] %}active{% endif %}">Packed</div>
-                    <div class="step {% if status in ['Shipped','Delivered'] %}active{% endif %}">Shipped</div>
-                    <div class="step {% if status == 'Delivered' %}active{% endif %} {% if status == 'Cancelled' %}cancelled{% endif %}">Delivered</div>
+                    {% for step in step_order %}
+                    {% set step_index = loop.index0 %}
+                    <div class="step {% if status == 'Cancelled' %}cancelled{% elif step_index < current_step %}active{% elif step_index == current_step %}current{% endif %}">{{ step }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="items">
                     <h3>Products</h3>
                     {% if items %}
                         {% for item in items %}
-                        <div class="item">
+                        <div class="product-row">
+                            {% if item.image %}
+                            <img class="product-img" src="{{ item.image }}" alt="{{ item.product_name }}" loading="lazy" decoding="async">
+                            {% else %}
+                            <div class="product-placeholder">No Image</div>
+                            {% endif %}
                             <strong>{{ item.product_name }}</strong>
                             <span class="qty">Qty: {{ item.quantity }}</span>
                             <span class="price">&#8377;{{ item.price }}</span>
@@ -121,19 +139,21 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                     {% endif %}
                 </div>
 
-                <a class="invoice-btn" href="/invoice/{{ order[0] }}">Download Invoice</a>
+                <div class="actions">
+                    <a class="invoice-btn" href="/invoice/{{ order[0] }}">Download Invoice</a>
 
-                {% if status in ['Pending', 'Packed'] %}
-                <a class="cancel-btn" href="/cancel_order/{{ order[0] }}" onclick="return confirm('Kya aap is order ko cancel karna chahte hain?')">Cancel Order</a>
-                {% endif %}
+                    {% if status in ['Pending', 'Packed'] %}
+                    <a class="cancel-btn" href="/cancel_order/{{ order[0] }}" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</a>
+                    {% endif %}
 
-                {% if status == 'Delivered' and items %}
-                    {% for item in items %}
-                        {% if item.product_id %}
-                        <a class="review-btn" href="/review/{{ item.product_id }}">Review {{ item.product_name }}</a>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+                    {% if status == 'Delivered' and items %}
+                        {% for item in items %}
+                            {% if item.product_id %}
+                            <a class="review-btn" href="/review/{{ item.product_id }}">Review {{ item.product_name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
             </div>
         </article>
         {% endfor %}
