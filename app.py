@@ -255,10 +255,11 @@ def empty_checkout_context():
         "grand_total": 0,
         "error": "",
         "form_data": {},
+        "saved_addresses": [],
     }
 
 
-def checkout_context(products, total, error="", form_data=None):
+def checkout_context(products, total, error="", form_data=None, saved_addresses=None):
     gst, discount_percent, discount_amount, grand_total = order_totals(total)
     return {
         "products": products,
@@ -269,7 +270,83 @@ def checkout_context(products, total, error="", form_data=None):
         "grand_total": grand_total,
         "error": error,
         "form_data": form_data or {},
+        "saved_addresses": saved_addresses or [],
     }
+
+
+def current_address_user_key(email="", phone=""):
+    return session.get("user") or email or phone or ""
+
+
+def fetch_saved_addresses(user_key):
+    if not user_key:
+        return []
+
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(
+        cursor,
+        """
+        SELECT id, name, phone, email, address, district, state, pincode
+        FROM saved_addresses
+        WHERE user_key=?
+        ORDER BY id DESC
+        """,
+        (user_key,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    addresses = []
+    for row in rows:
+        addresses.append({
+            "id": row[0],
+            "name": row[1] or "",
+            "phone": row[2] or "",
+            "email": row[3] or "",
+            "address": row[4] or "",
+            "district": row[5] or "",
+            "state": row[6] or "",
+            "pincode": row[7] or "",
+        })
+    return addresses
+
+
+def save_checkout_address(cursor, user_key, name, phone, email, address, district, state, pincode):
+    if not user_key:
+        return
+
+    execute(
+        cursor,
+        """
+        SELECT id FROM saved_addresses
+        WHERE user_key=? AND address=? AND district=? AND state=? AND pincode=?
+        LIMIT 1
+        """,
+        (user_key, address, district, state, pincode)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        execute(
+            cursor,
+            """
+            UPDATE saved_addresses
+            SET name=?, phone=?, email=?
+            WHERE id=?
+            """,
+            (name, phone, email, existing[0])
+        )
+        return
+
+    execute(
+        cursor,
+        """
+        INSERT INTO saved_addresses(user_key, name, phone, email, address, district, state, pincode)
+        VALUES(?,?,?,?,?,?,?,?)
+        """,
+        (user_key, name, phone, email, address, district, state, pincode)
+    )
 
 
 def order_col(order, key, index, default=""):
@@ -368,6 +445,20 @@ def init_db():
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS saved_addresses (
+                id SERIAL PRIMARY KEY,
+                user_key TEXT,
+                name TEXT,
+                phone TEXT,
+                email TEXT,
+                address TEXT,
+                district TEXT,
+                state TEXT,
+                pincode TEXT
+            )
+        """)
+
         # Add columns safely for old deployed databases.
         extra_columns = {
             "products": [
@@ -404,6 +495,7 @@ def init_db():
             "CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email)",
             "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)",
             "CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)",
+            "CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_key ON saved_addresses(user_key)",
         ]
 
         for index_sql in indexes:
@@ -492,6 +584,20 @@ def init_db():
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS saved_addresses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_key TEXT,
+                name TEXT,
+                phone TEXT,
+                email TEXT,
+                address TEXT,
+                district TEXT,
+                state TEXT,
+                pincode TEXT
+            )
+        """)
+
         extra_columns = {
             "products": [
                 ("description", "TEXT"),
@@ -526,6 +632,7 @@ def init_db():
             "CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email)",
             "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)",
             "CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id)",
+            "CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_key ON saved_addresses(user_key)",
         ]
 
         for index_sql in indexes:
@@ -1406,6 +1513,8 @@ def checkout():
         payment_method = request.form.get("payment_method", "COD")
         email = request.form.get("email", "").strip()
         full_address = f"{address}, District: {district}, State: {state}, Pincode: {pincode}"
+        user_key = current_address_user_key(email, phone)
+        saved_addresses = fetch_saved_addresses(user_key)
 
         products, total, order_products = build_cart_summary()
 
@@ -1431,7 +1540,7 @@ def checkout():
         if errors:
             return render_template(
                 "checkout.html",
-                **checkout_context(products, total, " ".join(errors), request.form)
+                **checkout_context(products, total, " ".join(errors), request.form, saved_addresses)
             )
 
         for product, quantity in order_products:
@@ -1442,7 +1551,8 @@ def checkout():
                         products,
                         total,
                         f"{product_col(product, 'name', 1)} ke liye enough stock nahi hai.",
-                        request.form
+                        request.form,
+                        saved_addresses
                     )
                 )
 
@@ -1450,6 +1560,9 @@ def checkout():
 
         conn = get_db()
         cursor = conn.cursor()
+
+        if request.form.get("save_address") == "1":
+            save_checkout_address(cursor, user_key, name, phone, email, address, district, state, pincode)
 
         if is_postgres():
             execute(
@@ -1538,9 +1651,10 @@ def checkout():
         if not order_products:
             return redirect("/cart")
 
+        user_key = current_address_user_key()
         return render_template(
             "checkout.html",
-            **checkout_context(products, total)
+            **checkout_context(products, total, saved_addresses=fetch_saved_addresses(user_key))
         )
     except Exception as error:
         app.logger.exception("Checkout page error: %s", error)
