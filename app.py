@@ -1244,41 +1244,6 @@ def my_orders():
     )
     orders = cursor.fetchall()
 
-    def format_order_datetime(value):
-        raw = str(value or "").strip()
-        if not raw:
-            now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
-            return {
-                "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
-                "placed_date": now_ist.strftime("%d %b %Y"),
-                "placed_time": now_ist.strftime("%I:%M %p"),
-            }
-
-        normalized = raw.replace("T", " ").replace("Z", "").split(".")[0]
-        parsed = None
-        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
-            try:
-                parsed = datetime.strptime(normalized[:19], fmt)
-                break
-            except ValueError:
-                continue
-
-        if not parsed:
-            now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
-            return {
-                "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
-                "placed_date": now_ist.strftime("%d %b %Y"),
-                "placed_time": now_ist.strftime("%I:%M %p"),
-            }
-
-        # Render/Postgres timestamps are usually UTC; show customers India time.
-        placed_ist = parsed + timedelta(hours=5, minutes=30)
-        return {
-            "placed_at": placed_ist.strftime("%d %b %Y, %I:%M %p"),
-            "placed_date": placed_ist.strftime("%d %b %Y"),
-            "placed_time": placed_ist.strftime("%I:%M %p"),
-        }
-
     order_items_map = {}
     order_meta_map = {}
     for order in orders:
@@ -1876,6 +1841,41 @@ def invoice(order_id):
     )
 
 
+def format_order_datetime(value):
+    raw = str(value or "").strip()
+    if not raw:
+        now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
+        return {
+            "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
+            "placed_date": now_ist.strftime("%d %b %Y"),
+            "placed_time": now_ist.strftime("%I:%M %p"),
+        }
+
+    normalized = raw.replace("T", " ").replace("Z", "").split(".")[0]
+    parsed = None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            parsed = datetime.strptime(normalized[:19], fmt)
+            break
+        except ValueError:
+            continue
+
+    if not parsed:
+        now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
+        return {
+            "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
+            "placed_date": now_ist.strftime("%d %b %Y"),
+            "placed_time": now_ist.strftime("%I:%M %p"),
+        }
+
+    placed_ist = parsed + timedelta(hours=5, minutes=30)
+    return {
+        "placed_at": placed_ist.strftime("%d %b %Y, %I:%M %p"),
+        "placed_date": placed_ist.strftime("%d %b %Y"),
+        "placed_time": placed_ist.strftime("%I:%M %p"),
+    }
+
+
 def dashboard_order_stats(all_orders):
     total_orders = len(all_orders)
     total_sales = sum(int(order_col(order, "total", 4, 0) or 0) for order in all_orders)
@@ -1916,8 +1916,12 @@ def orders():
     stats = dashboard_order_stats(all_orders)
 
     order_items_map = {}
+    order_meta_map = {}
     for order in all_orders:
         order_id = order_col(order, "id", 0)
+        placed_meta = format_order_datetime(order_col(order, "created_at", 10, ""))
+        order_meta_map[order_id] = placed_meta
+
         execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
         items = []
         for item in cursor.fetchall():
@@ -1935,6 +1939,7 @@ def orders():
         "orders.html",
         orders=all_orders,
         order_items_map=order_items_map,
+        order_meta_map=order_meta_map,
         **stats
     )
 
