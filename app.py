@@ -275,7 +275,43 @@ def checkout_context(products, total, error="", form_data=None, saved_addresses=
 
 
 def current_address_user_key(email="", phone=""):
-    return session.get("user") or email or phone or ""
+    return session.get("user") or session.get("last_checkout_user_key") or email or phone or ""
+
+
+def ensure_saved_addresses_table(cursor):
+    if is_postgres():
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS saved_addresses (
+                id SERIAL PRIMARY KEY,
+                user_key TEXT,
+                name TEXT,
+                phone TEXT,
+                email TEXT,
+                address TEXT,
+                district TEXT,
+                state TEXT,
+                pincode TEXT
+            )
+        """)
+    else:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS saved_addresses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_key TEXT,
+                name TEXT,
+                phone TEXT,
+                email TEXT,
+                address TEXT,
+                district TEXT,
+                state TEXT,
+                pincode TEXT
+            )
+        """)
+
+    try:
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_key ON saved_addresses(user_key)")
+    except Exception:
+        pass
 
 
 def fetch_saved_addresses(user_key):
@@ -286,6 +322,8 @@ def fetch_saved_addresses(user_key):
     try:
         conn = get_db()
         cursor = conn.cursor()
+        ensure_saved_addresses_table(cursor)
+        conn.commit()
         execute(
             cursor,
             """
@@ -364,6 +402,7 @@ def save_checkout_address_safe(user_key, name, phone, email, address, district, 
     try:
         conn = get_db()
         cursor = conn.cursor()
+        ensure_saved_addresses_table(cursor)
         save_checkout_address(cursor, user_key, name, phone, email, address, district, state, pincode)
         conn.commit()
     except Exception as error:
@@ -1688,6 +1727,7 @@ def checkout():
 
         if should_save_address:
             save_checkout_address_safe(user_key, name, phone, email, address, district, state, pincode)
+            session["last_checkout_user_key"] = user_key
 
         send_email_async(
             email,
