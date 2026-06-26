@@ -19,7 +19,12 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .search{min-width:280px;flex:1}.filter{min-width:170px}
 .orders{display:grid;gap:18px}
 .order{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.08);overflow:hidden}
-.order-head{display:flex;justify-content:space-between;gap:18px;padding:20px 22px;border-bottom:1px solid #edf0f2;background:#fbfdfb}
+.order-head{display:flex;justify-content:space-between;gap:18px;padding:20px 22px;border-bottom:1px solid #edf0f2;background:#fbfdfb;cursor:pointer;transition:background .2s ease}
+.order-head:hover{background:#f4fbf6}
+.order-toggle{border:0;background:#eef6f0;color:#0b6623;border-radius:999px;padding:9px 12px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.order.open .order-toggle{background:#0b8f3a;color:white}
+.order-body{display:none}
+.order.open .order-body{display:block}
 .order-title h2{font-size:23px;margin-bottom:6px}.muted{color:#64707d;font-size:14px;line-height:1.5}
 .amount{font-size:28px;font-weight:bold;color:#0b6623;text-align:right}
 .status{display:inline-block;margin-top:8px;padding:7px 11px;border-radius:999px;font-size:13px;font-weight:bold;background:#fff7e6;color:#b45309}
@@ -89,8 +94,8 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         {% set meta = order_meta_map.get(order[0], {}) %}
         {% set step_order = ['Pending', 'Packed', 'Shipped', 'Delivered'] %}
         {% set current_step = step_order.index(status) if status in step_order else -1 %}
-        <article class="order" data-status="{{ status }}">
-            <div class="order-head">
+        <article class="order {% if loop.first %}open{% endif %}" data-status="{{ status }}">
+            <div class="order-head" role="button" tabindex="0" aria-expanded="{{ 'true' if loop.first else 'false' }}">
                 <div class="order-title">
                     <h2>Order #{{ order[0] }}</h2>
                     <p class="muted">Payment: {{ order[5] if order|length > 5 else 'COD' }} | {{ order[6] if order|length > 6 else 'Pending' }}</p>
@@ -101,7 +106,10 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                         <span class="summary-pill">Expected: {{ meta.expected_delivery or '2-4 days' }}</span>
                     </div>
                 </div>
-                <div class="amount">&#8377;{{ order[4] }}</div>
+                <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+                    <div class="amount">&#8377;{{ order[4] }}</div>
+                    <button class="order-toggle" type="button">{{ 'Hide Details' if loop.first else 'View Details' }}</button>
+                </div>
             </div>
 
             <div class="order-body">
@@ -168,6 +176,37 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 </main>
 
 <script>
+function updateOrderToggle(card){
+    var toggle = card.querySelector(".order-toggle");
+    var head = card.querySelector(".order-head");
+    var isOpen = card.classList.contains("open");
+    if(toggle){ toggle.textContent = isOpen ? "Hide Details" : "View Details"; }
+    if(head){ head.setAttribute("aria-expanded", isOpen ? "true" : "false"); }
+}
+
+function toggleOrder(card){
+    card.classList.toggle("open");
+    updateOrderToggle(card);
+}
+
+document.querySelectorAll(".order").forEach(function(card){
+    var head = card.querySelector(".order-head");
+    updateOrderToggle(card);
+    if(!head){ return; }
+
+    head.addEventListener("click", function(event){
+        if(event.target.closest("a, button, select, input")){ return; }
+        toggleOrder(card);
+    });
+
+    head.addEventListener("keydown", function(event){
+        if(event.key === "Enter" || event.key === " "){
+            event.preventDefault();
+            toggleOrder(card);
+        }
+    });
+});
+
 function applyFilters(){
     var query = document.getElementById("orderSearch").value.toLowerCase();
     var status = document.getElementById("statusFilter").value;
