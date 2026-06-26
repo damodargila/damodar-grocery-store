@@ -105,8 +105,8 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                     <span class="status {{ status }}">{{ status }}</span>
                     <div class="order-summary">
                         <span class="summary-pill">Items: {{ meta.item_count or 0 }}</span>
-                        <span class="summary-pill date-time">Date: {{ meta.placed_date or 'Recent order' }}</span>
-                        <span class="summary-pill date-time">Time: {{ meta.placed_time or 'Time not available' }}</span>
+                        <span class="summary-pill date-time">Date: {{ meta.placed_date or 'Date not saved' }}</span>
+                        <span class="summary-pill date-time">Time: {{ meta.placed_time or 'Time not saved' }}</span>
                         <span class="summary-pill">Expected: {{ meta.expected_delivery or '2-4 days' }}</span>
                     </div>
                 </div>
@@ -120,8 +120,8 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                 <div class="info-grid">
                     <div class="info"><span>Name</span><strong>{{ order[1] }}</strong></div>
                     <div class="info"><span>Mobile</span><strong>{{ order[2] }}</strong></div>
-                    <div class="info date-info"><span>Order Date</span><strong>{{ meta.placed_date or 'Recent order' }}</strong></div>
-                    <div class="info date-info"><span>Order Time</span><strong>{{ meta.placed_time or 'Time not available' }}</strong></div>
+                    <div class="info date-info"><span>Order Date</span><strong>{{ meta.placed_date or 'Date not saved' }}</strong></div>
+                    <div class="info date-info"><span>Order Time</span><strong>{{ meta.placed_time or 'Time not saved' }}</strong></div>
                     <div class="info"><span>Delivery Address</span><strong>{{ order[3] }}</strong></div>
                     <div class="info"><span>Expected Delivery</span><strong>{{ meta.expected_delivery or '2-4 days' }}</strong></div>
                 </div>

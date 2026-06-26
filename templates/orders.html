@@ -133,8 +133,8 @@ button,input,select{font:inherit}
                                     </div>
                                 </td>
                                 <td><a href="tel:{{ order[2] }}">{{ order[2] }}</a></td>
-                                <td class="order-date-cell"><span class="date-badge">{{ meta.placed_date or 'Today' }}</span></td>
-                                <td class="order-time-cell"><span class="time-badge">{{ meta.placed_time or 'Now' }}</span></td>
+                                <td class="order-date-cell"><span class="date-badge">{{ meta.placed_date or 'Date not saved' }}</span></td>
+                                <td class="order-time-cell"><span class="time-badge">{{ meta.placed_time or 'Time not saved' }}</span></td>
                                 <td>
                                     <div class="product-summary">
                                         {% for item in items[:2] %}
@@ -165,8 +165,8 @@ button,input,select{font:inherit}
                                         <div class="detail-grid">
                                             <div class="detail-card"><span>Customer</span><strong>{{ order[1] }}</strong></div>
                                             <div class="detail-card"><span>Phone</span><strong>{{ order[2] }}</strong></div>
-                                            <div class="detail-card"><span>Order Date</span><strong>{{ meta.placed_date or 'Today' }}</strong></div>
-                                            <div class="detail-card"><span>Order Time</span><strong>{{ meta.placed_time or 'Now' }}</strong></div>
+                                            <div class="detail-card"><span>Order Date</span><strong>{{ meta.placed_date or 'Date not saved' }}</strong></div>
+                                            <div class="detail-card"><span>Order Time</span><strong>{{ meta.placed_time or 'Time not saved' }}</strong></div>
                                             <div class="detail-card"><span>Payment</span><strong>{{ order[5] if order[5] else 'COD' }} | {{ order[6] if order[6] else 'Pending' }}</strong></div>
                                             <div class="detail-card"><span>Total</span><strong>&#8377;{{ order[4] }}</strong></div>
                                         </div>

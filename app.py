@@ -21,7 +21,8 @@ from psycopg2.extras import DictCursor
 import cloudinary
 import cloudinary.uploader
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 app = Flask(__name__)
 
@@ -1083,7 +1084,7 @@ def send_otp():
 
         conn = get_db()
         cursor = conn.cursor()
-        execute(cursor, "SELECT * FROM users WHERE email=? OR phone=?", (login_id, login_id))
+        execute(cursor, "SELECT * FROM users WHERE LOWER(email)=? OR phone=?", (login_id, login_id))
         user = cursor.fetchone()
         conn.close()
 
@@ -1450,7 +1451,10 @@ def admin_login():
         if not ADMIN_USERNAME or not ADMIN_PASSWORD:
             return render_template("login.html", error="Admin login not configured.")
 
-        if request.form["username"] == ADMIN_USERNAME and request.form["password"] == ADMIN_PASSWORD:
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session.clear()
             session["admin"] = True
             return redirect("/orders")
@@ -1485,7 +1489,7 @@ def register():
 
         conn = get_db()
         cursor = conn.cursor()
-        execute(cursor, "SELECT 1 FROM users WHERE email=? OR phone=?", (login_id, login_id))
+        execute(cursor, "SELECT 1 FROM users WHERE LOWER(email)=? OR phone=?", (login_id, login_id))
         existing_user = cursor.fetchone()
         conn.close()
 
@@ -1534,7 +1538,7 @@ def customer_login():
 
         conn = get_db()
         cursor = conn.cursor()
-        execute(cursor, "SELECT * FROM users WHERE email=? OR phone=?", (login_id, login_id))
+        execute(cursor, "SELECT * FROM users WHERE LOWER(email)=? OR phone=?", (login_id, login_id))
         user = cursor.fetchone()
         conn.close()
 
@@ -1555,8 +1559,8 @@ def customer_login():
                     cursor = conn.cursor()
                     execute(
                         cursor,
-                        "UPDATE users SET password=? WHERE email=? OR phone=?",
-                        (generate_password_hash(password), user_email, user_phone)
+                        "UPDATE users SET password=? WHERE LOWER(email)=? OR phone=?",
+                        (generate_password_hash(password), (user_email or "").lower(), user_phone)
                     )
                     conn.commit()
                     conn.close()
