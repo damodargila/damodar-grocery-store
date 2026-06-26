@@ -7,7 +7,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111827}
-a{text-decoration:none}
+a{text-decoration:none;color:inherit}
+button,input,select{font:inherit}
 
 .layout{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
 .sidebar{background:#0b3d1b;color:white;padding:24px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
@@ -17,91 +18,30 @@ a{text-decoration:none}
 .menu a{color:white;padding:13px 14px;border-radius:10px;font-weight:bold}
 .menu a:hover,.menu .active{background:#0b8f3a}
 .side-card{margin-top:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:17px;line-height:1.5}
-.side-card h3{margin-bottom:6px}
-.side-card p{color:#d8f3df}
+.side-card h3{margin-bottom:6px}.side-card p{color:#d8f3df}
 
-.main{min-width:0}
-.topbar{height:72px;background:white;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 28px;border-bottom:1px solid #e7ecef;position:sticky;top:0;z-index:5}
-.search{width:390px;max-width:100%;border:1px solid #dce3e7;border-radius:11px;padding:13px 15px;font-size:15px}
+.main{min-width:0}.topbar{height:72px;background:white;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 28px;border-bottom:1px solid #e7ecef;position:sticky;top:0;z-index:5}
+.search{width:390px;max-width:100%;border:1px solid #dce3e7;border-radius:11px;padding:13px 15px;font-size:15px;background:white}
 .admin{font-weight:bold;color:#0b6623;background:#ecfdf3;border:1px solid #c8f0d5;padding:10px 14px;border-radius:999px}
-
 .content{padding:28px}
 .hero{background:linear-gradient(135deg,#0b6623,#0b8f3a);color:white;border-radius:18px;padding:26px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px;box-shadow:0 12px 30px rgba(11,102,35,.22)}
-.hero h1{font-size:34px;margin-bottom:7px}
-.hero p{color:#e7fff0}
-.hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.action{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:10px;font-weight:bold;background:white;color:#0b6623}
-.action.primary{background:#ff9900;color:#111}
-.action.danger{background:#ef4444;color:white}
+.hero h1{font-size:34px;margin-bottom:7px}.hero p{color:#e7fff0}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.action{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:10px;font-weight:bold;background:white;color:#0b6623}.action.primary{background:#ff9900;color:#111}.action.danger{background:#ef4444;color:white}
 
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:22px}
-.stat{background:white;border:1px solid #e7ecef;border-radius:16px;padding:20px;box-shadow:0 5px 18px rgba(0,0,0,.07);position:relative;overflow:hidden}
-.stat:after{content:"";position:absolute;right:-28px;top:-28px;width:95px;height:95px;border-radius:50%;background:#ecfdf3}
-.stat label{display:block;color:#5f6b76;font-size:14px;margin-bottom:10px}
-.stat strong{font-size:34px;color:#07111f}
-.stat small{display:block;color:#0b6623;font-weight:bold;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:22px}.stat{background:white;border:1px solid #e7ecef;border-radius:16px;padding:20px;box-shadow:0 5px 18px rgba(0,0,0,.07);position:relative;overflow:hidden}.stat:after{content:"";position:absolute;right:-28px;top:-28px;width:95px;height:95px;border-radius:50%;background:#ecfdf3}.stat label{display:block;color:#5f6b76;font-size:14px;margin-bottom:10px}.stat strong{font-size:34px;color:#07111f}.stat small{display:block;color:#0b6623;font-weight:bold;margin-top:8px}
+.dashboard-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;margin-bottom:22px}.panel{background:white;border:1px solid #e7ecef;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(0,0,0,.07)}.panel h2{font-size:22px;margin-bottom:16px}.donut{width:190px;height:190px;border-radius:50%;background:conic-gradient(#0b8f3a 0 70%,#ff9900 70% 100%);margin:20px auto;position:relative;transition:background .35s ease}.donut:after{content:"";position:absolute;inset:48px;background:white;border-radius:50%}.legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;color:#4b5563;font-weight:bold}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.green-dot{background:#0b8f3a}.orange-dot{background:#ff9900}.bar-row{margin:16px 0}.bar-row p{display:flex;justify-content:space-between;margin-bottom:7px;color:#374151}.bar-bg{height:13px;background:#edf2f7;border-radius:999px;overflow:hidden}.bar-fill{height:100%;background:linear-gradient(90deg,#0b6623,#0b8f3a);border-radius:999px;transition:width .35s ease}.live-pill{display:inline-flex;align-items:center;gap:7px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:bold}.live-dot{width:8px;height:8px;border-radius:50%;background:#0b8f3a;box-shadow:0 0 0 0 rgba(11,143,58,.55);animation:pulse 1.6s infinite}@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(11,143,58,0)}100%{box-shadow:0 0 0 0 rgba(11,143,58,0)}}
 
-.dashboard-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;margin-bottom:22px}
-.panel{background:white;border:1px solid #e7ecef;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(0,0,0,.07)}
-.panel h2{font-size:22px;margin-bottom:16px}
-.donut{width:190px;height:190px;border-radius:50%;background:conic-gradient(#0b8f3a 0 70%,#ff9900 70% 100%);margin:20px auto;position:relative;transition:background .35s ease}
-.donut:after{content:"";position:absolute;inset:48px;background:white;border-radius:50%}
-.legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;color:#4b5563;font-weight:bold}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-.green-dot{background:#0b8f3a}.orange-dot{background:#ff9900}
+.table-panel{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.07);overflow:hidden}.table-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 22px;border-bottom:1px solid #edf0f2}.table-head h2{font-size:23px}.table-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.filter-chips{display:flex;gap:8px;flex-wrap:wrap;padding:14px 22px;border-bottom:1px solid #edf0f2;background:#fbfdfb}.chip{border:1px solid #dbe7df;background:white;color:#0b3d1b;border-radius:999px;padding:8px 13px;font-weight:bold;cursor:pointer}.chip.active{background:#0b8f3a;color:white;border-color:#0b8f3a}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:1080px}th{background:#f8faf9;color:#4b5563;font-size:13px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:14px}td{padding:15px 14px;border-bottom:1px solid #edf0f2;vertical-align:top}.order-main-row{cursor:pointer}.order-main-row:hover{background:#fbfdfb}.order-main-row.status-Pending{box-shadow:inset 4px 0 #ff9900}.order-main-row.status-Packed{box-shadow:inset 4px 0 #7c3aed}.order-main-row.status-Shipped{box-shadow:inset 4px 0 #2563eb}.order-main-row.status-Delivered{box-shadow:inset 4px 0 #0b8f3a}.order-main-row.status-Cancelled{box-shadow:inset 4px 0 #ef4444;background:#fffafa}.id-badge{display:inline-block;background:#ecfdf3;color:#0b6623;padding:7px 10px;border-radius:999px;font-weight:bold}.customer{font-weight:bold;color:#111827}.muted{color:#6b7280;font-size:13px;margin-top:4px;max-width:300px}.amount{font-weight:bold;color:#0b6623}.status{display:inline-block;padding:7px 10px;border-radius:999px;font-size:13px;font-weight:bold;background:#fff7e6;color:#b45309}.status.Delivered{background:#ecfdf3;color:#0b6623}.status.Cancelled{background:#fff1f1;color:#dc2626}.status.Shipped{background:#eef5ff;color:#2563eb}.status.Packed{background:#f4efff;color:#7c3aed}.address-preview{max-width:260px;color:#4b5563;line-height:1.35}.copy-btn,.mini-action{border:0;background:#edf7f0;color:#0b6623;border-radius:8px;padding:6px 8px;margin-top:8px;font-size:12px;font-weight:bold;cursor:pointer}.copy-btn.copied{background:#0b8f3a;color:white}.quick-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.mini-action.whatsapp-mini{background:#ecfdf3}.status-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.status-select{border:1px solid #dbe3e8;border-radius:9px;padding:9px 10px;background:white;min-width:120px}.update-btn{border:0;border-radius:9px;background:#0b6623;color:white;padding:10px 12px;font-weight:bold;cursor:pointer}.details-row{display:none;background:#f9fbfa}.details-row td{padding:0 14px 18px}.order-details{border:1px solid #e4ece7;background:white;border-radius:14px;padding:16px;margin-left:46px;box-shadow:0 8px 20px rgba(0,0,0,.05)}.detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}.detail-card{background:#f8faf9;border:1px solid #e4ece7;border-radius:12px;padding:12px}.detail-card span{display:block;color:#64748b;font-size:12px;margin-bottom:5px}.detail-card strong{font-size:14px}.full-address{margin-bottom:12px}.details-products{border-top:1px solid #edf0f2;padding-top:12px}.details-products>span{display:block;color:#64748b;font-size:12px;margin-bottom:8px}.detail-product{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed #e5e7eb}.detail-product:last-child{border-bottom:0}.empty{text-align:center;padding:36px;color:#6b7280}.pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 22px;border-top:1px solid #edf0f2;background:#fbfdfb}.page-btn{border:1px solid #dbe7df;background:white;color:#0b3d1b;border-radius:9px;padding:8px 11px;font-weight:bold;cursor:pointer}.page-btn.active,.page-btn:hover{background:#0b8f3a;color:white;border-color:#0b8f3a}.page-info{color:#64748b;font-size:13px;margin-right:auto}
 
-.bar-row{margin:16px 0}
-.bar-row p{display:flex;justify-content:space-between;margin-bottom:7px;color:#374151}
-.bar-bg{height:13px;background:#edf2f7;border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;background:linear-gradient(90deg,#0b6623,#0b8f3a);border-radius:999px;transition:width .35s ease}
-.live-pill{display:inline-flex;align-items:center;gap:7px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:bold}
-.live-dot{width:8px;height:8px;border-radius:50%;background:#0b8f3a;box-shadow:0 0 0 0 rgba(11,143,58,.55);animation:pulse 1.6s infinite}
-@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(11,143,58,0)}100%{box-shadow:0 0 0 0 rgba(11,143,58,0)}}
-
-.table-panel{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.07);overflow:hidden}
-.table-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 22px;border-bottom:1px solid #edf0f2}
-.table-head h2{font-size:23px}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:940px}
-th{background:#f8faf9;color:#4b5563;font-size:13px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:14px}
-td{padding:15px 14px;border-bottom:1px solid #edf0f2;vertical-align:top}
-tr:hover{background:#fbfdfb}
-.id-badge{display:inline-block;background:#ecfdf3;color:#0b6623;padding:7px 10px;border-radius:999px;font-weight:bold}
-.customer{font-weight:bold;color:#111827}
-.muted{color:#6b7280;font-size:13px;margin-top:4px;max-width:260px}
-.amount{font-weight:bold;color:#0b6623}
-.status{display:inline-block;padding:7px 10px;border-radius:999px;font-size:13px;font-weight:bold;background:#fff7e6;color:#b45309}
-.status.Delivered{background:#ecfdf3;color:#0b6623}
-.status.Cancelled{background:#fff1f1;color:#dc2626}
-.status.Shipped{background:#eef5ff;color:#2563eb}
-.status.Packed{background:#f4efff;color:#7c3aed}
-.btns{display:flex;gap:7px;flex-wrap:wrap}
-.btn{display:inline-flex;padding:8px 10px;border-radius:8px;color:white;font-size:13px;font-weight:bold}
-.red{background:#ef4444}.orange{background:#f59e0b}.blue{background:#2563eb}.green{background:#0b8f3a}
-.empty{text-align:center;padding:36px;color:#6b7280}
-
-@media(max-width:1050px){
-.layout{grid-template-columns:1fr}
-.sidebar{position:static;height:auto}
-.side-card{margin-top:20px}
-.stats,.dashboard-grid{grid-template-columns:1fr 1fr}
-}
-@media(max-width:720px){
-.topbar,.hero,.table-head{align-items:flex-start;flex-direction:column}
-.content{padding:18px}
-.stats,.dashboard-grid{grid-template-columns:1fr}
-.hero h1{font-size:28px}
-.hero-actions{justify-content:flex-start}
-}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}.side-card{margin-top:20px}.stats,.dashboard-grid{grid-template-columns:1fr 1fr}.detail-grid{grid-template-columns:1fr 1fr}.order-details{margin-left:0}}
+@media(max-width:720px){.topbar,.hero,.table-head{align-items:flex-start;flex-direction:column}.content{padding:18px}.stats,.dashboard-grid,.detail-grid{grid-template-columns:1fr}.hero h1{font-size:28px}.hero-actions,.table-tools{justify-content:flex-start}}
 </style>
 </head>
 
 <body>
-
 <div class="layout">
     <aside class="sidebar">
         <div class="brand">DAMODAR <span>GROCERY STORE</span></div>
-
         <nav class="menu">
             <a class="active" href="/orders">Dashboard</a>
             <a href="/orders">All Orders</a>
@@ -112,11 +52,7 @@ tr:hover{background:#fbfdfb}
             <a href="/export_orders">Export Excel</a>
             <a href="/logout">Logout</a>
         </nav>
-
-        <div class="side-card">
-            <h3>Business Control</h3>
-            <p>Track orders, sales, delivery status and store growth from one clean dashboard.</p>
-        </div>
+        <div class="side-card"><h3>Business Control</h3><p>Track orders, sales, delivery status and store growth from one clean dashboard.</p></div>
     </aside>
 
     <main class="main">
@@ -127,10 +63,7 @@ tr:hover{background:#fbfdfb}
 
         <div class="content">
             <section class="hero">
-                <div>
-                    <h1>Welcome back, Admin</h1>
-                    <p>Your store summary, sales and orders are ready to manage.</p>
-                </div>
+                <div><h1>Welcome back, Admin</h1><p>Your store summary, sales and orders are ready to manage.</p></div>
                 <div class="hero-actions">
                     <a class="action" href="/export_orders">Export Excel</a>
                     <a class="action" href="/">Store Front</a>
@@ -142,143 +75,164 @@ tr:hover{background:#fbfdfb}
             </section>
 
             <section class="stats">
-                <div class="stat">
-                    <label>Total Orders</label>
-                    <strong id="statTotalOrders">{{ total_orders }}</strong>
-                    <small>All customer orders</small>
-                </div>
-                <div class="stat">
-                    <label>Total Sales</label>
-                    <strong id="statTotalSales">&#8377;{{ total_sales }}</strong>
-                    <small>Revenue collected</small>
-                </div>
-                <div class="stat">
-                    <label>Pending Orders</label>
-                    <strong id="statPendingOrders">{{ pending_orders }}</strong>
-                    <small>Need attention</small>
-                </div>
-                <div class="stat">
-                    <label>Delivered Orders</label>
-                    <strong id="statDeliveredOrders">{{ delivered_orders }}</strong>
-                    <small>Completed orders</small>
-                </div>
+                <div class="stat"><label>Total Orders</label><strong id="statTotalOrders">{{ total_orders }}</strong><small>All customer orders</small></div>
+                <div class="stat"><label>Total Sales</label><strong id="statTotalSales">&#8377;{{ total_sales }}</strong><small>Revenue collected</small></div>
+                <div class="stat"><label>Pending Orders</label><strong id="statPendingOrders">{{ pending_orders }}</strong><small>Need attention</small></div>
+                <div class="stat"><label>Delivered Orders</label><strong id="statDeliveredOrders">{{ delivered_orders }}</strong><small>Completed orders</small></div>
             </section>
 
             <section class="dashboard-grid">
                 <div class="panel">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                        <h2>Order Status</h2>
-                        <span class="live-pill"><i class="live-dot"></i>Live</span>
-                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h2>Order Status</h2><span class="live-pill"><i class="live-dot"></i>Live</span></div>
                     <div class="donut" id="orderStatusDonut"></div>
-                    <div class="legend">
-                        <span><i class="dot green-dot"></i>Delivered <b id="legendDelivered">{{ delivered_orders }}</b></span>
-                        <span><i class="dot orange-dot"></i>Pending <b id="legendPending">{{ pending_orders }}</b></span>
-                    </div>
+                    <div class="legend"><span><i class="dot green-dot"></i>Delivered <b id="legendDelivered">{{ delivered_orders }}</b></span><span><i class="dot orange-dot"></i>Pending <b id="legendPending">{{ pending_orders }}</b></span></div>
                 </div>
-
                 <div class="panel">
                     <h2>Store Overview</h2>
-                    <div class="bar-row">
-                        <p><span>Total Sales</span><b id="overviewSales">&#8377;{{ total_sales }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" id="barSales" style="width:{{ sales_percent }}%"></div></div>
-                    </div>
-                    <div class="bar-row">
-                        <p><span>Total Orders</span><b id="overviewOrders">{{ total_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" id="barOrders" style="width:{{ orders_percent }}%"></div></div>
-                    </div>
-                    <div class="bar-row">
-                        <p><span>Pending Work</span><b id="overviewPending">{{ pending_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" id="barPending" style="width:{{ pending_percent }}%"></div></div>
-                    </div>
-                    <div class="bar-row">
-                        <p><span>Delivered</span><b id="overviewDelivered">{{ delivered_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" id="barDelivered" style="width:{{ delivered_percent }}%"></div></div>
-                    </div>
+                    <div class="bar-row"><p><span>Total Sales</span><b id="overviewSales">&#8377;{{ total_sales }}</b></p><div class="bar-bg"><div class="bar-fill" id="barSales" style="width:{{ sales_percent }}%"></div></div></div>
+                    <div class="bar-row"><p><span>Total Orders</span><b id="overviewOrders">{{ total_orders }}</b></p><div class="bar-bg"><div class="bar-fill" id="barOrders" style="width:{{ orders_percent }}%"></div></div></div>
+                    <div class="bar-row"><p><span>Pending Work</span><b id="overviewPending">{{ pending_orders }}</b></p><div class="bar-bg"><div class="bar-fill" id="barPending" style="width:{{ pending_percent }}%"></div></div></div>
+                    <div class="bar-row"><p><span>Delivered</span><b id="overviewDelivered">{{ delivered_orders }}</b></p><div class="bar-bg"><div class="bar-fill" id="barDelivered" style="width:{{ delivered_percent }}%"></div></div></div>
                 </div>
             </section>
 
             <section class="table-panel">
                 <div class="table-head">
-                    <div>
-                        <h2>Recent Orders</h2>
-                        <p class="muted">Update tracking status and monitor customer orders.</p>
-                    </div>
-                    <input class="search" id="orderSearch" type="text" placeholder="Search orders...">
+                    <div><h2>Recent Orders</h2><p class="muted">Row par click karke full details dekho. Status dropdown se update karo.</p></div>
+                    <div class="table-tools"><input class="search" id="orderSearch" type="text" placeholder="Search order, customer, phone, address..."></div>
+                </div>
+
+                <div class="filter-chips" id="statusChips">
+                    <button type="button" class="chip active" data-status="All">All</button>
+                    <button type="button" class="chip" data-status="Pending">Pending</button>
+                    <button type="button" class="chip" data-status="Packed">Packed</button>
+                    <button type="button" class="chip" data-status="Shipped">Shipped</button>
+                    <button type="button" class="chip" data-status="Delivered">Delivered</button>
+                    <button type="button" class="chip" data-status="Cancelled">Cancelled</button>
                 </div>
 
                 <div class="table-wrap">
                     <table id="ordersTable">
                         <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Customer</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Tracking</th>
-                            </tr>
+                            <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Address</th><th>Total</th><th>Status</th><th>Tracking</th></tr>
                         </thead>
                         <tbody>
                             {% for order in orders %}
-                            <tr>
+                            {% set status = order[8] if order[8] else 'Pending' %}
+                            {% set items = order_items_map.get(order[0], []) %}
+                            <tr class="order-main-row status-{{ status }}" data-status="{{ status }}" data-order-id="{{ order[0] }}">
                                 <td><span class="id-badge">#{{ order[0] }}</span></td>
-                                <td><div class="customer">{{ order[1] }}</div></td>
-                                <td>{{ order[2] }}</td>
-                                <td><div class="muted">{{ order[3] }}</div></td>
-                                <td><span class="amount">&#8377;{{ order[4] }}</span></td>
-                                <td><span class="status {{ order[8] }}">{{ order[8] }}</span></td>
                                 <td>
-                                    <div class="btns">
-                                        <a class="btn red" href="/update_status/{{ order[0] }}/Pending">Pending</a>
-                                        <a class="btn orange" href="/update_status/{{ order[0] }}/Packed">Packed</a>
-                                        <a class="btn blue" href="/update_status/{{ order[0] }}/Shipped">Shipped</a>
-                                        <a class="btn green" href="/update_status/{{ order[0] }}/Delivered">Delivered</a>
+                                    <div class="customer">{{ order[1] }}</div>
+                                    <div class="quick-actions">
+                                        <a class="mini-action" href="tel:{{ order[2] }}">Call</a>
+                                        <a class="mini-action whatsapp-mini" target="_blank" href="https://wa.me/91{{ order[2] }}?text=Hello%2C%20your%20Damodar%20Grocery%20order%20%23{{ order[0] }}%20status%20is%20{{ status }}.">WhatsApp</a>
+                                    </div>
+                                </td>
+                                <td><a href="tel:{{ order[2] }}">{{ order[2] }}</a></td>
+                                <td><div class="address-preview">{{ order[3] }}</div><button type="button" class="copy-btn" data-copy="{{ order[3] }}">Copy Address</button></td>
+                                <td><span class="amount">&#8377;{{ order[4] }}</span></td>
+                                <td><span class="status {{ status }}">{{ status }}</span></td>
+                                <td>
+                                    <form class="status-form" action="/update_status/{{ order[0] }}/{{ status }}" method="POST">
+                                        <select class="status-select" name="status" aria-label="Update status for order {{ order[0] }}">
+                                            {% for option in ['Pending','Packed','Shipped','Delivered','Cancelled'] %}
+                                            <option value="{{ option }}" {% if status == option %}selected{% endif %}>{{ option }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button class="update-btn" type="submit">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr class="details-row" data-parent="{{ order[0] }}">
+                                <td colspan="7">
+                                    <div class="order-details">
+                                        <div class="detail-grid">
+                                            <div class="detail-card"><span>Customer</span><strong>{{ order[1] }}</strong></div>
+                                            <div class="detail-card"><span>Phone</span><strong>{{ order[2] }}</strong></div>
+                                            <div class="detail-card"><span>Payment</span><strong>{{ order[5] if order[5] else 'COD' }} | {{ order[6] if order[6] else 'Pending' }}</strong></div>
+                                            <div class="detail-card"><span>Total</span><strong>&#8377;{{ order[4] }}</strong></div>
+                                        </div>
+                                        <div class="detail-card full-address"><span>Full Address</span><strong>{{ order[3] }}</strong></div>
+                                        <div class="details-products">
+                                            <span>Products</span>
+                                            {% for item in items %}
+                                            <div class="detail-product"><strong>{{ item[2] }}</strong><span>Qty: {{ item[4] }} | &#8377;{{ item[3] }}</span></div>
+                                            {% else %}
+                                            <p class="muted">No product details found.</p>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
                             {% else %}
-                            <tr>
-                                <td class="empty" colspan="7">No orders yet.</td>
-                            </tr>
+                            <tr><td class="empty" colspan="7">No orders yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                <div class="pagination" id="ordersPagination"></div>
             </section>
         </div>
     </main>
 </div>
 
 <script>
-function filterOrders(value){
-    var query = value.toLowerCase();
-    document.querySelectorAll("#ordersTable tbody tr").forEach(function(row){
-        row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
+var activeStatus = "All";
+var currentPage = 1;
+var ordersPerPage = 10;
+
+function syncSearch(value){
+    document.getElementById("topSearch").value = value;
+    document.getElementById("orderSearch").value = value;
+    currentPage = 1;
+    applyOrderFilters();
+}
+
+function closeDetails(){
+    document.querySelectorAll(".details-row").forEach(function(row){ row.style.display = "none"; });
+}
+
+function rowSearchText(row){
+    var details = document.querySelector('.details-row[data-parent="' + row.dataset.orderId + '"]');
+    return (row.innerText + " " + (details ? details.innerText : "")).toLowerCase();
+}
+
+function applyOrderFilters(){
+    var query = document.getElementById("orderSearch").value.toLowerCase().trim();
+    document.querySelectorAll(".order-main-row").forEach(function(row){
+        var matchText = rowSearchText(row).includes(query);
+        var matchStatus = activeStatus === "All" || row.dataset.status === activeStatus;
+        row.dataset.filtered = matchText && matchStatus ? "1" : "0";
     });
+    renderOrdersPage();
 }
 
-document.getElementById("topSearch").addEventListener("input", function(){
-    filterOrders(this.value);
-    document.getElementById("orderSearch").value = this.value;
-});
-
-document.getElementById("orderSearch").addEventListener("input", function(){
-    filterOrders(this.value);
-    document.getElementById("topSearch").value = this.value;
-});
-
-function setText(id, value){
-    var element = document.getElementById(id);
-    if(element){ element.textContent = value; }
+function renderOrdersPage(){
+    closeDetails();
+    var rows = Array.from(document.querySelectorAll(".order-main-row"));
+    rows.forEach(function(row){ row.style.display = "none"; });
+    var filtered = rows.filter(function(row){ return row.dataset.filtered !== "0"; });
+    var totalPages = Math.max(1, Math.ceil(filtered.length / ordersPerPage));
+    currentPage = Math.min(currentPage, totalPages);
+    var start = (currentPage - 1) * ordersPerPage;
+    filtered.slice(start, start + ordersPerPage).forEach(function(row){ row.style.display = ""; });
+    renderPagination(filtered.length, totalPages);
 }
 
-function setBar(id, percent){
-    var element = document.getElementById(id);
-    if(element){ element.style.width = Math.max(0, Math.min(100, percent || 0)) + "%"; }
+function renderPagination(total, totalPages){
+    var box = document.getElementById("ordersPagination");
+    if(!box){ return; }
+    if(total === 0){ box.innerHTML = '<span class="page-info">No matching orders</span>'; return; }
+    var html = '<span class="page-info">Showing ' + total + ' orders</span>';
+    for(var i = 1; i <= totalPages; i++){
+        html += '<button type="button" class="page-btn ' + (i === currentPage ? 'active' : '') + '" data-page="' + i + '">' + i + '</button>';
+    }
+    box.innerHTML = html;
 }
 
+function setText(id, value){ var element = document.getElementById(id); if(element){ element.textContent = value; } }
+function setBar(id, percent){ var element = document.getElementById(id); if(element){ element.style.width = Math.max(0, Math.min(100, percent || 0)) + "%"; } }
 function updateDashboardStats(data){
     setText("statTotalOrders", data.total_orders);
     setText("statTotalSales", "₹" + data.total_sales);
@@ -290,34 +244,67 @@ function updateDashboardStats(data){
     setText("overviewOrders", data.total_orders);
     setText("overviewPending", data.pending_orders);
     setText("overviewDelivered", data.delivered_orders);
-
     var donut = document.getElementById("orderStatusDonut");
-    if(donut){
-        var delivered = Math.max(0, Math.min(100, data.delivered_percent || 0));
-        donut.style.background = "conic-gradient(#0b8f3a 0 " + delivered + "%, #ff9900 " + delivered + "% 100%)";
-    }
-
-    setBar("barSales", data.sales_percent);
-    setBar("barOrders", data.orders_percent);
-    setBar("barPending", data.pending_percent);
-    setBar("barDelivered", data.delivered_percent);
+    if(donut){ var delivered = Math.max(0, Math.min(100, data.delivered_percent || 0)); donut.style.background = "conic-gradient(#0b8f3a 0 " + delivered + "%, #ff9900 " + delivered + "% 100%)"; }
+    setBar("barSales", data.sales_percent); setBar("barOrders", data.orders_percent); setBar("barPending", data.pending_percent); setBar("barDelivered", data.delivered_percent);
 }
-
 function refreshDashboardStats(){
     fetch("/orders_stats", {headers: {"Accept": "application/json"}})
-        .then(function(response){
-            if(!response.ok){ throw new Error("Stats request failed"); }
-            return response.json();
-        })
+        .then(function(response){ if(!response.ok){ throw new Error("Stats request failed"); } return response.json(); })
         .then(updateDashboardStats)
-        .catch(function(){
-            // Network hiccup par current dashboard values ko disturb nahi karte.
-        });
+        .catch(function(){});
 }
 
+document.getElementById("topSearch").addEventListener("input", function(){ syncSearch(this.value); });
+document.getElementById("orderSearch").addEventListener("input", function(){ syncSearch(this.value); });
+document.getElementById("statusChips").addEventListener("click", function(event){
+    var chip = event.target.closest(".chip");
+    if(!chip){ return; }
+    document.querySelectorAll(".chip").forEach(function(item){ item.classList.remove("active"); });
+    chip.classList.add("active");
+    activeStatus = chip.dataset.status;
+    currentPage = 1;
+    applyOrderFilters();
+});
+document.getElementById("ordersPagination").addEventListener("click", function(event){
+    var button = event.target.closest(".page-btn");
+    if(!button){ return; }
+    currentPage = parseInt(button.dataset.page, 10);
+    renderOrdersPage();
+});
+document.querySelectorAll(".order-main-row").forEach(function(row){
+    row.dataset.filtered = "1";
+    row.addEventListener("click", function(event){
+        if(event.target.closest("a,button,select,input,form")){ return; }
+        var details = document.querySelector('.details-row[data-parent="' + row.dataset.orderId + '"]');
+        if(!details){ return; }
+        var isOpen = details.style.display === "table-row";
+        closeDetails();
+        details.style.display = isOpen ? "none" : "table-row";
+    });
+});
+document.querySelectorAll(".copy-btn").forEach(function(button){
+    button.addEventListener("click", function(){
+        var text = button.dataset.copy || "";
+        navigator.clipboard.writeText(text).then(function(){
+            button.textContent = "Copied";
+            button.classList.add("copied");
+            setTimeout(function(){ button.textContent = "Copy Address"; button.classList.remove("copied"); }, 1400);
+        });
+    });
+});
+document.querySelectorAll(".status-form").forEach(function(form){
+    form.addEventListener("submit", function(event){
+        var status = form.querySelector("select").value;
+        if((status === "Delivered" || status === "Cancelled") && !confirm("Order ko " + status + " mark karna hai?")){
+            event.preventDefault();
+        }
+    });
+});
+
+applyOrderFilters();
 refreshDashboardStats();
 setInterval(refreshDashboardStats, 5000);
 </script>
-
 </body>
 </html>

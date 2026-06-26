@@ -1867,11 +1867,18 @@ def orders():
     all_orders = cursor.fetchall()
     stats = dashboard_order_stats(all_orders)
 
+    order_items_map = {}
+    for order in all_orders:
+        order_id = order_col(order, "id", 0)
+        execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
+        order_items_map[order_id] = cursor.fetchall()
+
     conn.close()
 
     return render_template(
         "orders.html",
         orders=all_orders,
+        order_items_map=order_items_map,
         **stats
     )
 
@@ -1891,10 +1898,13 @@ def orders_stats():
     return jsonify(stats)
 
 
-@app.route("/update_status/<int:order_id>/<status>")
+@app.route("/update_status/<int:order_id>/<status>", methods=["GET", "POST"])
 def update_status(order_id, status):
     if not is_admin():
         return redirect("/admin_login")
+
+    if request.method == "POST":
+        status = request.form.get("status", status)
 
     allowed_status = ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"]
     if status not in allowed_status:
