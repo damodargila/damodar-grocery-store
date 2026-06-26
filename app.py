@@ -7,6 +7,7 @@ import threading
 import csv
 from io import BytesIO
 from email.message import EmailMessage
+from datetime import datetime, timedelta
 
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1243,12 +1244,46 @@ def my_orders():
     )
     orders = cursor.fetchall()
 
+    def format_order_datetime(value):
+        raw = str(value or "").strip()
+        if not raw:
+            return {
+                "placed_at": "Recent order",
+                "placed_date": "Recent order",
+                "placed_time": "Time not available",
+            }
+
+        normalized = raw.replace("T", " ").replace("Z", "").split(".")[0]
+        parsed = None
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+            try:
+                parsed = datetime.strptime(normalized[:19], fmt)
+                break
+            except ValueError:
+                continue
+
+        if not parsed:
+            short_value = normalized[:16]
+            return {
+                "placed_at": short_value,
+                "placed_date": short_value,
+                "placed_time": "Time not available",
+            }
+
+        # Render/Postgres timestamps are usually UTC; show customers India time.
+        placed_ist = parsed + timedelta(hours=5, minutes=30)
+        return {
+            "placed_at": placed_ist.strftime("%d %b %Y, %I:%M %p"),
+            "placed_date": placed_ist.strftime("%d %b %Y"),
+            "placed_time": placed_ist.strftime("%I:%M %p"),
+        }
+
     order_items_map = {}
     order_meta_map = {}
     for order in orders:
         order_id = order_col(order, "id", 0)
         placed_raw = order_col(order, "created_at", 10, "")
-        placed_text = str(placed_raw or "").replace("T", " ")[:16] or "Recent order"
+        placed_meta = format_order_datetime(placed_raw)
 
         execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
         items = []
@@ -1274,7 +1309,9 @@ def my_orders():
         order_items_map[order_id] = items
         order_meta_map[order_id] = {
             "item_count": item_count,
-            "placed_at": placed_text,
+            "placed_at": placed_meta["placed_at"],
+            "placed_date": placed_meta["placed_date"],
+            "placed_time": placed_meta["placed_time"],
             "expected_delivery": "2-4 days",
         }
 
