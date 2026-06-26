@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, session, request, send_file
+from flask import Flask, render_template, redirect, session, request, send_file, jsonify
 import sqlite3
 import os
 import random
@@ -1592,6 +1592,26 @@ def invoice(order_id):
     )
 
 
+def dashboard_order_stats(all_orders):
+    total_orders = len(all_orders)
+    total_sales = sum(int(order_col(order, "total", 4, 0) or 0) for order in all_orders)
+    delivered_orders = sum(1 for order in all_orders if order_col(order, "status", 8) == "Delivered")
+    pending_orders = total_orders - delivered_orders
+    delivered_percent = round((delivered_orders / total_orders) * 100) if total_orders else 0
+    pending_percent = 100 - delivered_percent if total_orders else 0
+
+    return {
+        "total_orders": total_orders,
+        "total_sales": total_sales,
+        "pending_orders": pending_orders,
+        "delivered_orders": delivered_orders,
+        "delivered_percent": delivered_percent,
+        "pending_percent": pending_percent,
+        "sales_percent": 100 if total_sales else 0,
+        "orders_percent": 100 if total_orders else 0,
+    }
+
+
 @app.route("/orders")
 def orders():
     if not is_admin():
@@ -1602,29 +1622,30 @@ def orders():
 
     cursor.execute("SELECT * FROM orders ORDER BY id DESC")
     all_orders = cursor.fetchall()
-
-    total_orders = len(all_orders)
-    total_sales = sum(int(order_col(order, "total", 4, 0) or 0) for order in all_orders)
-
-    pending_orders = 0
-    delivered_orders = 0
-
-    for order in all_orders:
-        if order_col(order, "status", 8) == "Delivered":
-            delivered_orders += 1
-        else:
-            pending_orders += 1
+    stats = dashboard_order_stats(all_orders)
 
     conn.close()
 
     return render_template(
         "orders.html",
         orders=all_orders,
-        total_orders=total_orders,
-        total_sales=total_sales,
-        pending_orders=pending_orders,
-        delivered_orders=delivered_orders
+        **stats
     )
+
+
+@app.route("/orders_stats")
+def orders_stats():
+    if not is_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM orders")
+    all_orders = cursor.fetchall()
+    stats = dashboard_order_stats(all_orders)
+    conn.close()
+
+    return jsonify(stats)
 
 
 @app.route("/update_status/<int:order_id>/<status>")

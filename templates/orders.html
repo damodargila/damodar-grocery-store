@@ -44,7 +44,7 @@ a{text-decoration:none}
 .dashboard-grid{display:grid;grid-template-columns:380px 1fr;gap:20px;margin-bottom:22px}
 .panel{background:white;border:1px solid #e7ecef;border-radius:16px;padding:22px;box-shadow:0 5px 18px rgba(0,0,0,.07)}
 .panel h2{font-size:22px;margin-bottom:16px}
-.donut{width:190px;height:190px;border-radius:50%;background:conic-gradient(#0b8f3a 0 70%,#ff9900 70% 100%);margin:20px auto;position:relative}
+.donut{width:190px;height:190px;border-radius:50%;background:conic-gradient(#0b8f3a 0 70%,#ff9900 70% 100%);margin:20px auto;position:relative;transition:background .35s ease}
 .donut:after{content:"";position:absolute;inset:48px;background:white;border-radius:50%}
 .legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;color:#4b5563;font-weight:bold}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
@@ -53,7 +53,10 @@ a{text-decoration:none}
 .bar-row{margin:16px 0}
 .bar-row p{display:flex;justify-content:space-between;margin-bottom:7px;color:#374151}
 .bar-bg{height:13px;background:#edf2f7;border-radius:999px;overflow:hidden}
-.bar-fill{height:100%;background:linear-gradient(90deg,#0b6623,#0b8f3a);border-radius:999px}
+.bar-fill{height:100%;background:linear-gradient(90deg,#0b6623,#0b8f3a);border-radius:999px;transition:width .35s ease}
+.live-pill{display:inline-flex;align-items:center;gap:7px;background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:bold}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#0b8f3a;box-shadow:0 0 0 0 rgba(11,143,58,.55);animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(11,143,58,0)}100%{box-shadow:0 0 0 0 rgba(11,143,58,0)}}
 
 .table-panel{background:white;border:1px solid #e7ecef;border-radius:16px;box-shadow:0 5px 18px rgba(0,0,0,.07);overflow:hidden}
 .table-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 22px;border-bottom:1px solid #edf0f2}
@@ -141,53 +144,56 @@ tr:hover{background:#fbfdfb}
             <section class="stats">
                 <div class="stat">
                     <label>Total Orders</label>
-                    <strong>{{ total_orders }}</strong>
+                    <strong id="statTotalOrders">{{ total_orders }}</strong>
                     <small>All customer orders</small>
                 </div>
                 <div class="stat">
                     <label>Total Sales</label>
-                    <strong>&#8377;{{ total_sales }}</strong>
+                    <strong id="statTotalSales">&#8377;{{ total_sales }}</strong>
                     <small>Revenue collected</small>
                 </div>
                 <div class="stat">
                     <label>Pending Orders</label>
-                    <strong>{{ pending_orders }}</strong>
+                    <strong id="statPendingOrders">{{ pending_orders }}</strong>
                     <small>Need attention</small>
                 </div>
                 <div class="stat">
                     <label>Delivered Orders</label>
-                    <strong>{{ delivered_orders }}</strong>
+                    <strong id="statDeliveredOrders">{{ delivered_orders }}</strong>
                     <small>Completed orders</small>
                 </div>
             </section>
 
             <section class="dashboard-grid">
                 <div class="panel">
-                    <h2>Order Status</h2>
-                    <div class="donut"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                        <h2>Order Status</h2>
+                        <span class="live-pill"><i class="live-dot"></i>Live</span>
+                    </div>
+                    <div class="donut" id="orderStatusDonut"></div>
                     <div class="legend">
-                        <span><i class="dot green-dot"></i>Delivered {{ delivered_orders }}</span>
-                        <span><i class="dot orange-dot"></i>Pending {{ pending_orders }}</span>
+                        <span><i class="dot green-dot"></i>Delivered <b id="legendDelivered">{{ delivered_orders }}</b></span>
+                        <span><i class="dot orange-dot"></i>Pending <b id="legendPending">{{ pending_orders }}</b></span>
                     </div>
                 </div>
 
                 <div class="panel">
                     <h2>Store Overview</h2>
                     <div class="bar-row">
-                        <p><span>Total Sales</span><b>&#8377;{{ total_sales }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" style="width:88%"></div></div>
+                        <p><span>Total Sales</span><b id="overviewSales">&#8377;{{ total_sales }}</b></p>
+                        <div class="bar-bg"><div class="bar-fill" id="barSales" style="width:{{ sales_percent }}%"></div></div>
                     </div>
                     <div class="bar-row">
-                        <p><span>Total Orders</span><b>{{ total_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" style="width:72%"></div></div>
+                        <p><span>Total Orders</span><b id="overviewOrders">{{ total_orders }}</b></p>
+                        <div class="bar-bg"><div class="bar-fill" id="barOrders" style="width:{{ orders_percent }}%"></div></div>
                     </div>
                     <div class="bar-row">
-                        <p><span>Pending Work</span><b>{{ pending_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" style="width:58%"></div></div>
+                        <p><span>Pending Work</span><b id="overviewPending">{{ pending_orders }}</b></p>
+                        <div class="bar-bg"><div class="bar-fill" id="barPending" style="width:{{ pending_percent }}%"></div></div>
                     </div>
                     <div class="bar-row">
-                        <p><span>Delivered</span><b>{{ delivered_orders }}</b></p>
-                        <div class="bar-bg"><div class="bar-fill" style="width:45%"></div></div>
+                        <p><span>Delivered</span><b id="overviewDelivered">{{ delivered_orders }}</b></p>
+                        <div class="bar-bg"><div class="bar-fill" id="barDelivered" style="width:{{ delivered_percent }}%"></div></div>
                     </div>
                 </div>
             </section>
@@ -262,6 +268,55 @@ document.getElementById("orderSearch").addEventListener("input", function(){
     filterOrders(this.value);
     document.getElementById("topSearch").value = this.value;
 });
+
+function setText(id, value){
+    var element = document.getElementById(id);
+    if(element){ element.textContent = value; }
+}
+
+function setBar(id, percent){
+    var element = document.getElementById(id);
+    if(element){ element.style.width = Math.max(0, Math.min(100, percent || 0)) + "%"; }
+}
+
+function updateDashboardStats(data){
+    setText("statTotalOrders", data.total_orders);
+    setText("statTotalSales", "₹" + data.total_sales);
+    setText("statPendingOrders", data.pending_orders);
+    setText("statDeliveredOrders", data.delivered_orders);
+    setText("legendDelivered", data.delivered_orders);
+    setText("legendPending", data.pending_orders);
+    setText("overviewSales", "₹" + data.total_sales);
+    setText("overviewOrders", data.total_orders);
+    setText("overviewPending", data.pending_orders);
+    setText("overviewDelivered", data.delivered_orders);
+
+    var donut = document.getElementById("orderStatusDonut");
+    if(donut){
+        var delivered = Math.max(0, Math.min(100, data.delivered_percent || 0));
+        donut.style.background = "conic-gradient(#0b8f3a 0 " + delivered + "%, #ff9900 " + delivered + "% 100%)";
+    }
+
+    setBar("barSales", data.sales_percent);
+    setBar("barOrders", data.orders_percent);
+    setBar("barPending", data.pending_percent);
+    setBar("barDelivered", data.delivered_percent);
+}
+
+function refreshDashboardStats(){
+    fetch("/orders_stats", {headers: {"Accept": "application/json"}})
+        .then(function(response){
+            if(!response.ok){ throw new Error("Stats request failed"); }
+            return response.json();
+        })
+        .then(updateDashboardStats)
+        .catch(function(){
+            // Network hiccup par current dashboard values ko disturb nahi karte.
+        });
+}
+
+refreshDashboardStats();
+setInterval(refreshDashboardStats, 5000);
 </script>
 
 </body>
