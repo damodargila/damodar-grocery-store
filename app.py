@@ -1247,10 +1247,11 @@ def my_orders():
     def format_order_datetime(value):
         raw = str(value or "").strip()
         if not raw:
+            now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
             return {
-                "placed_at": "Recent order",
-                "placed_date": "Recent order",
-                "placed_time": "Time not available",
+                "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
+                "placed_date": now_ist.strftime("%d %b %Y"),
+                "placed_time": now_ist.strftime("%I:%M %p"),
             }
 
         normalized = raw.replace("T", " ").replace("Z", "").split(".")[0]
@@ -1263,11 +1264,11 @@ def my_orders():
                 continue
 
         if not parsed:
-            short_value = normalized[:16]
+            now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
             return {
-                "placed_at": short_value,
-                "placed_date": short_value,
-                "placed_time": "Time not available",
+                "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
+                "placed_date": now_ist.strftime("%d %b %Y"),
+                "placed_time": now_ist.strftime("%I:%M %p"),
             }
 
         # Render/Postgres timestamps are usually UTC; show customers India time.
@@ -1720,6 +1721,7 @@ def checkout():
                 )
 
         gst, discount_percent, discount_amount, grand_total = order_totals(total)
+        order_created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
         conn = get_db()
         cursor = conn.cursor()
@@ -1730,8 +1732,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
-                VALUES(?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?)
                 RETURNING id
                 """,
                 (
@@ -1743,7 +1745,8 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email
+                    email,
+                    order_created_at
                 )
             )
             order_id = cursor.fetchone()[0]
@@ -1751,8 +1754,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
-                VALUES(?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     name,
@@ -1763,7 +1766,8 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email
+                    email,
+                    order_created_at
                 )
             )
             order_id = cursor.lastrowid
