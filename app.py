@@ -1697,8 +1697,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
-                VALUES(?,?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
+                VALUES(?,?,?,?,?,?,?,?,?)
                 RETURNING id
                 """,
                 (
@@ -1710,8 +1710,7 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email,
-                    order_created_at
+                    email
                 )
             )
             order_id = cursor.fetchone()[0]
@@ -1719,8 +1718,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
-                VALUES(?,?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
+                VALUES(?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     name,
@@ -1731,11 +1730,25 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email,
-                    order_created_at
+                    email
                 )
             )
             order_id = cursor.lastrowid
+
+        if is_postgres():
+            cursor.execute("SAVEPOINT order_created_at_savepoint")
+            try:
+                execute(cursor, "UPDATE orders SET created_at=? WHERE id=?", (order_created_at, order_id))
+                cursor.execute("RELEASE SAVEPOINT order_created_at_savepoint")
+            except Exception as error:
+                cursor.execute("ROLLBACK TO SAVEPOINT order_created_at_savepoint")
+                cursor.execute("RELEASE SAVEPOINT order_created_at_savepoint")
+                app.logger.warning("Could not save order created_at for order %s: %s", order_id, error)
+        else:
+            try:
+                execute(cursor, "UPDATE orders SET created_at=? WHERE id=?", (order_created_at, order_id))
+            except Exception as error:
+                app.logger.warning("Could not save order created_at for order %s: %s", order_id, error)
 
         for product, quantity in order_products:
             product_id = fetch_product_id(product)
