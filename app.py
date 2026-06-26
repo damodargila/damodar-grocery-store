@@ -1876,17 +1876,24 @@ def dashboard_order_stats(all_orders):
     total_orders = len(all_orders)
     total_sales = sum(int(order_col(order, "total", 4, 0) or 0) for order in all_orders)
     delivered_orders = sum(1 for order in all_orders if order_col(order, "status", 8) == "Delivered")
-    pending_orders = total_orders - delivered_orders
+    cancelled_orders = sum(1 for order in all_orders if order_col(order, "status", 8) == "Cancelled")
+    pending_orders = sum(
+        1 for order in all_orders
+        if order_col(order, "status", 8, "Pending") not in ["Delivered", "Cancelled"]
+    )
     delivered_percent = round((delivered_orders / total_orders) * 100) if total_orders else 0
-    pending_percent = 100 - delivered_percent if total_orders else 0
+    cancelled_percent = round((cancelled_orders / total_orders) * 100) if total_orders else 0
+    pending_percent = max(0, 100 - delivered_percent - cancelled_percent) if total_orders else 0
 
     return {
         "total_orders": total_orders,
         "total_sales": total_sales,
         "pending_orders": pending_orders,
         "delivered_orders": delivered_orders,
+        "cancelled_orders": cancelled_orders,
         "delivered_percent": delivered_percent,
         "pending_percent": pending_percent,
+        "cancelled_percent": cancelled_percent,
         "sales_percent": 100 if total_sales else 0,
         "orders_percent": 100 if total_orders else 0,
     }
@@ -1908,7 +1915,15 @@ def orders():
     for order in all_orders:
         order_id = order_col(order, "id", 0)
         execute(cursor, "SELECT * FROM order_items WHERE order_id=?", (order_id,))
-        order_items_map[order_id] = cursor.fetchall()
+        items = []
+        for item in cursor.fetchall():
+            items.append({
+                "product_id": order_col(item, "product_id", 5, ""),
+                "product_name": order_col(item, "product_name", 2, "Product"),
+                "price": order_col(item, "price", 3, 0),
+                "quantity": order_col(item, "quantity", 4, 0),
+            })
+        order_items_map[order_id] = items
 
     conn.close()
 
