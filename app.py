@@ -171,6 +171,14 @@ def get_cart_items():
     return cart_items
 
 
+def get_current_user_id():
+    user_id = session.get("user_id")
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        return None
+
+
 def get_session_wishlist():
     wishlist = session.get("wishlist", [])
     if not isinstance(wishlist, list):
@@ -206,6 +214,64 @@ def safe_quantity(quantity):
         return max(0, int(quantity))
     except (TypeError, ValueError):
         return 0
+
+
+def get_user_wishlist_ids():
+    user_id = get_current_user_id()
+    if not user_id:
+        return {int(pid) for pid in get_session_wishlist() if str(pid).isdigit()}
+
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(cursor, "SELECT product_id FROM wishlist WHERE user_id=?", (user_id,))
+    ids = {row[0] for row in cursor.fetchall()}
+    conn.close()
+    return ids
+
+
+def toggle_user_wishlist(product_id):
+    user_id = get_current_user_id()
+    if not user_id:
+        toggle_session_wishlist(product_id)
+        return
+
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(cursor, "SELECT id FROM wishlist WHERE user_id=? AND product_id=?", (user_id, product_id))
+    existing = cursor.fetchone()
+    if existing:
+        execute(cursor, "DELETE FROM wishlist WHERE id=?", (existing[0],))
+    else:
+        try:
+            execute(cursor, "INSERT INTO wishlist(user_id, product_id) VALUES(?,?)", (user_id, product_id))
+        except Exception:
+            conn.rollback()
+
+    conn.commit()
+    conn.close()
+
+
+def migrate_session_wishlist_to_user():
+    user_id = get_current_user_id()
+    if not user_id:
+        return
+
+    wishlist_ids = [int(pid) for pid in get_session_wishlist() if str(pid).isdigit()]
+    if not wishlist_ids:
+        session.pop("wishlist", None)
+        return
+
+    conn = get_db()
+    cursor = conn.cursor()
+    for product_id in wishlist_ids:
+        try:
+            execute(cursor, "INSERT INTO wishlist(user_id, product_id) VALUES(?,?)", (user_id, product_id))
+        except Exception:
+            conn.rollback()
+            cursor = conn.cursor()
+    conn.commit()
+    conn.close()
+    session.pop("wishlist", None)
 
 
 def build_cart_summary():
@@ -507,7 +573,9 @@ def init_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS wishlist (
                 id SERIAL PRIMARY KEY,
-                product_id INTEGER UNIQUE
+                user_id INTEGER,
+                product_id INTEGER,
+                UNIQUE(user_id, product_id)
             )
         """)
 
@@ -600,6 +668,16 @@ def init_db():
                 except Exception:
                     conn.rollback()
                     cursor = conn.cursor()
+        try:
+            cursor.execute("ALTER TABLE wishlist ADD COLUMN user_id INTEGER")
+        except Exception:
+            conn.rollback()
+            cursor = conn.cursor()
+        try:
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_wishlist_user_product ON wishlist(user_id, product_id)")
+        except Exception:
+            conn.rollback()
+            cursor = conn.cursor()
 
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
@@ -648,7 +726,9 @@ def init_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS wishlist (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                product_id INTEGER UNIQUE
+                user_id INTEGER,
+                product_id INTEGER,
+                UNIQUE(user_id, product_id)
             )
         """)
 
@@ -739,6 +819,14 @@ def init_db():
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {name} {col_type}")
                 except sqlite3.OperationalError:
                     pass
+        try:
+            cursor.execute("ALTER TABLE wishlist ADD COLUMN user_id INTEGER")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_wishlist_user_product ON wishlist(user_id, product_id)")
+        except sqlite3.OperationalError:
+            pass
 
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
@@ -859,11 +947,20 @@ def register_pending_user():
     cursor = conn.cursor()
 
     try:
-        execute(
-            cursor,
-            "INSERT INTO users(name, email, phone, password) VALUES(?,?,?,?)",
-            (pending["name"], pending.get("email"), pending.get("phone"), hashed_password)
-        )
+        if is_postgres():
+            execute(
+                cursor,
+                "INSERT INTO users(name, email, phone, password) VALUES(?,?,?,?) RETURNING id",
+                (pending["name"], pending.get("email"), pending.get("phone"), hashed_password)
+            )
+            user_id = cursor.fetchone()[0]
+        else:
+            execute(
+                cursor,
+                "INSERT INTO users(name, email, phone, password) VALUES(?,?,?,?)",
+                (pending["name"], pending.get("email"), pending.get("phone"), hashed_password)
+            )
+            user_id = cursor.lastrowid
         conn.commit()
     except Exception:
         conn.rollback()
@@ -871,6 +968,7 @@ def register_pending_user():
         return None
 
     conn.close()
+    pending["id"] = user_id
     return pending
 
 
@@ -994,8 +1092,10 @@ def send_otp():
 
         user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
         user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else ""
+        user_id = user["id"] if hasattr(user, "keys") and "id" in user.keys() else user[0]
 
         session["otp_user"] = user_email or user_phone
+        session["otp_user_id"] = user_id
         session["otp_login_id"] = login_id
         session["otp"] = otp
         session["otp_flow"] = "login"
@@ -1034,6 +1134,7 @@ def verify_otp():
                     )
 
                 session["user"] = pending.get("email") or pending.get("phone")
+                session["user_id"] = pending.get("id") if pending else None
                 session.pop("pending_register", None)
 
                 session.pop("otp", None)
@@ -1041,6 +1142,7 @@ def verify_otp():
                 session.pop("phone_demo_otp", None)
                 session.pop("email_demo_otp", None)
                 session.pop("admin", None)
+                migrate_session_wishlist_to_user()
                 return redirect("/")
 
             return render_template(
@@ -1053,13 +1155,16 @@ def verify_otp():
 
         if user_otp == session.get("otp"):
             session["user"] = session.get("otp_user")
+            session["user_id"] = session.get("otp_user_id")
             session.pop("otp", None)
             session.pop("otp_flow", None)
             session.pop("otp_user", None)
+            session.pop("otp_user_id", None)
             session.pop("otp_login_id", None)
             session.pop("phone_demo_otp", None)
             session.pop("email_demo_otp", None)
             session.pop("admin", None)
+            migrate_session_wishlist_to_user()
             return redirect("/")
 
         return render_template(
@@ -1437,11 +1542,13 @@ def customer_login():
             stored_password = user["password"] if hasattr(user, "keys") and "password" in user.keys() else user[3]
             user_email = user["email"] if hasattr(user, "keys") and "email" in user.keys() else user[2]
             user_phone = user["phone"] if hasattr(user, "keys") and "phone" in user.keys() else ""
+            user_id = user["id"] if hasattr(user, "keys") and "id" in user.keys() else user[0]
 
             # Supports old plain-text passwords and upgrades them after login.
             if check_password_hash(stored_password, password) or stored_password == password:
                 session.pop("admin", None)
                 session["user"] = user_email or user_phone
+                session["user_id"] = user_id
 
                 if stored_password == password:
                     conn = get_db()
@@ -1606,12 +1713,7 @@ def product_details(product_id):
     execute(cursor, "SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (product_id,))
     reviews_data = cursor.fetchall()
 
-    wishlist_ids = set()
-    for raw_id in get_session_wishlist():
-        try:
-            wishlist_ids.add(int(raw_id))
-        except ValueError:
-            continue
+    wishlist_ids = get_user_wishlist_ids()
 
     execute(
         cursor,
@@ -1648,23 +1750,31 @@ def product_details(product_id):
 
 @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):
-    toggle_session_wishlist(product_id)
+    toggle_user_wishlist(product_id)
     return redirect(request.referrer or "/")
 
 
 @app.route("/wishlist")
 def wishlist_page():
-    wishlist_ids = get_session_wishlist()
+    user_id = get_current_user_id()
     products = []
 
-    params = [int(pid) for pid in wishlist_ids if pid.isdigit()]
-    if params:
+    if user_id:
         conn = get_db()
         cursor = conn.cursor()
-        placeholders = ",".join(["?"] * len(params))
-        execute(cursor, f"SELECT * FROM products WHERE id IN ({placeholders})", params)
+        execute(cursor, "SELECT products.* FROM wishlist JOIN products ON wishlist.product_id = products.id WHERE wishlist.user_id=?", (user_id,))
         products = cursor.fetchall()
         conn.close()
+    else:
+        wishlist_ids = get_session_wishlist()
+        params = [int(pid) for pid in wishlist_ids if pid.isdigit()]
+        if params:
+            conn = get_db()
+            cursor = conn.cursor()
+            placeholders = ",".join(["?"] * len(params))
+            execute(cursor, f"SELECT * FROM products WHERE id IN ({placeholders})", params)
+            products = cursor.fetchall()
+            conn.close()
 
     return render_template("wishlist.html", products=products)
 
