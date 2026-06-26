@@ -282,20 +282,27 @@ def fetch_saved_addresses(user_key):
     if not user_key:
         return []
 
-    conn = get_db()
-    cursor = conn.cursor()
-    execute(
-        cursor,
-        """
-        SELECT id, name, phone, email, address, district, state, pincode
-        FROM saved_addresses
-        WHERE user_key=?
-        ORDER BY id DESC
-        """,
-        (user_key,)
-    )
-    rows = cursor.fetchall()
-    conn.close()
+    conn = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        execute(
+            cursor,
+            """
+            SELECT id, name, phone, email, address, district, state, pincode
+            FROM saved_addresses
+            WHERE user_key=?
+            ORDER BY id DESC
+            """,
+            (user_key,)
+        )
+        rows = cursor.fetchall()
+    except Exception as error:
+        app.logger.exception("Saved address fetch failed: %s", error)
+        return []
+    finally:
+        if conn:
+            conn.close()
 
     addresses = []
     for row in rows:
@@ -347,6 +354,25 @@ def save_checkout_address(cursor, user_key, name, phone, email, address, distric
         """,
         (user_key, name, phone, email, address, district, state, pincode)
     )
+
+
+def save_checkout_address_safe(user_key, name, phone, email, address, district, state, pincode):
+    if not user_key:
+        return
+
+    conn = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        save_checkout_address(cursor, user_key, name, phone, email, address, district, state, pincode)
+        conn.commit()
+    except Exception as error:
+        app.logger.exception("Saved address save failed: %s", error)
+        if conn:
+            conn.rollback()
+    finally:
+        if conn:
+            conn.close()
 
 
 def order_col(order, key, index, default=""):
@@ -1561,8 +1587,7 @@ def checkout():
         conn = get_db()
         cursor = conn.cursor()
 
-        if request.form.get("save_address") == "1":
-            save_checkout_address(cursor, user_key, name, phone, email, address, district, state, pincode)
+        should_save_address = request.form.get("save_address") == "1"
 
         if is_postgres():
             execute(
@@ -1629,6 +1654,9 @@ def checkout():
 
         conn.commit()
         conn.close()
+
+        if should_save_address:
+            save_checkout_address_safe(user_key, name, phone, email, address, district, state, pincode)
 
         send_email_async(
             email,
