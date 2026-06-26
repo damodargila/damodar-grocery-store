@@ -22,6 +22,11 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .navbar{background:#0b6623;padding:11px 22px;display:flex;gap:24px;flex-wrap:wrap}
 .navbar a{color:white;text-decoration:none;font-size:15px;font-weight:bold}
 
+.category-row{background:#fff;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:10px 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.category-row a{color:#0b6623;text-decoration:none;padding:8px 12px;border-radius:999px;font-size:14px;background:#f0fdf4;border:1px solid #d1fae5;transition:background .2s,color .2s}
+.category-row a.active{background:#0b6623;color:white;border-color:#0b6623}
+.category-row a:hover{background:#0b8f3a;color:white}
+
 .hero{margin:18px 22px;background:linear-gradient(135deg,#0b6623,#45b36b);color:white;border-radius:18px;padding:34px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .hero h1{font-size:36px}
 .hero p{margin-top:8px;font-size:17px}
@@ -161,6 +166,13 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
     {% if session.get('admin') or session.get('user') %}
     <a href="/logout">Logout</a>
     {% endif %}
+</div>
+
+<div class="category-row">
+    <a href="/" class="{% if not category %}active{% endif %}">All Categories</a>
+    {% for cat in categories %}
+    <a href="/?category={{ cat[0]|urlencode }}" class="{% if category == cat[0] %}active{% endif %}">{{ cat[0] }}</a>
+    {% endfor %}
 </div>
 
 <div class="hero">

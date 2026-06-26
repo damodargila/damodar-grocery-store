@@ -24,13 +24,27 @@ import cloudinary.uploader
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "change-this-secret-key")
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = os.urandom(32)
+    app.logger.warning("SECRET_KEY is not set. Generated a random secret key for this runtime.")
+app.secret_key = SECRET_KEY
+
+USE_HTTPS = os.getenv("USE_HTTPS", "0") == "1"
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=USE_HTTPS,
+)
 
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "1234")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+if not ADMIN_USERNAME or not ADMIN_PASSWORD:
+    app.logger.warning("ADMIN_USERNAME or ADMIN_PASSWORD not configured. Admin login is disabled until both are set.")
 
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
@@ -155,6 +169,36 @@ def get_cart_items():
         session["cart"] = {}
         return {}
     return cart_items
+
+
+def get_session_wishlist():
+    wishlist = session.get("wishlist", [])
+    if not isinstance(wishlist, list):
+        wishlist = []
+    cleaned = []
+    for item in wishlist:
+        try:
+            cleaned.append(str(int(item)))
+        except (TypeError, ValueError):
+            continue
+    session["wishlist"] = cleaned
+    session.modified = True
+    return cleaned
+
+
+def is_product_in_wishlist(product_id):
+    return str(product_id) in get_session_wishlist()
+
+
+def toggle_session_wishlist(product_id):
+    wishlist = get_session_wishlist()
+    product_key = str(product_id)
+    if product_key in wishlist:
+        wishlist.remove(product_key)
+    else:
+        wishlist.append(product_key)
+    session["wishlist"] = wishlist
+    session.modified = True
 
 
 def safe_quantity(quantity):
@@ -906,8 +950,12 @@ def home():
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()
 
-    cursor.execute("SELECT product_id FROM wishlist")
-    wishlist_ids = {row[0] for row in cursor.fetchall()}
+    wishlist_ids = set()
+    for raw_id in get_session_wishlist():
+        try:
+            wishlist_ids.add(int(raw_id))
+        except ValueError:
+            continue
 
     conn.close()
 
@@ -1294,6 +1342,9 @@ def my_orders():
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
+        if not ADMIN_USERNAME or not ADMIN_PASSWORD:
+            return render_template("login.html", error="Admin login not configured.")
+
         if request.form["username"] == ADMIN_USERNAME and request.form["password"] == ADMIN_PASSWORD:
             session.clear()
             session["admin"] = True
@@ -1555,8 +1606,12 @@ def product_details(product_id):
     execute(cursor, "SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (product_id,))
     reviews_data = cursor.fetchall()
 
-    cursor.execute("SELECT product_id FROM wishlist")
-    wishlist_ids = {row[0] for row in cursor.fetchall()}
+    wishlist_ids = set()
+    for raw_id in get_session_wishlist():
+        try:
+            wishlist_ids.add(int(raw_id))
+        except ValueError:
+            continue
 
     execute(
         cursor,
@@ -1593,39 +1648,23 @@ def product_details(product_id):
 
 @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):
-    conn = get_db()
-    cursor = conn.cursor()
-
-    execute(cursor, "SELECT * FROM wishlist WHERE product_id=?", (product_id,))
-    existing = cursor.fetchone()
-
-    if existing:
-        execute(cursor, "DELETE FROM wishlist WHERE product_id=?", (product_id,))
-    else:
-        try:
-            execute(cursor, "INSERT INTO wishlist(product_id) VALUES(?)", (product_id,))
-        except Exception:
-            conn.rollback()
-
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
+    toggle_session_wishlist(product_id)
+    return redirect(request.referrer or "/")
 
 
 @app.route("/wishlist")
 def wishlist_page():
-    conn = get_db()
-    cursor = conn.cursor()
+    wishlist_ids = get_session_wishlist()
+    products = []
 
-    cursor.execute("""
-        SELECT products.*
-        FROM wishlist
-        JOIN products ON wishlist.product_id = products.id
-    """)
-
-    products = cursor.fetchall()
-    conn.close()
+    params = [int(pid) for pid in wishlist_ids if pid.isdigit()]
+    if params:
+        conn = get_db()
+        cursor = conn.cursor()
+        placeholders = ",".join(["?"] * len(params))
+        execute(cursor, f"SELECT * FROM products WHERE id IN ({placeholders})", params)
+        products = cursor.fetchall()
+        conn.close()
 
     return render_template("wishlist.html", products=products)
 
@@ -1856,13 +1895,13 @@ def invoice(order_id):
 
 def format_order_datetime(value):
     raw = str(value or "").strip()
+    missing = {
+        "placed_at": "Order time not saved",
+        "placed_date": "Date not saved",
+        "placed_time": "Time not saved",
+    }
     if not raw:
-        now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
-        return {
-            "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
-            "placed_date": now_ist.strftime("%d %b %Y"),
-            "placed_time": now_ist.strftime("%I:%M %p"),
-        }
+        return missing
 
     normalized = raw.replace("T", " ").replace("Z", "").split(".")[0]
     parsed = None
@@ -1874,12 +1913,7 @@ def format_order_datetime(value):
             continue
 
     if not parsed:
-        now_ist = datetime.utcnow() + timedelta(hours=5, minutes=30)
-        return {
-            "placed_at": now_ist.strftime("%d %b %Y, %I:%M %p"),
-            "placed_date": now_ist.strftime("%d %b %Y"),
-            "placed_time": now_ist.strftime("%I:%M %p"),
-        }
+        return missing
 
     placed_ist = parsed + timedelta(hours=5, minutes=30)
     return {
