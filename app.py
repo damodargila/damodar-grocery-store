@@ -1390,13 +1390,57 @@ def my_orders():
     conn = get_db()
     cursor = conn.cursor()
 
-    user_email_or_name = session["user"]
-    execute(
-        cursor,
-        "SELECT * FROM orders WHERE customer_email=? OR customer_name=? ORDER BY id DESC",
-        (user_email_or_name, user_email_or_name)
-    )
-    orders = cursor.fetchall()
+    user_identifier = str(session.get("user", "")).strip()
+    identifiers = {"emails": set(), "phones": set(), "names": set()}
+
+    if user_identifier:
+        if "@" in user_identifier:
+            identifiers["emails"].add(user_identifier.lower())
+        elif user_identifier.isdigit():
+            identifiers["phones"].add(user_identifier)
+        else:
+            identifiers["names"].add(user_identifier.lower())
+
+    user_id = session.get("user_id")
+    if user_id:
+        execute(cursor, "SELECT name, email, phone FROM users WHERE id=?", (user_id,))
+        user_row = cursor.fetchone()
+        if user_row:
+            user_name = order_col(user_row, "name", 0, "")
+            user_email = order_col(user_row, "email", 1, "")
+            user_phone = order_col(user_row, "phone", 2, "")
+            if user_name:
+                identifiers["names"].add(str(user_name).lower())
+            if user_email:
+                identifiers["emails"].add(str(user_email).lower())
+            if user_phone:
+                identifiers["phones"].add(str(user_phone))
+
+    clauses = []
+    params = []
+    if identifiers["emails"]:
+        placeholders = ",".join("?" for _ in identifiers["emails"])
+        clauses.append(f"LOWER(customer_email) IN ({placeholders})")
+        params.extend(sorted(identifiers["emails"]))
+    if identifiers["phones"]:
+        placeholders = ",".join("?" for _ in identifiers["phones"])
+        clauses.append(f"phone IN ({placeholders})")
+        params.extend(sorted(identifiers["phones"]))
+    if identifiers["names"]:
+        placeholders = ",".join("?" for _ in identifiers["names"])
+        clauses.append(f"LOWER(customer_name) IN ({placeholders})")
+        params.extend(sorted(identifiers["names"]))
+
+    last_order_id = session.get("last_order_id")
+    if last_order_id:
+        clauses.append("id=?")
+        params.append(last_order_id)
+
+    if clauses:
+        execute(cursor, f"SELECT * FROM orders WHERE {' OR '.join(clauses)} ORDER BY id DESC", tuple(params))
+        orders = cursor.fetchall()
+    else:
+        orders = []
 
     order_items_map = {}
     order_meta_map = {}
