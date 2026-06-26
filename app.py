@@ -1104,6 +1104,15 @@ def apply_coupon():
     return redirect("/cart")
 
 
+@app.route("/remove_coupon")
+def remove_coupon():
+    session["coupon_code"] = ""
+    session["discount"] = 0
+    session["coupon_message"] = "Coupon removed."
+    session["coupon_status"] = "success"
+    return redirect("/cart")
+
+
 @app.route("/review/<int:product_id>", methods=["GET", "POST"])
 def review(product_id):
     if not can_review_product(product_id):
@@ -1383,6 +1392,25 @@ def decrease(product_id):
     return redirect("/cart")
 
 
+@app.route("/remove_from_cart/<int:product_id>")
+def remove_from_cart(product_id):
+    cart = session.get("cart", {})
+    if isinstance(cart, list):
+        cart = {}
+
+    cart.pop(str(product_id), None)
+    session["cart"] = cart
+    session.modified = True
+
+    if not cart:
+        session["coupon_code"] = ""
+        session["discount"] = 0
+        session["coupon_message"] = ""
+        session["coupon_status"] = ""
+
+    return redirect("/cart")
+
+
 @app.route("/cart")
 def cart():
     cart_items = session.get("cart", {})
@@ -1413,6 +1441,8 @@ def cart():
 
     conn.close()
 
+    item_count = sum(quantity for _, quantity, _ in products)
+
     return render_template(
         "cart.html",
         products=products,
@@ -1421,6 +1451,7 @@ def cart():
         discount_percent=discount_percent,
         discount_amount=discount_amount,
         grand_total=grand_total,
+        item_count=item_count,
         coupon_code=session.get("coupon_code", ""),
         coupon_message=session.get("coupon_message", ""),
         coupon_status=session.get("coupon_status", "")

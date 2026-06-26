@@ -23,7 +23,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .items{display:flex;flex-direction:column;gap:16px}
 
 .card{background:white;border-radius:14px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.10);display:grid;grid-template-columns:112px 1fr auto;gap:16px;align-items:center}
-.product-img{width:112px;height:100px;border-radius:12px;object-fit:cover;background:#eee}
+.product-img{width:112px;height:100px;border-radius:12px;object-fit:contain;background:#f8fafc;padding:6px}
 .no-img{width:112px;height:100px;border-radius:12px;background:#eee;color:#777;display:flex;align-items:center;justify-content:center;font-size:13px}
 .item-title{font-size:22px;margin-bottom:8px}
 .meta{display:flex;gap:10px;flex-wrap:wrap;color:#555;font-size:14px}
@@ -39,15 +39,25 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .minus{background:#ff9900}
 .plus{background:#0b6623}
 .stock-msg{display:block;margin-top:10px;color:#d32f2f;font-size:13px;font-weight:bold}
+.item-actions{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.remove-link{display:inline-flex;align-items:center;justify-content:center;color:#dc2626;background:#fff1f1;border:1px solid #ffd0d0;border-radius:9px;padding:8px 11px;font-size:13px;font-weight:bold;text-decoration:none}
+.low-stock{display:inline-flex;color:#b45309;background:#fff7e6;border:1px solid #ffe0a6;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:bold;margin-top:9px}
 
 .summary{background:white;border-radius:14px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.10);position:sticky;top:86px}
 .summary h2{font-size:22px;margin-bottom:16px}
-.coupon{display:flex;gap:8px;margin-bottom:18px}
+.coupon{display:flex;gap:8px;margin-bottom:8px}
 .coupon input{flex:1;border:1px solid #ddd;border-radius:9px;padding:12px;font-size:14px;min-width:0}
 .coupon button{background:#131921;color:white;border:none;border-radius:9px;padding:12px 14px;font-weight:bold;cursor:pointer}
 .coupon-message{margin:-6px 0 14px;padding:10px 12px;border-radius:9px;font-size:14px;font-weight:bold}
 .coupon-message.success{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5}
 .coupon-message.error{background:#fff1f1;color:#d32f2f;border:1px solid #ffd0d0}
+.coupon-hint{font-size:13px;color:#64748b;margin:0 0 14px}
+.coupon-remove{display:inline-flex;margin-left:8px;color:#0b6623;text-decoration:underline;font-weight:bold}
+.summary-note{display:grid;gap:9px;margin:14px 0}
+.note-card{border:1px solid #e5edf0;background:#fbfdfc;border-radius:10px;padding:11px;color:#334155;font-size:14px}
+.note-card b{display:block;color:#0b6623;margin-bottom:3px}
+.savings{background:#ecfdf3;color:#0b6623;border:1px solid #c8f0d5;border-radius:10px;padding:11px;margin:10px 0 2px;font-weight:bold}
+.mobile-checkout{display:none}
 .line{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #eee;color:#444}
 .line strong{color:#111}
 .grand{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:24px;font-weight:bold;color:#0b6623}
@@ -64,12 +74,16 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .topbar{align-items:flex-start;gap:10px;flex-direction:column}
 .nav a{margin:0 14px 0 0}
 .page-head{align-items:flex-start;flex-direction:column}
+.page{padding-bottom:96px}
 .cart-layout{grid-template-columns:1fr}
 .summary{position:static}
 .card{grid-template-columns:90px 1fr;align-items:start}
 .product-img,.no-img{width:90px;height:84px}
 .qty-box{grid-column:1 / -1;text-align:left}
 .qty-controls{justify-content:flex-start}
+.mobile-checkout{position:fixed;left:0;right:0;bottom:0;background:white;border-top:1px solid #e5e7eb;box-shadow:0 -8px 22px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;z-index:20}
+.mobile-total{font-weight:bold;color:#0b6623;font-size:18px}
+.mobile-checkout .checkout{width:auto;margin:0;padding:12px 18px}
 }
 </style>
 </head>
@@ -112,6 +126,12 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                         <span class="pill">Stock: {{ item[0][5] }}</span>
                     </div>
                     <div class="subtotal">Subtotal: &#8377;{{ item[2] }}</div>
+                    {% if (item[0][5] | int) <= 5 and (item[0][5] | int) > 0 %}
+                    <div class="low-stock">Only {{ item[0][5] }} left</div>
+                    {% endif %}
+                    <div class="item-actions">
+                        <a class="remove-link" href="/remove_from_cart/{{ item[0][0] }}" onclick="return confirm('Remove this item from cart?')">Remove item</a>
+                    </div>
                 </div>
 
                 <div class="qty-box">
@@ -138,20 +158,41 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
                 <input type="text" name="coupon" placeholder="Enter coupon code" value="{{ coupon_code }}">
                 <button type="submit">Apply</button>
             </form>
+            <p class="coupon-hint">Tip: coupon ke liye admin se latest code check kare. Example: DAMODAR10</p>
 
             {% if coupon_message %}
-            <div class="coupon-message {{ coupon_status }}">{{ coupon_message }}</div>
+            <div class="coupon-message {{ coupon_status }}">
+                {{ coupon_message }}
+                {% if coupon_code %}<a class="coupon-remove" href="/remove_coupon">Remove coupon</a>{% endif %}
+            </div>
             {% endif %}
 
+            <div class="summary-note">
+                <div class="note-card"><b>Delivery estimate</b>Delivery in 2-4 days</div>
+                <div class="note-card"><b>Payment</b>Cash on Delivery available</div>
+            </div>
+
+            <div class="line"><span>Items</span><strong>{{ item_count }}</strong></div>
             <div class="line"><span>Subtotal</span><strong>&#8377;{{ total }}</strong></div>
             <div class="line"><span>GST</span><strong>&#8377;{{ gst }}</strong></div>
             <div class="line"><span>Discount {{ discount_percent }}%</span><strong>- &#8377;{{ discount_amount }}</strong></div>
             <div class="grand"><span>Total</span><span>&#8377;{{ grand_total }}</span></div>
+            {% if discount_amount > 0 %}
+            <div class="savings">You saved &#8377;{{ discount_amount }} on this order</div>
+            {% endif %}
 
             <a class="checkout" href="/checkout">Buy Now</a>
             <a class="whatsapp" href="https://wa.me/918209049778?text=Hello%20Damodar%20Grocery%20Store,%20I%20want%20to%20place%20an%20order.%20Grand%20Total:%20%E2%82%B9{{ grand_total }}">Order on WhatsApp</a>
             <a class="back" href="/">Back to store</a>
         </aside>
+    </div>
+
+    <div class="mobile-checkout">
+        <div>
+            <div class="mobile-total">&#8377;{{ grand_total }}</div>
+            <small>{{ item_count }} item{% if item_count != 1 %}s{% endif %}</small>
+        </div>
+        <a class="checkout" href="/checkout">Buy Now</a>
     </div>
     {% else %}
     <div class="empty">
