@@ -282,12 +282,20 @@ body{background:#eef3f7!important}
         <div class="no-img">No Image</div>
         {% endif %}
 
-        {% if (product[5] | int) > 0 and (product[5] | int) <= 5 %}
-        <div class="stock-badge low-badge">Only {{ product[5] }} left</div>
-        {% elif (product[5] | int) > 0 %}
-        <div class="stock-badge">In Stock</div>
+        {% if session.get('admin') %}
+            {% if (product[5] | int) > 0 and (product[5] | int) <= 5 %}
+            <div class="stock-badge low-badge">Only {{ product[5] }} left</div>
+            {% elif (product[5] | int) > 0 %}
+            <div class="stock-badge">In Stock</div>
+            {% else %}
+            <div class="stock-badge out-badge">Out of Stock</div>
+            {% endif %}
         {% else %}
-        <div class="stock-badge out-badge">Out of Stock</div>
+            {% if (product[5] | int) > 0 and (product[5] | int) <= 5 %}
+            <div class="stock-badge low-badge">Only {{ product[5] }} left</div>
+            {% elif (product[5] | int) <= 0 %}
+            <div class="stock-badge out-badge">Out of Stock</div>
+            {% endif %}
         {% endif %}
 
         <a onclick="event.stopPropagation();" class="heart-btn wishlist-toggle {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}" data-product-id="{{ product[0] }}">♥</a>
@@ -316,7 +324,9 @@ body{background:#eef3f7!important}
     </div>
     {% endif %}
 
-    <p class="stock">Stock: {{ product[5] }}</p>
+    {% if session.get('admin') or (product[5] | int) <= 0 or ((product[5] | int) > 0 and (product[5] | int) <= 5) %}
+    <p class="stock">{% if session.get('admin') %}Stock: {{ product[5] }}{% elif (product[5] | int) <= 0 %}Out of stock{% else %}Only {{ product[5] }} left{% endif %}</p>
+    {% endif %}
 
 
     <div class="card-actions">
