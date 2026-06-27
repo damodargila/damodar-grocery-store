@@ -18,6 +18,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .search-form select{width:150px;border:none;border-left:1px solid #ddd;padding:14px;background:#f3f3f3}
 .search-form button{background:#ff9900;color:#111;border:none;padding:14px 24px;font-weight:bold;cursor:pointer}
 
+.mobile-main-link{display:none!important}
 .top-links{margin-left:auto;display:flex;align-items:center;gap:10px}.top-links a{color:white;text-decoration:none;font-weight:bold;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:9px 10px;border-radius:999px;transition:background .2s,transform .2s;position:relative}.top-links a:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}.nav-icon,.cat-icon{display:inline-flex;align-items:center;justify-content:center}.nav-icon{width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.14);font-size:14px}.cat-icon{font-size:15px}.cart-count{position:absolute;top:-5px;left:21px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff9900;color:#111;font-size:11px;line-height:18px;text-align:center;box-shadow:0 0 0 2px #131921}
 
 .navbar{background:#0b6623;padding:11px 22px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
@@ -192,14 +193,19 @@ body{background:#eef3f7!important}
 
 /* Compact mobile header */
 @media(max-width:640px){
-.topbar{padding:8px 12px!important;gap:7px!important}
+.topbar{padding:8px 10px!important;gap:7px!important}
 .logo{font-size:19px!important;padding:0 2px!important}
-.search-form input{padding:9px 12px!important}
-.search-form select{height:38px!important;padding:8px 10px!important}
-.search-form button{height:38px!important;padding:0 10px!important}
-.top-links{gap:6px!important}
-.top-links a{min-height:34px!important;padding:7px 5px!important;font-size:12px!important}
-.navbar{top:142px!important;padding:7px 12px!important}
+.search-form{grid-template-columns:minmax(0,1fr) 92px 74px!important;border-radius:11px!important}
+.search-form input{grid-column:auto!important;min-width:0!important;padding:9px 10px!important;border:0!important;border-right:1px solid #edf0f2!important}
+.search-form select{height:40px!important;padding:7px 6px!important;font-size:13px!important;border:0!important;border-right:1px solid #edf0f2!important}
+.search-form button{height:40px!important;padding:0 8px!important;font-size:13px!important;border-radius:0!important}
+.mobile-main-link{display:inline-flex!important}
+.top-links{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important;overflow:visible!important;width:100%!important;padding:0!important}
+.top-links a{min-width:0!important;min-height:34px!important;justify-content:center!important;padding:7px 3px!important;font-size:11px!important;gap:4px!important;border-radius:11px!important;white-space:nowrap!important}
+.nav-icon{width:19px!important;height:19px!important;font-size:11px!important;flex:0 0 auto!important}
+.cart-count{top:-6px!important;left:auto!important;right:6px!important}
+.navbar{display:none!important}
+.category-row{margin-top:0!important}
 }
 @media(max-width:340px){
 .products{grid-template-columns:1fr!important}
@@ -229,9 +235,11 @@ body{background:#eef3f7!important}
         <a href="/orders"><span class="nav-icon">⚙</span>Admin</a>
         <a href="/add_product"><span class="nav-icon">＋</span>Add Product</a>
         {% else %}
-        <a href="/cart" class="cart-link"><span class="nav-icon">🛒</span>Cart <span class="cart-count" id="cartCount">{{ cart_count|default(0) }}</span></a>
-        <a href="/wishlist"><span class="nav-icon">♡</span>Wishlist</a>
-        <a href="/profile"><span class="nav-icon">👤</span>Profile</a>
+        <a href="/" class="mobile-main-link"><span class="nav-icon">&#8962;</span>Home</a>
+        <a href="/my_orders" class="mobile-main-link"><span class="nav-icon">&#9776;</span>My Orders</a>
+        <a href="/wishlist"><span class="nav-icon">&#9825;</span>Wishlist</a>
+        <a href="/cart" class="cart-link"><span class="nav-icon">&#128722;</span>Cart <span class="cart-count" id="cartCount">{{ cart_count|default(0) }}</span></a>
+        <a href="/profile"><span class="nav-icon">&#128100;</span>Profile</a>
         {% endif %}
     </div>
 </div>
