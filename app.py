@@ -28,8 +28,8 @@ app = Flask(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    SECRET_KEY = os.urandom(32)
-    app.logger.warning("SECRET_KEY is not set. Generated a random secret key for this runtime.")
+    SECRET_KEY = "damodar-grocery-store-change-this-secret-key"
+    app.logger.warning("SECRET_KEY is not set. Using fallback key; set SECRET_KEY in Render to keep logins secure and stable.")
 app.secret_key = SECRET_KEY
 
 USE_HTTPS = os.getenv("USE_HTTPS", "0") == "1"
@@ -37,7 +37,14 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=USE_HTTPS,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+    SESSION_REFRESH_EACH_REQUEST=True,
 )
+
+
+@app.before_request
+def keep_login_session_alive():
+    session.permanent = True
 
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
