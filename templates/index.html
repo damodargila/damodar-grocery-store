@@ -17,7 +17,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .search-form select{width:150px;border:none;border-left:1px solid #ddd;padding:14px;background:#f3f3f3}
 .search-form button{background:#ff9900;color:#111;border:none;padding:14px 24px;font-weight:bold;cursor:pointer}
 
-.top-links{margin-left:auto;display:flex;align-items:center;gap:10px}.top-links a{color:white;text-decoration:none;font-weight:bold;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:9px 10px;border-radius:999px;transition:background .2s,transform .2s}.top-links a:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}.nav-icon,.cat-icon{display:inline-flex;align-items:center;justify-content:center}.nav-icon{width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.14);font-size:14px}.cat-icon{font-size:15px}
+.top-links{margin-left:auto;display:flex;align-items:center;gap:10px}.top-links a{color:white;text-decoration:none;font-weight:bold;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:9px 10px;border-radius:999px;transition:background .2s,transform .2s;position:relative}.top-links a:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}.nav-icon,.cat-icon{display:inline-flex;align-items:center;justify-content:center}.nav-icon{width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.14);font-size:14px}.cat-icon{font-size:15px}.cart-count{position:absolute;top:-5px;left:21px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff9900;color:#111;font-size:11px;line-height:18px;text-align:center;box-shadow:0 0 0 2px #131921}
 
 .navbar{background:#0b6623;padding:11px 22px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .navbar a{color:white;text-decoration:none;font-size:15px;font-weight:bold;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;transition:background .2s}.navbar a:hover{background:rgba(255,255,255,.14)}
@@ -73,7 +73,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .review-count{font-size:13px;color:#555;margin-left:5px}
 .stock{font-size:13px;margin:8px 0;color:#444}
 
-.card-actions{margin-top:auto}
+.card-actions{margin-top:auto}.shop-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shop-actions .btn{margin:0}.cart-btn.added{background:#0b8f3a;color:white}.toast-msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111827;color:white;padding:11px 16px;border-radius:999px;font-weight:bold;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.25s;z-index:2000}.toast-msg.show{opacity:1;bottom:34px}
 .btn{display:block;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;padding:10px;margin:7px 0;text-align:center}
 .details-btn{background:#0b6623;color:white}
 .cart-btn{background:#ffd814;color:#111}
@@ -129,7 +129,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <a href="/orders"><span class="nav-icon">⚙</span>Admin</a>
         <a href="/add_product"><span class="nav-icon">＋</span>Add Product</a>
         {% else %}
-        <a href="/cart"><span class="nav-icon">🛒</span>Cart</a>
+        <a href="/cart" class="cart-link"><span class="nav-icon">🛒</span>Cart <span class="cart-count" id="cartCount">{{ cart_count|default(0) }}</span></a>
         <a href="/wishlist"><span class="nav-icon">♡</span>Wishlist</a>
         <a href="/profile"><span class="nav-icon">👤</span>Profile</a>
         {% endif %}
@@ -207,7 +207,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         <div class="stock-badge out-badge">Out of Stock</div>
         {% endif %}
 
-        <a onclick="event.stopPropagation();" class="heart-btn {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">♥</a>
+        <a onclick="event.stopPropagation();" class="heart-btn wishlist-toggle {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}" data-product-id="{{ product[0] }}">♥</a>
     </div>
 
     <div class="extra-images">
@@ -244,8 +244,10 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
         </div>
         {% else %}
         {% if (product[5] | int) > 0 %}
-        <a class="btn cart-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Add To Cart</a>
-        <a class="btn buy-btn" href="/add_to_cart/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
+        <div class="shop-actions">
+            <a class="btn cart-btn ajax-add-cart" href="/add_to_cart/{{ product[0] }}" data-product-id="{{ product[0] }}" onclick="event.stopPropagation();">🛒 Cart</a>
+            <a class="btn buy-btn" href="/buy_now/{{ product[0] }}" onclick="event.stopPropagation();">Buy Now</a>
+        </div>
         {% else %}
         <p class="out">Out Of Stock</p>
         {% endif %}
@@ -317,5 +319,49 @@ if(bulkDeleteForm){
 updateBulkState();
 </script>
 {% endif %}
+
+<div class="toast-msg" id="toastMsg"></div>
+<script>
+const cartCount = document.getElementById("cartCount");
+const toastMsg = document.getElementById("toastMsg");
+let toastTimer;
+function showToast(message){
+    if(!toastMsg) return;
+    toastMsg.textContent = message;
+    toastMsg.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastMsg.classList.remove("show"); }, 1600);
+}
+function ajaxGet(url){
+    return fetch(url, {headers:{"X-Requested-With":"XMLHttpRequest","Accept":"application/json"}}).then(function(response){ return response.json(); });
+}
+document.querySelectorAll(".wishlist-toggle").forEach(function(button){
+    button.addEventListener("click", function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        ajaxGet(button.href).then(function(data){
+            if(data.success){
+                button.classList.toggle("active", !!data.active);
+                showToast(data.active ? "Wishlist me add ho gaya" : "Wishlist se remove ho gaya");
+            }
+        }).catch(function(){ showToast("Wishlist update nahi hua"); });
+    });
+});
+document.querySelectorAll(".ajax-add-cart").forEach(function(button){
+    button.addEventListener("click", function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        ajaxGet(button.href).then(function(data){
+            if(cartCount && typeof data.cart_count !== "undefined"){ cartCount.textContent = data.cart_count; }
+            if(data.success){
+                button.classList.add("added");
+                button.textContent = "✓ Cart";
+                setTimeout(function(){ button.classList.remove("added"); button.textContent = "🛒 Cart"; }, 1200);
+            }
+            showToast(data.message || (data.success ? "Cart me add ho gaya" : "Stock available nahi hai"));
+        }).catch(function(){ showToast("Cart update nahi hua"); });
+    });
+});
+</script>
 </body>
 </html>

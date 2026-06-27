@@ -186,6 +186,31 @@ def get_current_user_id():
     except (TypeError, ValueError):
         return None
 
+def get_cart_count():
+    total = 0
+    for quantity in get_cart_items().values():
+        try:
+            total += int(quantity or 0)
+        except (TypeError, ValueError):
+            pass
+    return total
+
+
+def get_wishlist_count():
+    user_id = get_current_user_id()
+    if not user_id:
+        return len(get_session_wishlist())
+
+    conn = get_db()
+    cursor = conn.cursor()
+    execute(cursor, "SELECT COUNT(*) FROM wishlist WHERE user_id=?", (user_id,))
+    count_row = cursor.fetchone()
+    conn.close()
+    return int(count_row[0] if count_row else 0)
+
+
+def wants_json_response():
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest" or "application/json" in request.headers.get("Accept", "")
 
 def get_session_wishlist():
     wishlist = session.get("wishlist", [])
@@ -209,12 +234,15 @@ def is_product_in_wishlist(product_id):
 def toggle_session_wishlist(product_id):
     wishlist = get_session_wishlist()
     product_key = str(product_id)
+    is_active = False
     if product_key in wishlist:
         wishlist.remove(product_key)
     else:
         wishlist.append(product_key)
+        is_active = True
     session["wishlist"] = wishlist
     session.modified = True
+    return is_active
 
 
 def safe_quantity(quantity):
@@ -240,23 +268,25 @@ def get_user_wishlist_ids():
 def toggle_user_wishlist(product_id):
     user_id = get_current_user_id()
     if not user_id:
-        toggle_session_wishlist(product_id)
-        return
+        return toggle_session_wishlist(product_id)
 
     conn = get_db()
     cursor = conn.cursor()
     execute(cursor, "SELECT id FROM wishlist WHERE user_id=? AND product_id=?", (user_id, product_id))
     existing = cursor.fetchone()
+    is_active = False
     if existing:
         execute(cursor, "DELETE FROM wishlist WHERE id=?", (existing[0],))
     else:
         try:
             execute(cursor, "INSERT INTO wishlist(user_id, product_id) VALUES(?,?)", (user_id, product_id))
+            is_active = True
         except Exception:
             conn.rollback()
 
     conn.commit()
     conn.close()
+    return is_active
 
 
 def migrate_session_wishlist_to_user():
@@ -1091,12 +1121,7 @@ def home():
     cursor.execute("SELECT DISTINCT category FROM products")
     categories = cursor.fetchall()
 
-    wishlist_ids = set()
-    for raw_id in get_session_wishlist():
-        try:
-            wishlist_ids.add(int(raw_id))
-        except ValueError:
-            continue
+    wishlist_ids = get_user_wishlist_ids()
 
     conn.close()
 
@@ -1109,7 +1134,9 @@ def home():
         stock_filter=stock_filter,
         sort=sort,
         categories=categories,
-        wishlist_ids=wishlist_ids
+        wishlist_ids=wishlist_ids,
+        cart_count=get_cart_count(),
+        wishlist_count=get_wishlist_count()
     )
 
 
@@ -1672,7 +1699,15 @@ def customer_login():
 @app.route("/add_to_cart/<int:product_id>")
 def add_to_cart(product_id):
     quantity = request.args.get("quantity", request.form.get("quantity", 1))
-    add_product_to_cart(product_id, quantity)
+    added = add_product_to_cart(product_id, quantity)
+
+    if wants_json_response():
+        return jsonify({
+            "success": added > 0,
+            "added": added,
+            "cart_count": get_cart_count(),
+            "message": "Product cart me add ho gaya." if added > 0 else "Stock available nahi hai."
+        })
 
     return redirect("/cart")
 
@@ -1851,7 +1886,13 @@ def product_details(product_id):
 
 @app.route("/wishlist/<int:product_id>")
 def wishlist(product_id):
-    toggle_user_wishlist(product_id)
+    active = toggle_user_wishlist(product_id)
+    if wants_json_response():
+        return jsonify({
+            "success": True,
+            "active": active,
+            "wishlist_count": get_wishlist_count()
+        })
     return redirect(request.referrer or "/")
 
 
