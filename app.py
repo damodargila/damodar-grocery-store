@@ -1876,7 +1876,9 @@ def product_details(product_id):
         reviews=reviews_data,
         wishlist_ids=wishlist_ids,
         related_products=related_products,
-        can_review=can_review_product(product_id)
+        can_review=can_review_product(product_id),
+        cart_count=get_cart_count(),
+        wishlist_count=get_wishlist_count()
     )
 
 

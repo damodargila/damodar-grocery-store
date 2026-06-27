@@ -17,6 +17,11 @@ position:sticky;top:0;z-index:999;
 .logo{font-size:24px;font-weight:bold}
 .logo span{color:#ff9900}
 .header a{color:white;text-decoration:none;margin-left:16px;font-weight:bold}
+.nav-links{display:flex;align-items:center;gap:10px}
+.nav-link{position:relative;display:inline-flex;align-items:center;gap:7px;color:white;text-decoration:none;margin-left:0!important;font-weight:bold;padding:9px 11px;border-radius:999px;background:rgba(255,255,255,.08);transition:.2s}
+.nav-link:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
+.nav-icon{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);font-size:13px}
+.nav-count{position:absolute;top:-7px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#ff9900;color:#111;font-size:11px;line-height:19px;text-align:center;box-shadow:0 0 0 2px #131921}
 
 .container{max-width:1200px;margin:22px auto;padding:0 18px}
 
@@ -43,14 +48,9 @@ height:430px;display:flex;align-items:center;justify-content:center;
 color:#777;background:#eee;font-size:22px;
 }
 
-.thumbs{
-display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;
-}
+.thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,85px));gap:10px;margin-top:14px;align-items:center;overflow:hidden}
 
-.thumb{
-width:85px;height:75px;object-fit:contain;border-radius:10px;
-border:2px solid #ddd;cursor:pointer;background:white;padding:4px;
-}
+.thumb{width:100%;height:75px;object-fit:contain;border-radius:10px;border:2px solid #ddd;cursor:pointer;background:white;padding:4px;min-width:0}
 
 .thumb:hover,
 .thumb.active{
@@ -109,6 +109,7 @@ font-size:16px;line-height:1.7;color:#444;white-space:pre-line;
 .qty-control button{width:42px;height:42px;border:none;background:#f4f6f8;font-size:20px;font-weight:bold;cursor:pointer}
 .qty-control input{width:58px;height:42px;border:none;text-align:center;font-size:16px;font-weight:bold}
 .actions{display:flex;gap:14px;margin-top:18px}
+.toast-msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111827;color:white;padding:11px 16px;border-radius:999px;font-weight:bold;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.25s;z-index:2500}.toast-msg.show{opacity:1;bottom:34px}
 .btn{
 flex:1;text-align:center;text-decoration:none;padding:15px;border-radius:10px;
 font-size:17px;font-weight:bold;
@@ -153,6 +154,10 @@ box-shadow:0 3px 14px rgba(0,0,0,.10)
 
 @media(max-width:800px){
 .header{flex-direction:column;gap:10px}
+.nav-links{gap:8px;flex-wrap:wrap;justify-content:center}
+.nav-link{padding:8px 10px;font-size:14px}
+.thumbs{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.thumb{height:58px;padding:3px}
 .product-box{grid-template-columns:1fr}
 .main-img,.no-img{height:300px}
 .title{font-size:26px}
@@ -201,10 +206,10 @@ table{min-width:760px}
 
 <div class="header">
     <div class="logo">Damodar <span>Grocery</span></div>
-    <div>
-        <a href="/">Home</a>
-        <a href="/cart">Cart</a>
-        <a href="/wishlist">Wishlist</a>
+    <div class="nav-links">
+        <a class="nav-link" href="/"><span class="nav-icon">&#8962;</span>Home</a>
+        <a class="nav-link" href="/cart"><span class="nav-icon">&#128722;</span>Cart <span class="nav-count" id="cartCount">{{ cart_count|default(0) }}</span></a>
+        <a class="nav-link" href="/wishlist"><span class="nav-icon">&#9825;</span>Wishlist <span class="nav-count" id="wishlistCount">{{ wishlist_count|default(0) }}</span></a>
     </div>
 </div>
 
@@ -219,7 +224,7 @@ table{min-width:760px}
                 <div class="no-img">No Image</div>
                 {% endif %}
 
-                <a class="heart {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}">&hearts;</a>
+                <a class="heart wishlist-toggle {% if product[0] in wishlist_ids %}active{% endif %}" href="/wishlist/{{ product[0] }}" data-product-id="{{ product[0] }}">&hearts;</a>
             </div>
 
             <div class="thumbs">
@@ -275,11 +280,6 @@ table{min-width:760px}
             <div class="stock-warning">Only {{ product[5] }} left. Order soon.</div>
             {% endif %}
 
-            <div class="delivery-grid">
-                <div class="delivery-card"><b>Fast Delivery</b>Delivery in 2-4 days</div>
-                <div class="delivery-card"><b>COD Available</b>Pay after delivery</div>
-                <div class="delivery-card"><b>Easy Return</b>7 days support</div>
-            </div>
 
             {% if (product[5] | int) > 0 and not session.get('admin') %}
             <div class="qty-row">
@@ -295,6 +295,12 @@ table{min-width:760px}
                 <a class="btn buy" href="/add_to_cart/{{ product[0] }}">Buy Now</a>
             </div>
             {% endif %}
+
+            <div class="delivery-grid">
+                <div class="delivery-card"><b>Fast Delivery</b>Delivery in 2-4 days</div>
+                <div class="delivery-card"><b>COD Available</b>Pay after delivery</div>
+                <div class="delivery-card"><b>Easy Return</b>7 days support</div>
+            </div>
         </div>
     </div>
 
@@ -362,6 +368,8 @@ table{min-width:760px}
 
 </div>
 
+<div class="toast-msg" id="toastMsg"></div>
+
 <div class="footer">
     &copy; 2026 Damodar Grocery Store | Fresh Grocery, Fast Delivery
 </div>
@@ -424,13 +432,30 @@ function changeQty(delta){
 
 var cartButton = document.querySelector(".actions .cart");
 var buyButton = document.querySelector(".actions .buy");
+var cartCount = document.getElementById("cartCount");
+var wishlistCount = document.getElementById("wishlistCount");
+var toastMsg = document.getElementById("toastMsg");
+var toastTimer;
+function showToast(message){
+    if(!toastMsg){ return; }
+    toastMsg.textContent = message;
+    toastMsg.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastMsg.classList.remove("show"); }, 1600);
+}
+function ajaxGet(url){
+    return fetch(url, {headers:{"X-Requested-With":"XMLHttpRequest","Accept":"application/json"}}).then(function(response){ return response.json(); });
+}
 var stickyCartButton = document.querySelector(".sticky-cart");
 var stickyBuyButton = document.querySelector(".sticky-buy");
 
 if(cartButton){
     cartButton.addEventListener("click", function(event){
         event.preventDefault();
-        window.location.href = "/add_to_cart/{{ product[0] }}?quantity=" + selectedQty();
+        ajaxGet("/add_to_cart/{{ product[0] }}?quantity=" + selectedQty()).then(function(data){
+            if(cartCount && typeof data.cart_count !== "undefined"){ cartCount.textContent = data.cart_count; }
+            showToast(data.message || (data.success ? "Cart me add ho gaya" : "Stock available nahi hai"));
+        }).catch(function(){ showToast("Cart update nahi hua"); });
     });
 }
 
@@ -444,7 +469,10 @@ if(buyButton){
 if(stickyCartButton){
     stickyCartButton.addEventListener("click", function(event){
         event.preventDefault();
-        window.location.href = "/add_to_cart/{{ product[0] }}?quantity=" + selectedQty();
+        ajaxGet("/add_to_cart/{{ product[0] }}?quantity=" + selectedQty()).then(function(data){
+            if(cartCount && typeof data.cart_count !== "undefined"){ cartCount.textContent = data.cart_count; }
+            showToast(data.message || (data.success ? "Cart me add ho gaya" : "Stock available nahi hai"));
+        }).catch(function(){ showToast("Cart update nahi hua"); });
     });
 }
 
@@ -455,6 +483,19 @@ if(stickyBuyButton){
     });
 }
 
+
+document.querySelectorAll(".wishlist-toggle").forEach(function(button){
+    button.addEventListener("click", function(event){
+        event.preventDefault();
+        ajaxGet(button.href).then(function(data){
+            if(data.success){
+                button.classList.toggle("active", !!data.active);
+                if(wishlistCount && typeof data.wishlist_count !== "undefined"){ wishlistCount.textContent = data.wishlist_count; }
+                showToast(data.active ? "Wishlist me add ho gaya" : "Wishlist se remove ho gaya");
+            }
+        }).catch(function(){ showToast("Wishlist update nahi hua"); });
+    });
+});
 document.addEventListener("keydown", function(event){
     if(event.key === "Escape"){
         var modal = document.getElementById("imageModal");
