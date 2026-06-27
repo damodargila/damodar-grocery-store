@@ -2198,6 +2198,24 @@ def orders_stats():
     return jsonify(stats)
 
 
+ALLOWED_ORDER_STATUSES = ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"]
+
+
+def update_orders_status(cursor, order_ids, status):
+    if status not in ALLOWED_ORDER_STATUSES:
+        return 0
+
+    updated = 0
+    for order_id in order_ids:
+        try:
+            clean_id = int(order_id)
+        except (TypeError, ValueError):
+            continue
+        execute(cursor, "UPDATE orders SET status=? WHERE id=?", (status, clean_id))
+        updated += 1
+    return updated
+
+
 @app.route("/update_status/<int:order_id>/<status>", methods=["GET", "POST"])
 def update_status(order_id, status):
     if not is_admin():
@@ -2206,13 +2224,32 @@ def update_status(order_id, status):
     if request.method == "POST":
         status = request.form.get("status", status)
 
-    allowed_status = ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"]
-    if status not in allowed_status:
+    if status not in ALLOWED_ORDER_STATUSES:
         return "Invalid status"
 
     conn = get_db()
     cursor = conn.cursor()
-    execute(cursor, "UPDATE orders SET status=? WHERE id=?", (status, order_id))
+    update_orders_status(cursor, [order_id], status)
+    conn.commit()
+    conn.close()
+
+    return redirect("/orders")
+
+
+@app.route("/bulk_update_orders", methods=["POST"])
+def bulk_update_orders():
+    if not is_admin():
+        return redirect("/admin_login")
+
+    status = request.form.get("bulk_status", "").strip()
+    order_ids = request.form.getlist("order_ids")
+
+    if status not in ALLOWED_ORDER_STATUSES or not order_ids:
+        return redirect("/orders")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    update_orders_status(cursor, order_ids, status)
     conn.commit()
     conn.close()
 
