@@ -17,15 +17,15 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 .search-form select{width:150px;border:none;border-left:1px solid #ddd;padding:14px;background:#f3f3f3}
 .search-form button{background:#ff9900;color:#111;border:none;padding:14px 24px;font-weight:bold;cursor:pointer}
 
-.top-links a{color:white;text-decoration:none;margin-left:12px;font-weight:bold;font-size:14px}
+.top-links{margin-left:auto;display:flex;align-items:center;gap:10px}.top-links a{color:white;text-decoration:none;font-weight:bold;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:9px 10px;border-radius:999px;transition:background .2s,transform .2s}.top-links a:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}.nav-icon,.cat-icon{display:inline-flex;align-items:center;justify-content:center}.nav-icon{width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.14);font-size:14px}.cat-icon{font-size:15px}
 
-.navbar{background:#0b6623;padding:11px 22px;display:flex;gap:24px;flex-wrap:wrap}
-.navbar a{color:white;text-decoration:none;font-size:15px;font-weight:bold}
+.navbar{background:#0b6623;padding:11px 22px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.navbar a{color:white;text-decoration:none;font-size:15px;font-weight:bold;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;transition:background .2s}.navbar a:hover{background:rgba(255,255,255,.14)}
 
 .category-row{background:#fff;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:10px 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.category-row a{color:#0b6623;text-decoration:none;padding:8px 12px;border-radius:999px;font-size:14px;background:#f0fdf4;border:1px solid #d1fae5;transition:background .2s,color .2s}
+.category-row a{color:#0b6623;text-decoration:none;padding:8px 12px;border-radius:999px;font-size:14px;background:#f0fdf4;border:1px solid #d1fae5;transition:background .2s,color .2s,transform .2s;display:inline-flex;align-items:center;gap:7px;font-weight:bold}
 .category-row a.active{background:#0b6623;color:white;border-color:#0b6623}
-.category-row a:hover{background:#0b8f3a;color:white}
+.category-row a:hover{background:#0b8f3a;color:white;transform:translateY(-1px)}
 
 .hero{margin:18px 22px;background:linear-gradient(135deg,#0b6623,#45b36b);color:white;border-radius:18px;padding:34px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.18)}
 .hero h1{font-size:36px}
@@ -114,17 +114,6 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
     <form class="search-form" action="/" method="GET">
         <input type="text" name="search" placeholder="Search grocery products..." value="{{ search }}">
-        <select name="category">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-            <option value="{{ cat[0] }}" {% if category == cat[0] %}selected{% endif %}>{{ cat[0] }}</option>
-            {% endfor %}
-        </select>
-        <select name="stock">
-            <option value="">All Stock</option>
-            <option value="in" {% if stock_filter == 'in' %}selected{% endif %}>In Stock</option>
-            <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Out of Stock</option>
-        </select>
         <select name="sort">
             <option value="">Newest</option>
             <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price Low</option>
@@ -137,41 +126,37 @@ body{font-family:Arial,sans-serif;background:#f4f6f8;color:#111}
 
     <div class="top-links">
         {% if session.get('admin') %}
-        <a href="/orders">Admin</a>
-        <a href="/add_product">Add Product</a>
+        <a href="/orders"><span class="nav-icon">⚙</span>Admin</a>
+        <a href="/add_product"><span class="nav-icon">＋</span>Add Product</a>
         {% else %}
-        <a href="/cart">Cart</a>
-        <a href="/wishlist">Wishlist</a>
-        <a href="/profile">Profile</a>
+        <a href="/cart"><span class="nav-icon">🛒</span>Cart</a>
+        <a href="/wishlist"><span class="nav-icon">♡</span>Wishlist</a>
+        <a href="/profile"><span class="nav-icon">👤</span>Profile</a>
         {% endif %}
     </div>
 </div>
 
 <div class="navbar">
-    <a href="/">Home</a>
+    <a href="/"><span class="nav-icon">⌂</span>Home</a>
     {% if session.get('admin') %}
-    <a href="/orders">Admin Dashboard</a>
-    <a href="/add_product">Add Product</a>
-    <a href="/export_orders">Export Excel</a>
+    <a href="/orders"><span class="nav-icon">▣</span>Admin Dashboard</a>
+    <a href="/add_product"><span class="nav-icon">＋</span>Add Product</a>
+    <a href="/export_orders"><span class="nav-icon">⇩</span>Export Excel</a>
+    {% elif session.get('user') %}
+    <a href="/my_orders"><span class="nav-icon">▤</span>My Orders</a>
     {% else %}
-    <a href="/cart">Cart</a>
-    <a href="/wishlist">Wishlist</a>
-        {% if session.get('user') %}
-    <a href="/my_orders">My Orders</a>
-        {% else %}
-    <a href="/register">Register</a>
-    <a href="/customer_login">Login</a>
-        {% endif %}
-    {% endif %}
-    {% if session.get('admin') or session.get('user') %}
-    <a href="/logout">Logout</a>
+    <a href="/register"><span class="nav-icon">＋</span>Register</a>
+    <a href="/customer_login"><span class="nav-icon">↪</span>Login</a>
     {% endif %}
 </div>
 
+{% set category_icons = {
+    'Grocery':'🛒','Groceries':'🛒','kitchen':'🍳','Kitchen':'🍳','Electronics':'⌁','Home & Kitchen':'⌂','Vegetable':'🥦','Vegetables':'🥦','Appliances':'▣','Smart Watches':'◷','Mobiles':'▯','Fashion':'◈','Beauty':'✧','Books':'▤','Sports':'◉','Toys':'◇','Automotive':'⚙','Health':'✚','Fruits':'●','Dairy':'◌','Snacks':'◍','Beverages':'◒'
+} %}
 <div class="category-row">
-    <a href="/" class="{% if not category %}active{% endif %}">All Categories</a>
+    <a href="/" class="{% if not category %}active{% endif %}"><span class="cat-icon">▦</span>All Categories</a>
     {% for cat in categories %}
-    <a href="/?category={{ cat[0]|urlencode }}" class="{% if category == cat[0] %}active{% endif %}">{{ cat[0] }}</a>
+    <a href="/?category={{ cat[0]|urlencode }}" class="{% if category == cat[0] %}active{% endif %}"><span class="cat-icon">{{ category_icons.get(cat[0], '◼') }}</span>{{ cat[0] }}</a>
     {% endfor %}
 </div>
 
