@@ -1188,7 +1188,7 @@ def verify_otp():
                 session.pop("phone_demo_otp", None)
                 session.pop("email_demo_otp", None)
                 session.pop("otp_notice", None)
-                session.pop("admin", None)
+                session.permanent = True
                 migrate_session_wishlist_to_user()
                 return redirect("/")
 
@@ -1212,7 +1212,7 @@ def verify_otp():
             session.pop("phone_demo_otp", None)
             session.pop("email_demo_otp", None)
             session.pop("otp_notice", None)
-            session.pop("admin", None)
+            session.permanent = True
             migrate_session_wishlist_to_user()
             return redirect("/")
 
@@ -1549,8 +1549,8 @@ def admin_login():
         password = request.form.get("password", "")
 
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session.clear()
             session["admin"] = True
+            session.permanent = True
             return redirect("/orders")
         return render_template("login.html", error="Admin username ya password galat hai.")
 
@@ -1647,9 +1647,9 @@ def customer_login():
 
             # Supports old plain-text passwords and upgrades them after login.
             if check_password_hash(stored_password, password) or stored_password == password:
-                session.pop("admin", None)
                 session["user"] = user_email or user_phone
                 session["user_id"] = user_id
+                session.permanent = True
 
                 if stored_password == password:
                     conn = get_db()
