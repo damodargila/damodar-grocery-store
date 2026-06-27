@@ -1853,23 +1853,19 @@ def product_details(product_id):
 
     execute(
         cursor,
-        "SELECT * FROM products WHERE category=? AND id!=? LIMIT 8",
+        "SELECT * FROM products WHERE category=? AND id!=?",
         (product_col(product, "category", 2), product_id)
     )
     related_products = list(cursor.fetchall())
 
-    if len(related_products) < 6:
-        related_ids = {fetch_product_id(item) for item in related_products}
-        related_ids.add(product_id)
-        execute(cursor, "SELECT * FROM products WHERE id!=? LIMIT 12", (product_id,))
-        for item in cursor.fetchall():
-            item_id = fetch_product_id(item)
-            if item_id not in related_ids:
-                related_products.append(item)
-                related_ids.add(item_id)
-            if len(related_products) >= 8:
-                break
-
+    related_ids = {fetch_product_id(item) for item in related_products}
+    related_ids.add(product_id)
+    execute(cursor, "SELECT * FROM products WHERE id!=?", (product_id,))
+    for item in cursor.fetchall():
+        item_id = fetch_product_id(item)
+        if item_id not in related_ids:
+            related_products.append(item)
+            related_ids.add(item_id)
     conn.close()
 
     return render_template(

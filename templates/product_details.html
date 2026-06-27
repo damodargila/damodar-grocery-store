@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>{{ product[1] }} - Damodar Grocery</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -81,6 +82,8 @@ border-radius:8px;font-weight:bold;margin-bottom:14px;
 .info{border:1px solid #eee;border-radius:12px;padding:14px;text-align:center;font-size:13px;background:#fafafa}
 
 .stock{font-size:17px;margin:15px 0;font-weight:bold;color:#0b6623}
+.category-line{margin-top:10px;font-size:15px}
+.inline-desc{margin-top:10px;padding:12px 14px;border-left:4px solid #0b8f3a;background:#f0fff4;border-radius:10px;color:#334155;line-height:1.5}
 .stock-warning{display:inline-block;background:#fff7e6;color:#b45309;border:1px solid #ffe0a6;border-radius:999px;padding:8px 12px;font-weight:bold;margin:4px 0 12px}
 
 .short-note{
@@ -130,13 +133,10 @@ box-shadow:0 3px 14px rgba(0,0,0,.10)
 .review-action{display:inline-block;margin-top:14px;background:#0b8f3a;color:white;text-decoration:none;border-radius:9px;padding:11px 14px;font-weight:bold}
 .review-note{background:#fff7e6;border:1px solid #ffe0a6;color:#5f4300;border-radius:10px;padding:12px;margin-top:14px}
 
-.related{
-display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;
-}
-.rel-card{
-border:1px solid #eee;border-radius:14px;padding:12px;text-decoration:none;
-color:#111;background:#fafafa;transition:.2s;overflow:hidden;
-}
+.related{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(170px,210px);gap:16px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:inline mandatory;padding:2px 2px 12px;scrollbar-width:thin}
+.related::-webkit-scrollbar{height:8px}
+.related::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.rel-card{border:1px solid #eee;border-radius:14px;padding:12px;text-decoration:none;color:#111;background:#fafafa;transition:.2s;overflow:hidden;scroll-snap-align:start}
 .rel-card:hover{transform:translateY(-4px);box-shadow:0 6px 14px rgba(0,0,0,.15)}
 .rel-card img{width:100%;height:120px;object-fit:contain;background:white;border-radius:10px}
 .rel-card h3{font-size:17px;margin:10px 0 6px}
@@ -260,27 +260,20 @@ table{min-width:760px}
                 <span class="discount">Best Deal</span>
             </div>
 
-            <p>Category: <b>{{ product[2] }}</b></p>
+            <p class="category-line">Category: <b>{{ product[2] }}</b></p>
+            {% if product['description'] %}
+            <p class="inline-desc">{{ product['description'] }}</p>
+            {% else %}
+            <p class="inline-desc">Fresh product from Damodar Grocery Store. Quality checked, safely packed and ready for fast delivery.</p>
+            {% endif %}
 
-            <div class="info-grid">
-                <div class="info">Best Quality</div>
-                <div class="info">Fast Delivery</div>
-                <div class="info">Easy Return</div>
-                <div class="info">Secure Order</div>
-            </div>
-
-            {% if (product[5] | int) > 0 %}
+            {% if session.get('admin') %}
             <div class="stock">In Stock: {{ product[5] }} units</div>
-            {% if (product[5] | int) <= 5 %}
+            {% elif (product[5] | int) <= 0 %}
+            <div class="stock" style="color:red;">Out of Stock</div>
+            {% elif (product[5] | int) <= 5 %}
             <div class="stock-warning">Only {{ product[5] }} left. Order soon.</div>
             {% endif %}
-            {% else %}
-            <div class="stock" style="color:red;">Out of Stock</div>
-            {% endif %}
-
-            <div class="short-note">
-                Fresh and trusted product from Damodar Grocery Store.
-            </div>
 
             <div class="delivery-grid">
                 <div class="delivery-card"><b>Fast Delivery</b>Delivery in 2-4 days</div>
@@ -323,16 +316,6 @@ table{min-width:760px}
     </div>
 
     <div class="section">
-        <h2>Product Description</h2>
-        <br>
-        {% if product['description'] %}
-        <p class="desc">{{ product['description'] }}</p>
-        {% else %}
-        <p class="desc">Fresh product from Damodar Grocery Store. Quality checked, safely packed and ready for fast delivery.</p>
-        {% endif %}
-    </div>
-
-    <div class="section">
         <h2>Customer Reviews</h2>
         <div class="review-summary">
             <div>
@@ -361,7 +344,6 @@ table{min-width:760px}
 
     <div class="section">
         <h2>You May Also Like</h2>
-        <br>
         <div class="related">
             {% for item in related_products %}
             <a class="rel-card" href="/product/{{ item[0] }}">
