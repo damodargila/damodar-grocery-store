@@ -526,6 +526,23 @@ def save_checkout_address_safe(user_key, name, phone, email, address, district, 
             conn.close()
 
 
+def ensure_orders_created_at_column(cursor):
+    if is_postgres():
+        cursor.execute("SAVEPOINT ensure_orders_created_at_column")
+        try:
+            cursor.execute("ALTER TABLE orders ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP")
+            cursor.execute("RELEASE SAVEPOINT ensure_orders_created_at_column")
+        except Exception:
+            cursor.execute("ROLLBACK TO SAVEPOINT ensure_orders_created_at_column")
+            cursor.execute("RELEASE SAVEPOINT ensure_orders_created_at_column")
+        return
+
+    try:
+        cursor.execute("ALTER TABLE orders ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP")
+    except sqlite3.OperationalError:
+        pass
+
+
 def order_col(order, key, index, default=""):
     try:
         if hasattr(order, "keys") and key in order.keys():
@@ -606,6 +623,8 @@ def init_db():
             )
         """)
 
+        ensure_orders_created_at_column(cursor)
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS order_items (
                 id SERIAL PRIMARY KEY,
@@ -664,21 +683,28 @@ def init_db():
 
         for table, columns in extra_columns.items():
             for name, col_type in columns:
+                savepoint = f"alter_{table}_{name}"
+                cursor.execute(f"SAVEPOINT {savepoint}")
                 try:
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {name} {col_type}")
+                    cursor.execute(f"RELEASE SAVEPOINT {savepoint}")
                 except Exception:
-                    conn.rollback()
-                    cursor = conn.cursor()
+                    cursor.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                    cursor.execute(f"RELEASE SAVEPOINT {savepoint}")
+        cursor.execute("SAVEPOINT wishlist_user_id")
         try:
             cursor.execute("ALTER TABLE wishlist ADD COLUMN user_id INTEGER")
+            cursor.execute("RELEASE SAVEPOINT wishlist_user_id")
         except Exception:
-            conn.rollback()
-            cursor = conn.cursor()
+            cursor.execute("ROLLBACK TO SAVEPOINT wishlist_user_id")
+            cursor.execute("RELEASE SAVEPOINT wishlist_user_id")
+        cursor.execute("SAVEPOINT wishlist_user_product_index")
         try:
             cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_wishlist_user_product ON wishlist(user_id, product_id)")
+            cursor.execute("RELEASE SAVEPOINT wishlist_user_product_index")
         except Exception:
-            conn.rollback()
-            cursor = conn.cursor()
+            cursor.execute("ROLLBACK TO SAVEPOINT wishlist_user_product_index")
+            cursor.execute("RELEASE SAVEPOINT wishlist_user_product_index")
 
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)",
@@ -689,12 +715,15 @@ def init_db():
             "CREATE INDEX IF NOT EXISTS idx_saved_addresses_user_key ON saved_addresses(user_key)",
         ]
 
-        for index_sql in indexes:
+        for index_number, index_sql in enumerate(indexes):
+            savepoint = f"index_savepoint_{index_number}"
+            cursor.execute(f"SAVEPOINT {savepoint}")
             try:
                 cursor.execute(index_sql)
+                cursor.execute(f"RELEASE SAVEPOINT {savepoint}")
             except Exception:
-                conn.rollback()
-                cursor = conn.cursor()
+                cursor.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                cursor.execute(f"RELEASE SAVEPOINT {savepoint}")
 
     else:
         cursor.execute("""
@@ -885,7 +914,7 @@ init_db()
 def send_email(to_email, subject, body):
     if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD:
         print("Email settings missing")
-        return
+        return False, "Email settings missing. Render me EMAIL_ADDRESS aur EMAIL_APP_PASSWORD set kare."
 
     try:
         msg = EmailMessage()
@@ -897,17 +926,23 @@ def send_email(to_email, subject, body):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=8) as smtp:
             smtp.login(EMAIL_ADDRESS, EMAIL_APP_PASSWORD)
             smtp.send_message(msg)
+        return True, "OTP email sent."
     except Exception as e:
         print("Email send error:", e)
+        return False, f"Email send failed: {e}"
 
 
 def send_email_async(to_email, subject, body):
-    thread = threading.Thread(
-        target=send_email,
-        args=(to_email, subject, body),
-        daemon=True
-    )
+    def runner():
+        send_email(to_email, subject, body)
+
+    thread = threading.Thread(target=runner, daemon=True)
     thread.start()
+
+
+def send_otp_email(to_email, subject, body):
+    sent, message = send_email(to_email, subject, body)
+    return sent, message
 
 
 def is_admin():
@@ -1101,14 +1136,17 @@ def send_otp():
         session["otp"] = otp
         session["otp_flow"] = "login"
 
+        session.pop("otp_notice", None)
         if login_type == "email":
-            send_email_async(
+            sent, message = send_otp_email(
                 user_email,
                 "Your Damodar Grocery Store OTP",
                 f"Your login OTP is {otp}"
             )
             session["phone_demo_otp"] = ""
-            session["email_demo_otp"] = otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
+            session["email_demo_otp"] = "" if sent else otp
+            if not sent:
+                session["otp_notice"] = message
         else:
             send_phone_otp(user_phone, otp)
             session["phone_demo_otp"] = otp
@@ -1142,6 +1180,7 @@ def verify_otp():
                 session.pop("otp_flow", None)
                 session.pop("phone_demo_otp", None)
                 session.pop("email_demo_otp", None)
+                session.pop("otp_notice", None)
                 session.pop("admin", None)
                 migrate_session_wishlist_to_user()
                 return redirect("/")
@@ -1151,6 +1190,7 @@ def verify_otp():
                 error="OTP galat hai.",
                 email_demo_otp=session.get("email_demo_otp", ""),
                 phone_demo_otp=session.get("phone_demo_otp", ""),
+                otp_notice=session.get("otp_notice", ""),
                 otp_flow="register"
             )
 
@@ -1164,6 +1204,7 @@ def verify_otp():
             session.pop("otp_login_id", None)
             session.pop("phone_demo_otp", None)
             session.pop("email_demo_otp", None)
+            session.pop("otp_notice", None)
             session.pop("admin", None)
             migrate_session_wishlist_to_user()
             return redirect("/")
@@ -1173,6 +1214,7 @@ def verify_otp():
             error="Wrong OTP. Dobara check kare.",
             email_demo_otp=session.get("email_demo_otp", ""),
             phone_demo_otp=session.get("phone_demo_otp", ""),
+            otp_notice=session.get("otp_notice", ""),
             otp_flow=session.get("otp_flow", "login")
         )
 
@@ -1180,6 +1222,7 @@ def verify_otp():
         "verify_otp.html",
         email_demo_otp=session.get("email_demo_otp", ""),
         phone_demo_otp=session.get("phone_demo_otp", ""),
+        otp_notice=session.get("otp_notice", ""),
         otp_flow=session.get("otp_flow", "login")
     )
 
@@ -1551,14 +1594,17 @@ def register():
         session["otp"] = otp
         session["otp_flow"] = "register"
 
+        session.pop("otp_notice", None)
         if login_type == "email":
-            session["email_demo_otp"] = otp if not EMAIL_ADDRESS or not EMAIL_APP_PASSWORD else ""
             session["phone_demo_otp"] = ""
-            send_email_async(
+            sent, message = send_otp_email(
                 login_id,
                 "Verify your Damodar Grocery account",
                 f"Your account verification OTP is {otp}"
             )
+            session["email_demo_otp"] = "" if sent else otp
+            if not sent:
+                session["otp_notice"] = message
         else:
             session["email_demo_otp"] = ""
             session["phone_demo_otp"] = otp
@@ -1887,6 +1933,7 @@ def checkout():
 
         conn = get_db()
         cursor = conn.cursor()
+        ensure_orders_created_at_column(cursor)
 
         should_save_address = request.form.get("save_address") == "1"
 
@@ -1894,8 +1941,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
-                VALUES(?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?)
                 RETURNING id
                 """,
                 (
@@ -1907,7 +1954,8 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email
+                    email,
+                    order_created_at
                 )
             )
             order_id = cursor.fetchone()[0]
@@ -1915,8 +1963,8 @@ def checkout():
             execute(
                 cursor,
                 """
-                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email)
-                VALUES(?,?,?,?,?,?,?,?,?)
+                INSERT INTO orders(customer_name, phone, address, total, payment_method, payment_status, gst_amount, status, customer_email, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     name,
@@ -1927,25 +1975,11 @@ def checkout():
                     "Paid" if payment_method == "Demo Payment" else "Pending",
                     gst,
                     "Pending",
-                    email
+                    email,
+                    order_created_at
                 )
             )
             order_id = cursor.lastrowid
-
-        if is_postgres():
-            cursor.execute("SAVEPOINT order_created_at_savepoint")
-            try:
-                execute(cursor, "UPDATE orders SET created_at=? WHERE id=?", (order_created_at, order_id))
-                cursor.execute("RELEASE SAVEPOINT order_created_at_savepoint")
-            except Exception as error:
-                cursor.execute("ROLLBACK TO SAVEPOINT order_created_at_savepoint")
-                cursor.execute("RELEASE SAVEPOINT order_created_at_savepoint")
-                app.logger.warning("Could not save order created_at for order %s: %s", order_id, error)
-        else:
-            try:
-                execute(cursor, "UPDATE orders SET created_at=? WHERE id=?", (order_created_at, order_id))
-            except Exception as error:
-                app.logger.warning("Could not save order created_at for order %s: %s", order_id, error)
 
         for product, quantity in order_products:
             product_id = fetch_product_id(product)
